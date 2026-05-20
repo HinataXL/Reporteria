@@ -1,12 +1,207 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Sistema Soporte</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Estadistica Soporte</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+
+    <!-- Fonts -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Manrope:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: "Manrope", sans-serif;
+            background: linear-gradient(135deg, #10231F, #17342E);
+            color: #F4F0E6;
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(23, 52, 46, 0.75);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(16px);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            transition: 0.2s;
+        }
+
+        .chart-bar {
+            transition: 0.3s;
+        }
+
+        .chart-bar:hover {
+            opacity: 0.8;
+        }
+    </style>
 </head>
+
 <body>
 
-<h1>Sistema de soporte funcionando 🚀</h1>
+<div class="max-w-7xl mx-auto p-6">
+
+    <!-- HEADER -->
+    <header class="flex flex-col lg:flex-row justify-between items-center mb-8 gap-4">
+
+        <div class="flex items-center gap-4">
+
+            <img
+                    src="/img/logo.png"
+                    alt="Logo"
+                    class="w-16 h-16 object-contain"
+            >
+
+            <div>
+            <span class="bg-green-500/20 text-green-300 px-3 py-1 rounded-full text-sm font-bold">
+                ● Skill Soporte
+            </span>
+
+                <h1 class="text-5xl font-extrabold mt-4" style="font-family: Syne;">
+                    Dashboard Soporte
+                </h1>
+
+                <p class="opacity-70 mt-2">
+                    Métricas operativas y conversaciones registradas
+                </p>
+            </div>
+
+        </div>
+
+        <button class="bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold">
+            Actualizar
+        </button>
+
+    </header>
+
+    <!-- METRICAS -->
+    <section class="grid md:grid-cols-3 gap-5 mb-8">
+
+        <div class="glass-card metric-card rounded-3xl p-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="opacity-70 font-bold">Chats registrados</p>
+                    <h2 class="text-4xl font-extrabold mt-2">248</h2>
+                </div>
+
+                <div class="bg-yellow-400/20 p-3 rounded-2xl text-yellow-400">
+                    <i data-lucide="messages-square"></i>
+                </div>
+            </div>
+
+            <p class="mt-4 text-green-400 font-bold">
+                +12% hoy
+            </p>
+        </div>
+
+        <div class="glass-card metric-card rounded-3xl p-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="opacity-70 font-bold">Agentes activos</p>
+                    <h2 class="text-4xl font-extrabold mt-2">2</h2>
+                </div>
+
+                <div class="bg-cyan-400/20 p-3 rounded-2xl text-cyan-400">
+                    <i data-lucide="users"></i>
+                </div>
+            </div>
+
+            <p class="mt-4 text-green-400 font-bold">
+                +3 conectados
+            </p>
+        </div>
+
+        <div class="glass-card metric-card rounded-3xl p-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="opacity-70 font-bold">Tiempo promedio</p>
+                    <h2 class="text-4xl font-extrabold mt-2">6m</h2>
+                </div>
+
+                <div class="bg-pink-400/20 p-3 rounded-2xl text-pink-400">
+                    <i data-lucide="timer"></i>
+                </div>
+            </div>
+
+            <p class="mt-4 text-green-400 font-bold">
+                -8% mejora
+            </p>
+        </div>
+
+    </section>
+
+    <!-- TABLA -->
+    <section class="glass-card rounded-3xl p-6">
+
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-extrabold">
+                Historial de conversaciones
+            </h2>
+
+            <button class="bg-yellow-400 text-black px-4 py-2 rounded-xl font-bold">
+                Exportar reporte
+            </button>
+        </div>
+
+        <div class="overflow-x-auto">
+
+            <table class="w-full text-left">
+
+                <thead>
+                <tr class="border-b border-white/10">
+                    <th class="py-3">Agente</th>
+                    <th>Cliente</th>
+                    <th>Canal</th>
+                    <th>Estado</th>
+                    <th>Duración</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <tr class="border-b border-white/5">
+                    <td class="py-4">Erick</td>
+                    <td>Juan Pérez</td>
+                    <td>WhatsApp</td>
+                    <td>
+                        <span class="bg-green-500/20 text-green-300 px-2 py-1 rounded-lg text-sm">
+                            Cerrado
+                        </span>
+                    </td>
+                    <td>5m</td>
+                </tr>
+
+                <tr class="border-b border-white/5">
+                    <td class="py-4">Andrea</td>
+                    <td>María López</td>
+                    <td>Facebook</td>
+                    <td>
+                        <span class="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-lg text-sm">
+                            Pendiente
+                        </span>
+                    </td>
+                    <td>12m</td>
+                </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</div>
+
+<script>
+    lucide.createIcons();
+</script>
 
 </body>
 </html>
