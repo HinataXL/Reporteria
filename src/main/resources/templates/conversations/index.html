@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Conversaciones</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+
+<div class="max-w-7xl mx-auto p-6">
+
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-4xl font-extrabold">Conversaciones</h1>
+            <p class="opacity-70">Historial de conversaciones de soporte</p>
+        </div>
+
+        <a href="/conversations/create"
+           class="bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold">
+            + Nueva conversación
+        </a>
+    </div>
+
+    <div class="bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur">
+
+        <div class="flex gap-3 mb-6">
+            <input type="text"
+                   placeholder="Buscar cliente, teléfono o asunto..."
+                   class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+
+            <button class="bg-teal-400 text-black px-5 py-3 rounded-xl font-bold">
+                Buscar
+            </button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                <tr class="border-b border-white/10">
+                    <th class="py-3">Código</th>
+                    <th>Cliente</th>
+                    <th>Canal</th>
+                    <th>Estado</th>
+                    <th>Prioridad</th>
+                    <th>Agente</th>
+                    <th>Fecha</th>
+                    <th>Acción</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <tr th:each="conversation : ${conversations}"
+                    class="border-b border-white/5">
+
+                    <td class="py-4" th:text="${conversation.codigo}"></td>
+
+                    <td th:text="${conversation.clienteNombre}"></td>
+
+                    <td>
+        <span th:switch="${conversation.channelId}">
+
+            <span th:case="1">WhatsApp</span>
+            <span th:case="2">Facebook</span>
+            <span th:case="3">Instagram</span>
+            <span th:case="4">Web Chat</span>
+            <span th:case="5">Correo</span>
+
+        </span>
+                    </td>
+
+                    <td>
+        <span
+                class="px-3 py-1 rounded-lg"
+
+                th:classappend="
+                ${conversation.statusId == 1} ? 'bg-yellow-500/20 text-yellow-300' :
+                (${conversation.statusId == 2} ? 'bg-cyan-500/20 text-cyan-300' :
+                (${conversation.statusId == 3} ? 'bg-green-500/20 text-green-300' :
+                (${conversation.statusId == 4} ? 'bg-red-500/20 text-red-300' :
+                'bg-green-500/20 text-green-300')))
+                "
+
+                th:text="
+                ${conversation.statusId == 1} ? 'Pendiente' :
+                (${conversation.statusId == 2} ? 'En Proceso' :
+                (${conversation.statusId == 3} ? 'Resuelto' :
+                (${conversation.statusId == 4} ? 'Escalado' :
+                'Cerrado')))
+                ">
+        </span>
+                    </td>
+
+                    <td>
+        <span
+                class="px-3 py-1 rounded-lg"
+
+                th:classappend="
+                ${conversation.priorityId == 1} ? 'bg-gray-500/20 text-gray-300' :
+                (${conversation.priorityId == 2} ? 'bg-yellow-500/20 text-yellow-300' :
+                (${conversation.priorityId == 3} ? 'bg-red-500/20 text-red-300' :
+                'bg-purple-500/20 text-purple-300'))
+                "
+
+                th:text="
+                ${conversation.priorityId == 1} ? 'Baja' :
+                (${conversation.priorityId == 2} ? 'Media' :
+                (${conversation.priorityId == 3} ? 'Alta' :
+                'Crítica'))
+                ">
+        </span>
+                    </td>
+
+                    <td>Agente</td>
+
+                    <td th:text="${#temporals.format(conversation.fechaInicio, 'dd/MM/yyyy')}"></td>
+
+                    <td>
+                        <a th:href="@{/conversations/{id}(id=${conversation.id})}"
+                           class="text-yellow-300 font-bold hover:underline">
+                            Ver
+                        </a>
+                    </td>
+
+                </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

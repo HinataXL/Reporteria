@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Nueva Conversación</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+
+<div class="max-w-5xl mx-auto p-6">
+
+    <div class="mb-8">
+        <a href="/conversations" class="text-yellow-300 font-bold hover:underline">
+            ← Volver
+        </a>
+
+        <h1 class="text-4xl font-extrabold mt-4">Nueva conversación</h1>
+        <p class="opacity-70">Registro manual de atención de soporte</p>
+    </div>
+
+    <form action="/conversations/save" method="post"
+          class="bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur grid gap-5">
+
+        <div class="grid md:grid-cols-2 gap-5">
+            <div>
+                <label class="font-bold">Nombre del cliente</label>
+                <input name="clienteNombre" type="text" required
+                       class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+            </div>
+
+            <div>
+                <label class="font-bold">Teléfono</label>
+                <input name="clienteTelefono" type="text"
+                       class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-5">
+            <div>
+                <label class="font-bold">Correo</label>
+                <input name="clienteCorreo" type="email"
+                       class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+            </div>
+
+            <div>
+                <label class="font-bold">Canal</label>
+                <select name="channelId"
+                        class="mt-2 w-full px-4 py-3 rounded-xl bg-[#17342E] border border-white/10 outline-none">
+                    <option value="1">WhatsApp</option>
+                    <option value="2">Facebook</option>
+                    <option value="3">Instagram</option>
+                    <option value="4">Web Chat</option>
+                    <option value="5">Correo</option>
+                </select>
+            </div>
+        </div>
+
+        <div>
+            <label class="font-bold">Asunto</label>
+            <input name="asunto" type="text" required
+                   class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+        </div>
+
+        <div>
+            <label class="font-bold">Descripción de la conversación</label>
+            <textarea name="descripcion" rows="5"
+                      class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none"></textarea>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-5">
+            <div>
+                <label class="font-bold">Estado</label>
+                <select name="statusId"
+                        class="mt-2 w-full px-4 py-3 rounded-xl bg-[#17342E] border border-white/10 outline-none">
+                    <option value="1">Pendiente</option>
+                    <option value="2">En Proceso</option>
+                    <option value="3">Resuelto</option>
+                    <option value="4">Escalado</option>
+                    <option value="5">Cerrado</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="font-bold">Prioridad</label>
+                <select name="priorityId"
+                        class="mt-2 w-full px-4 py-3 rounded-xl bg-[#17342E] border border-white/10 outline-none">
+                    <option value="1">Baja</option>
+                    <option value="2">Media</option>
+                    <option value="3">Alta</option>
+                    <option value="4">Crítica</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="font-bold">Tiempo gestión minutos</label>
+                <input name="tiempoGestionMinutos" type="number" min="0"
+                       class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+            </div>
+        </div>
+
+        <div>
+            <label class="font-bold">Observaciones</label>
+            <textarea name="observaciones" rows="4"
+                      class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-3">
+            <a href="/conversations"
+               class="px-5 py-3 rounded-2xl border border-white/10 font-bold">
+                Cancelar
+            </a>
+
+            <button type="submit"
+                    class="bg-yellow-400 text-black px-6 py-3 rounded-2xl font-bold">
+                Guardar conversación
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+</body>
+</html>

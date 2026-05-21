@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalle Conversación</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+
+<div class="max-w-6xl mx-auto p-6">
+
+    <div class="mb-8">
+        <a href="/conversations" class="text-yellow-300 font-bold hover:underline">
+            ← Volver
+        </a>
+
+        <h1 class="text-4xl font-extrabold mt-4">Detalle de conversación</h1>
+        <p class="opacity-70">CONV-001</p>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-6">
+
+        <section class="lg:col-span-2 bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur">
+
+            <h2 class="text-2xl font-extrabold mb-5">Información principal</h2>
+
+            <div class="grid md:grid-cols-2 gap-5">
+                <div>
+                    <p class="opacity-60">Cliente</p>
+                    <p class="font-bold text-lg">Juan Pérez</p>
+                </div>
+
+                <div>
+                    <p class="opacity-60">Teléfono</p>
+                    <p class="font-bold text-lg">5555-5555</p>
+                </div>
+
+                <div>
+                    <p class="opacity-60">Correo</p>
+                    <p class="font-bold text-lg">cliente@email.com</p>
+                </div>
+
+                <div>
+                    <p class="opacity-60">Canal</p>
+                    <p class="font-bold text-lg">WhatsApp</p>
+                </div>
+            </div>
+
+            <hr class="border-white/10 my-6">
+
+            <div>
+                <p class="opacity-60">Asunto</p>
+                <p class="font-bold text-xl">Problema con acceso a plataforma</p>
+            </div>
+
+            <div class="mt-5">
+                <p class="opacity-60">Descripción</p>
+                <p class="leading-relaxed">
+                    El cliente reporta que no puede ingresar a su cuenta.
+                    Se validó correo, usuario y se indicó proceso de recuperación.
+                </p>
+            </div>
+
+            <div class="mt-5">
+                <p class="opacity-60">Observaciones</p>
+                <p class="leading-relaxed">
+                    Cliente quedó satisfecho. Se recomienda seguimiento mañana.
+                </p>
+            </div>
+
+        </section>
+
+        <aside class="bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur">
+
+            <h2 class="text-2xl font-extrabold mb-5">Estado</h2>
+
+            <div class="space-y-4">
+                <div>
+                    <p class="opacity-60">Estado</p>
+                    <span class="inline-block bg-green-500/20 text-green-300 px-3 py-1 rounded-lg mt-1">
+                        Resuelto
+                    </span>
+                </div>
+
+                <div>
+                    <p class="opacity-60">Prioridad</p>
+                    <span class="inline-block bg-red-500/20 text-red-300 px-3 py-1 rounded-lg mt-1">
+                        Alta
+                    </span>
+                </div>
+
+                <div>
+                    <p class="opacity-60">Agente</p>
+                    <p class="font-bold">Erick</p>
+                </div>
+
+                <div>
+                    <p class="opacity-60">Tiempo gestión</p>
+                    <p class="font-bold">5 minutos</p>
+                </div>
+
+                <div>
+                    <p class="opacity-60">Fecha inicio</p>
+                    <p class="font-bold">20/05/2026 14:30</p>
+                </div>
+            </div>
+
+            <button class="mt-8 w-full bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold">
+                Editar conversación
+            </button>
+
+        </aside>
+
+    </div>
+
+</div>
+
+</body>
+</html>
