@@ -2,10 +2,12 @@ package com.erick.soporte.security;
 
 import com.erick.soporte.entity.User;
 import com.erick.soporte.repository.UserRepository;
+
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,19 +36,32 @@ public class CustomUserDetailsService implements UserDetailsService {
         System.out.println("Estado: " + user.getEstado());
         System.out.println("Password hash BD: " + user.getPassword());
 
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+
+        System.out.println(
+                "Password admin123 coincide: " +
+                        encoder.matches("admin123", user.getPassword())
+        );
+
         if (user.getEstado() == null || user.getEstado() == 0) {
+
             System.out.println("Usuario inactivo");
+
             throw new UsernameNotFoundException("Usuario inactivo");
         }
 
-        String roleName = user.getRole() != null ? user.getRole().getNombre() : "AGENTE";
+        String roleName = user.getRole() != null
+                ? user.getRole().getNombre()
+                : "AGENTE";
 
         System.out.println("Rol: " + roleName);
 
         return new org.springframework.security.core.userdetails.User(
                 user.getCorreo(),
                 user.getPassword(),
-                List.of(new SimpleGrantedAuthority("ROLE_" + roleName))
+                List.of(
+                        new SimpleGrantedAuthority("ROLE_" + roleName)
+                )
         );
     }
 }
