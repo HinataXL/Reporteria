@@ -1,0 +1,52 @@
+package com.erick.soporte.security;
+
+import com.erick.soporte.entity.User;
+import com.erick.soporte.repository.UserRepository;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class CustomUserDetailsService implements UserDetailsService {
+
+    private final UserRepository userRepository;
+
+    public CustomUserDetailsService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String correo) throws UsernameNotFoundException {
+
+        System.out.println("Intentando login con correo: " + correo);
+
+        User user = userRepository.findByCorreo(correo)
+                .orElseThrow(() -> {
+                    System.out.println("Usuario NO encontrado en BD");
+                    return new UsernameNotFoundException("Usuario no encontrado");
+                });
+
+        System.out.println("Usuario encontrado: " + user.getCorreo());
+        System.out.println("Estado: " + user.getEstado());
+        System.out.println("Password hash BD: " + user.getPassword());
+
+        if (user.getEstado() == null || user.getEstado() == 0) {
+            System.out.println("Usuario inactivo");
+            throw new UsernameNotFoundException("Usuario inactivo");
+        }
+
+        String roleName = user.getRole() != null ? user.getRole().getNombre() : "AGENTE";
+
+        System.out.println("Rol: " + roleName);
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getCorreo(),
+                user.getPassword(),
+                List.of(new SimpleGrantedAuthority("ROLE_" + roleName))
+        );
+    }
+}

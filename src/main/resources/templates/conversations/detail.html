@@ -5,6 +5,7 @@
     <title>Detalle Conversación</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
 
 <div class="max-w-6xl mx-auto p-6">
@@ -15,7 +16,7 @@
         </a>
 
         <h1 class="text-4xl font-extrabold mt-4">Detalle de conversación</h1>
-        <p class="opacity-70">CONV-001</p>
+        <p class="opacity-70" th:text="${conversation.codigo}">CONV-00001</p>
     </div>
 
     <div class="grid lg:grid-cols-3 gap-6">
@@ -27,22 +28,29 @@
             <div class="grid md:grid-cols-2 gap-5">
                 <div>
                     <p class="opacity-60">Cliente</p>
-                    <p class="font-bold text-lg">Juan Pérez</p>
+                    <p class="font-bold text-lg" th:text="${conversation.clienteNombre}">Cliente</p>
                 </div>
 
                 <div>
                     <p class="opacity-60">Teléfono</p>
-                    <p class="font-bold text-lg">5555-5555</p>
+                    <p class="font-bold text-lg" th:text="${conversation.clienteTelefono}">Teléfono</p>
                 </div>
 
                 <div>
                     <p class="opacity-60">Correo</p>
-                    <p class="font-bold text-lg">cliente@email.com</p>
+                    <p class="font-bold text-lg" th:text="${conversation.clienteCorreo}">Correo</p>
                 </div>
 
                 <div>
                     <p class="opacity-60">Canal</p>
-                    <p class="font-bold text-lg">WhatsApp</p>
+                    <p class="font-bold text-lg"
+                       th:text="${conversation.channelId == 1 ? 'WhatsApp' :
+                       (conversation.channelId == 2 ? 'Facebook' :
+                       (conversation.channelId == 3 ? 'Instagram' :
+                       (conversation.channelId == 4 ? 'Web Chat' :
+                       (conversation.channelId == 5 ? 'Correo' : 'Desconocido'))))}">
+                        Canal
+                    </p>
                 </div>
             </div>
 
@@ -50,21 +58,20 @@
 
             <div>
                 <p class="opacity-60">Asunto</p>
-                <p class="font-bold text-xl">Problema con acceso a plataforma</p>
+                <p class="font-bold text-xl" th:text="${conversation.asunto}">Asunto</p>
             </div>
 
             <div class="mt-5">
                 <p class="opacity-60">Descripción</p>
-                <p class="leading-relaxed">
-                    El cliente reporta que no puede ingresar a su cuenta.
-                    Se validó correo, usuario y se indicó proceso de recuperación.
+                <p class="leading-relaxed" th:text="${conversation.descripcion}">
+                    Descripción
                 </p>
             </div>
 
             <div class="mt-5">
                 <p class="opacity-60">Observaciones</p>
-                <p class="leading-relaxed">
-                    Cliente quedó satisfecho. Se recomienda seguimiento mañana.
+                <p class="leading-relaxed" th:text="${conversation.observaciones}">
+                    Observaciones
                 </p>
             </div>
 
@@ -75,39 +82,59 @@
             <h2 class="text-2xl font-extrabold mb-5">Estado</h2>
 
             <div class="space-y-4">
+
                 <div>
                     <p class="opacity-60">Estado</p>
-                    <span class="inline-block bg-green-500/20 text-green-300 px-3 py-1 rounded-lg mt-1">
-                        Resuelto
+                    <span class="inline-block px-3 py-1 rounded-lg mt-1"
+                          th:classappend="${conversation.statusId == 1 ? 'bg-yellow-500/20 text-yellow-300' :
+                          (conversation.statusId == 2 ? 'bg-cyan-500/20 text-cyan-300' :
+                          (conversation.statusId == 3 ? 'bg-green-500/20 text-green-300' :
+                          (conversation.statusId == 4 ? 'bg-red-500/20 text-red-300' :
+                          'bg-green-500/20 text-green-300')))}"
+                          th:text="${conversation.statusId == 1 ? 'Pendiente' :
+                          (conversation.statusId == 2 ? 'En Proceso' :
+                          (conversation.statusId == 3 ? 'Resuelto' :
+                          (conversation.statusId == 4 ? 'Escalado' :
+                          'Cerrado')))}">
+                        Estado
                     </span>
                 </div>
 
                 <div>
                     <p class="opacity-60">Prioridad</p>
-                    <span class="inline-block bg-red-500/20 text-red-300 px-3 py-1 rounded-lg mt-1">
-                        Alta
+                    <span class="inline-block px-3 py-1 rounded-lg mt-1"
+                          th:classappend="${conversation.priorityId == 1 ? 'bg-gray-500/20 text-gray-300' :
+                          (conversation.priorityId == 2 ? 'bg-yellow-500/20 text-yellow-300' :
+                          (conversation.priorityId == 3 ? 'bg-red-500/20 text-red-300' :
+                          'bg-purple-500/20 text-purple-300'))}"
+                          th:text="${conversation.priorityId == 1 ? 'Baja' :
+                          (conversation.priorityId == 2 ? 'Media' :
+                          (conversation.priorityId == 3 ? 'Alta' :
+                          'Crítica'))}">
+                        Prioridad
                     </span>
                 </div>
 
                 <div>
-                    <p class="opacity-60">Agente</p>
-                    <p class="font-bold">Erick</p>
-                </div>
-
-                <div>
                     <p class="opacity-60">Tiempo gestión</p>
-                    <p class="font-bold">5 minutos</p>
+                    <p class="font-bold">
+                        <span th:text="${conversation.tiempoGestionMinutos}">0</span> minutos
+                    </p>
                 </div>
 
                 <div>
                     <p class="opacity-60">Fecha inicio</p>
-                    <p class="font-bold">20/05/2026 14:30</p>
+                    <p class="font-bold"
+                       th:text="${conversation.fechaInicio != null ? #temporals.format(conversation.fechaInicio, 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">
+                        Fecha
+                    </p>
                 </div>
             </div>
 
-            <button class="mt-8 w-full bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold">
+            <a th:href="@{/conversations/edit/{id}(id=${conversation.id})}"
+               class="mt-8 block w-full bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold text-center">
                 Editar conversación
-            </button>
+            </a>
 
         </aside>
 

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Soporte</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen flex items-center justify-center">
+
+<div class="w-full max-w-md bg-white/10 border border-white/10 rounded-3xl p-8 backdrop-blur">
+    <div th:if="${param.error}"
+         class="mb-4 bg-red-500/20 text-red-300 border border-red-500/30 rounded-xl px-4 py-3 font-bold">
+        Usuario o contraseña incorrectos.
+    </div>
+
+    <div th:if="${param.logout}"
+         class="mb-4 bg-green-500/20 text-green-300 border border-green-500/30 rounded-xl px-4 py-3 font-bold">
+        Sesión cerrada correctamente.
+    </div>
+
+    <h1 class="text-3xl font-extrabold mb-2">Iniciar sesión</h1>
+    <p class="opacity-70 mb-6">Sistema de reportería de soporte</p>
+
+    <form method="post" action="/login" class="space-y-5">
+
+        <div>
+            <label class="font-bold">Correo</label>
+            <input name="username"
+                   type="email"
+                   required
+                   class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+        </div>
+
+        <div>
+            <label class="font-bold">Contraseña</label>
+            <input name="password"
+                   type="password"
+                   required
+                   class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+        </div>
+
+        <button class="w-full bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold">
+            Entrar
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>

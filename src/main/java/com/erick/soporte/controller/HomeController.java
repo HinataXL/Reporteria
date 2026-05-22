@@ -138,4 +138,36 @@ public class HomeController {
             default -> "Desconocida";
         };
     }
+    @GetMapping("/conversations/edit/{id}")
+    public String editConversation(@PathVariable Long id, Model model) {
+        Conversation conversation = conversationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Conversación no encontrada"));
+
+        model.addAttribute("conversation", conversation);
+        return "conversations/edit";
+    }
+
+    @PostMapping("/conversations/update/{id}")
+    public String updateConversation(
+            @PathVariable Long id,
+            @ModelAttribute Conversation formConversation
+    ) {
+        Conversation conversation = conversationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Conversación no encontrada"));
+
+        conversation.setClienteNombre(formConversation.getClienteNombre());
+        conversation.setClienteTelefono(formConversation.getClienteTelefono());
+        conversation.setClienteCorreo(formConversation.getClienteCorreo());
+        conversation.setAsunto(formConversation.getAsunto());
+        conversation.setDescripcion(formConversation.getDescripcion());
+        conversation.setTiempoGestionMinutos(formConversation.getTiempoGestionMinutos());
+        conversation.setObservaciones(formConversation.getObservaciones());
+        conversation.setChannelId(formConversation.getChannelId());
+        conversation.setStatusId(formConversation.getStatusId());
+        conversation.setPriorityId(formConversation.getPriorityId());
+
+        conversationRepository.save(conversation);
+
+        return "redirect:/conversations/" + id;
+    }
 }
