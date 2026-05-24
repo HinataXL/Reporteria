@@ -24,6 +24,12 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/css/**", "/js/**", "/img/**").permitAll()
+
+                        .requestMatchers("/conversations/export/**").hasAnyRole("ADMIN", "SUPERVISOR")
+                        .requestMatchers("/conversations/edit/**", "/conversations/update/**").hasAnyRole("ADMIN", "SUPERVISOR")
+                        .requestMatchers("/conversations/create", "/conversations/save").hasAnyRole("ADMIN", "SUPERVISOR", "AGENTE")
+                        .requestMatchers("/conversations/**").hasAnyRole("ADMIN", "SUPERVISOR", "AGENTE")
+
                         .anyRequest().authenticated()
                 )
                 .formLogin(login -> login

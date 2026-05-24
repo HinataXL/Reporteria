@@ -39,8 +39,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
         System.out.println(
-                "Password admin123 coincide: " +
-                        encoder.matches("admin123", user.getPassword())
+                "Password 123456 coincide: " +
+                        encoder.matches("123456", user.getPassword())
         );
 
         if (user.getEstado() == null || user.getEstado() == 0) {
@@ -56,12 +56,9 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         System.out.println("Rol: " + roleName);
 
-        return new org.springframework.security.core.userdetails.User(
-                user.getCorreo(),
-                user.getPassword(),
-                List.of(
-                        new SimpleGrantedAuthority("ROLE_" + roleName)
-                )
+        return new CustomUserPrincipal(
+                user,
+                List.of(new SimpleGrantedAuthority("ROLE_" + roleName))
         );
     }
 }

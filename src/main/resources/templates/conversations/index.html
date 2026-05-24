@@ -1,28 +1,57 @@
 <!doctype html>
 <html lang="es">
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>Conversaciones</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
 
 <div class="max-w-7xl mx-auto p-6">
 
-    <div class="flex justify-between items-center mb-8">
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-5 mb-8">
+
         <div>
             <h1 class="text-4xl font-extrabold">Conversaciones</h1>
             <p class="opacity-70">Historial de conversaciones de soporte</p>
         </div>
 
-        <a href="/conversations/create"
-           class="bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold">
-            + Nueva conversación
-        </a>
-        <a href="/conversations/export/csv"
-           class="bg-yellow-400 text-black px-4 py-2 rounded-xl font-bold">
-            Exportar CSV
-        </a>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+
+            <div class="text-right bg-white/10 border border-white/10 px-4 py-3 rounded-2xl">
+                <p class="font-bold" th:text="${userName}">Erick Pedroza</p>
+                <p class="text-sm opacity-60" th:text="${userRole}">ADMIN</p>
+                <p class="text-xs opacity-50" th:text="${userEmail}">admin@soporte.com</p>
+            </div>
+
+            <a href="/conversations/create"
+               class="bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold text-center">
+                + Nueva conversación
+            </a>
+
+            <a href="/conversations/export/csv"
+               sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"
+               class="bg-teal-400 text-black px-5 py-3 rounded-2xl font-bold text-center">
+                Exportar CSV
+            </a>
+
+            <form th:action="@{/logout}" method="post">
+                <input type="hidden"
+                       th:name="${_csrf.parameterName}"
+                       th:value="${_csrf.token}" />
+
+                <button type="submit"
+                        class="bg-red-500 hover:bg-red-400 transition text-white px-5 py-3 rounded-2xl font-bold w-full">
+                    Cerrar sesión
+                </button>
+            </form>
+
+        </div>
+
     </div>
 
     <div class="bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur">
@@ -53,71 +82,59 @@
                 </thead>
 
                 <tbody>
-
                 <tr th:each="conversation : ${conversations}"
                     class="border-b border-white/5">
 
-                    <td class="py-4" th:text="${conversation.codigo}"></td>
+                    <td class="py-4" th:text="${conversation.codigo}">CONV-00001</td>
 
-                    <td th:text="${conversation.clienteNombre}"></td>
+                    <td th:text="${conversation.clienteNombre}">Cliente</td>
 
                     <td>
-        <span th:switch="${conversation.channelId}">
-
-            <span th:case="1">WhatsApp</span>
-            <span th:case="2">Facebook</span>
-            <span th:case="3">Instagram</span>
-            <span th:case="4">Web Chat</span>
-            <span th:case="5">Correo</span>
-
-        </span>
+                        <span th:switch="${conversation.channelId}">
+                            <span th:case="1">WhatsApp</span>
+                            <span th:case="2">Facebook</span>
+                            <span th:case="3">Instagram</span>
+                            <span th:case="4">Web Chat</span>
+                            <span th:case="5">Correo</span>
+                            <span th:case="*">Desconocido</span>
+                        </span>
                     </td>
 
                     <td>
-        <span
-                class="px-3 py-1 rounded-lg"
-
-                th:classappend="
-                ${conversation.statusId == 1} ? 'bg-yellow-500/20 text-yellow-300' :
-                (${conversation.statusId == 2} ? 'bg-cyan-500/20 text-cyan-300' :
-                (${conversation.statusId == 3} ? 'bg-green-500/20 text-green-300' :
-                (${conversation.statusId == 4} ? 'bg-red-500/20 text-red-300' :
-                'bg-green-500/20 text-green-300')))
-                "
-
-                th:text="
-                ${conversation.statusId == 1} ? 'Pendiente' :
-                (${conversation.statusId == 2} ? 'En Proceso' :
-                (${conversation.statusId == 3} ? 'Resuelto' :
-                (${conversation.statusId == 4} ? 'Escalado' :
-                'Cerrado')))
-                ">
-        </span>
+                        <span class="px-3 py-1 rounded-lg"
+                              th:classappend="${conversation.statusId == 1} ? 'bg-yellow-500/20 text-yellow-300' :
+                              (${conversation.statusId == 2} ? 'bg-cyan-500/20 text-cyan-300' :
+                              (${conversation.statusId == 3} ? 'bg-green-500/20 text-green-300' :
+                              (${conversation.statusId == 4} ? 'bg-red-500/20 text-red-300' :
+                              'bg-green-500/20 text-green-300')))"
+                              th:text="${conversation.statusId == 1} ? 'Pendiente' :
+                              (${conversation.statusId == 2} ? 'En Proceso' :
+                              (${conversation.statusId == 3} ? 'Resuelto' :
+                              (${conversation.statusId == 4} ? 'Escalado' :
+                              'Cerrado')))">
+                            Estado
+                        </span>
                     </td>
 
                     <td>
-        <span
-                class="px-3 py-1 rounded-lg"
-
-                th:classappend="
-                ${conversation.priorityId == 1} ? 'bg-gray-500/20 text-gray-300' :
-                (${conversation.priorityId == 2} ? 'bg-yellow-500/20 text-yellow-300' :
-                (${conversation.priorityId == 3} ? 'bg-red-500/20 text-red-300' :
-                'bg-purple-500/20 text-purple-300'))
-                "
-
-                th:text="
-                ${conversation.priorityId == 1} ? 'Baja' :
-                (${conversation.priorityId == 2} ? 'Media' :
-                (${conversation.priorityId == 3} ? 'Alta' :
-                'Crítica'))
-                ">
-        </span>
+                        <span class="px-3 py-1 rounded-lg"
+                              th:classappend="${conversation.priorityId == 1} ? 'bg-gray-500/20 text-gray-300' :
+                              (${conversation.priorityId == 2} ? 'bg-yellow-500/20 text-yellow-300' :
+                              (${conversation.priorityId == 3} ? 'bg-red-500/20 text-red-300' :
+                              'bg-purple-500/20 text-purple-300'))"
+                              th:text="${conversation.priorityId == 1} ? 'Baja' :
+                              (${conversation.priorityId == 2} ? 'Media' :
+                              (${conversation.priorityId == 3} ? 'Alta' :
+                              'Crítica'))">
+                            Prioridad
+                        </span>
                     </td>
 
-                    <td>Agente</td>
+                    <td th:text="${userEmail}">Agente</td>
 
-                    <td th:text="${#temporals.format(conversation.fechaInicio, 'dd/MM/yyyy')}"></td>
+                    <td th:text="${conversation.fechaInicio != null ? #temporals.format(conversation.fechaInicio, 'dd/MM/yyyy') : 'Sin fecha'}">
+                        Fecha
+                    </td>
 
                     <td>
                         <a th:href="@{/conversations/{id}(id=${conversation.id})}"
@@ -127,7 +144,6 @@
                     </td>
 
                 </tr>
-
                 </tbody>
             </table>
         </div>

@@ -1,5 +1,8 @@
 <!doctype html>
 <html lang="es">
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>Detalle Conversación</title>
@@ -132,6 +135,7 @@
             </div>
 
             <a th:href="@{/conversations/edit/{id}(id=${conversation.id})}"
+               sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"
                class="mt-8 block w-full bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold text-center">
                 Editar conversación
             </a>

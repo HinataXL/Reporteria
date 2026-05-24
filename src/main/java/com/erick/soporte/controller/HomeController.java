@@ -6,7 +6,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
+import com.erick.soporte.security.CustomUserPrincipal;
+import org.springframework.security.core.Authentication;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.format.DateTimeFormatter;
@@ -26,8 +27,15 @@ public class HomeController {
     }
 
     @GetMapping("/conversations")
-    public String conversations(Model model) {
+    public String conversations(Model model, Authentication authentication) {
+
+        CustomUserPrincipal user = (CustomUserPrincipal) authentication.getPrincipal();
+
         model.addAttribute("conversations", conversationRepository.findAll());
+        model.addAttribute("userName", user.getNombreCompleto());
+        model.addAttribute("userEmail", user.getCorreo());
+        model.addAttribute("userRole", user.getRol());
+
         return "conversations/index";
     }
 
