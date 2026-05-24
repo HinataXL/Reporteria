@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Autenticación 2FA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+
+<div class="max-w-3xl mx-auto p-6">
+
+    <a href="/conversations" class="text-yellow-300 font-bold hover:underline">
+        ← Volver
+    </a>
+
+    <h1 class="text-4xl font-extrabold mt-6 mb-2">
+        Autenticación 2FA
+    </h1>
+
+    <p class="opacity-70 mb-8">
+        Protege tu cuenta usando Google Authenticator, Microsoft Authenticator o Authy.
+    </p>
+
+    <div th:if="${param.enabled}"
+         class="mb-4 bg-green-500/20 text-green-300 border border-green-500/30 rounded-xl px-4 py-3 font-bold">
+        2FA activado correctamente.
+    </div>
+
+    <div th:if="${param.disabled}"
+         class="mb-4 bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 rounded-xl px-4 py-3 font-bold">
+        2FA desactivado correctamente.
+    </div>
+
+    <div th:if="${error}"
+         class="mb-4 bg-red-500/20 text-red-300 border border-red-500/30 rounded-xl px-4 py-3 font-bold"
+         th:text="${error}">
+        Error
+    </div>
+
+    <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+
+        <div th:if="${enabled}">
+            <h2 class="text-2xl font-extrabold mb-3">
+                2FA está activo
+            </h2>
+
+            <p class="opacity-70 mb-6">
+                Tu cuenta ya requiere código de autenticación.
+            </p>
+
+            <form th:action="@{/settings/2fa/disable}" method="post">
+                <input type="hidden"
+                       th:name="${_csrf.parameterName}"
+                       th:value="${_csrf.token}" />
+
+                <button class="bg-red-500 text-white px-5 py-3 rounded-2xl font-bold">
+                    Desactivar 2FA
+                </button>
+            </form>
+        </div>
+
+        <div th:unless="${enabled}">
+            <h2 class="text-2xl font-extrabold mb-3">
+                Escanea este código QR
+            </h2>
+
+            <p class="opacity-70 mb-5">
+                Abre tu app autenticadora y escanea el QR.
+            </p>
+
+            <div class="bg-white p-4 rounded-2xl inline-block mb-5">
+                <img th:src="'data:image/png;base64,' + ${qrBase64}"
+                     alt="QR 2FA"
+                     class="w-60 h-60">
+            </div>
+
+            <p class="opacity-70 mb-5">
+                Código manual:
+                <strong class="text-yellow-300" th:text="${secret}">SECRET</strong>
+            </p>
+
+            <form th:action="@{/settings/2fa/enable}" method="post" class="grid gap-4">
+                <input type="hidden"
+                       th:name="${_csrf.parameterName}"
+                       th:value="${_csrf.token}" />
+
+                <div>
+                    <label class="font-bold">Código de 6 dígitos</label>
+                    <input name="code"
+                           type="number"
+                           required
+                           class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+                </div>
+
+                <button class="bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold">
+                    Activar 2FA
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

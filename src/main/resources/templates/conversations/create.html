@@ -20,6 +20,9 @@
 
     <form action="/conversations/save" method="post"
           class="bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur grid gap-5">
+        <input type="hidden"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}" />
 
         <div class="grid md:grid-cols-2 gap-5">
             <div>

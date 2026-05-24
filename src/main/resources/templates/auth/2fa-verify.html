@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Verificación 2FA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen flex items-center justify-center">
+
+<div class="w-full max-w-md bg-white/10 border border-white/10 rounded-3xl p-8 backdrop-blur">
+
+  <h1 class="text-3xl font-extrabold mb-2">Verificación 2FA</h1>
+  <p class="opacity-70 mb-6">Ingresa el código de tu app autenticadora.</p>
+
+  <div th:if="${error}"
+       class="mb-4 bg-red-500/20 text-red-300 border border-red-500/30 rounded-xl px-4 py-3 font-bold"
+       th:text="${error}">
+    Error
+  </div>
+
+  <form th:action="@{/2fa/verify}" method="post" class="space-y-5">
+
+    <input type="hidden"
+           th:name="${_csrf.parameterName}"
+           th:value="${_csrf.token}" />
+
+    <div>
+      <label class="font-bold">Código</label>
+      <input name="code"
+             type="number"
+             required
+             autofocus
+             class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+    </div>
+
+    <button type="submit"
+            class="w-full bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold">
+      Verificar
+    </button>
+
+  </form>
+
+</div>
+
+</body>
+</html>
