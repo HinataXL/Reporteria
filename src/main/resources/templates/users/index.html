@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Usuarios</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+
+<div class="max-w-6xl mx-auto p-6">
+
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-4xl font-extrabold">Usuarios</h1>
+      <p class="opacity-70">Administración de usuarios del sistema</p>
+    </div>
+
+    <a href="/users/create"
+       class="bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold">
+      + Nuevo usuario
+    </a>
+  </div>
+
+  <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+    <table class="w-full text-left">
+      <thead>
+      <tr class="border-b border-white/10">
+        <th class="py-3">Nombre</th>
+        <th>Correo</th>
+        <th>Rol</th>
+        <th>Estado</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr th:each="user : ${users}" class="border-b border-white/5">
+        <td class="py-4" th:text="${user.nombre + ' ' + user.apellido}">Nombre</td>
+        <td th:text="${user.correo}">correo</td>
+        <td th:text="${user.role.nombre}">Rol</td>
+        <td>
+                    <span th:if="${user.estado == 1}"
+                          class="bg-green-500/20 text-green-300 px-3 py-1 rounded-lg">
+                        Activo
+                    </span>
+          <span th:if="${user.estado == 0}"
+                class="bg-red-500/20 text-red-300 px-3 py-1 rounded-lg">
+                        Inactivo
+                    </span>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Nuevo Usuario</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+
+<div class="max-w-3xl mx-auto p-6">
+
+    <a href="/users" class="text-yellow-300 font-bold hover:underline">
+        ← Volver
+    </a>
+
+    <h1 class="text-4xl font-extrabold mt-6 mb-2">Nuevo usuario</h1>
+    <p class="opacity-70 mb-8">Crear usuario para acceder al sistema</p>
+
+    <form action="/users/save" method="post"
+          class="bg-white/10 border border-white/10 rounded-3xl p-6 grid gap-5">
+
+        <input type="hidden"
+               th:name="${_csrf.parameterName}"
+               th:value="${_csrf.token}" />
+
+        <div class="grid md:grid-cols-2 gap-5">
+            <div>
+                <label class="font-bold">Nombre</label>
+                <input name="nombre" required
+                       class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+            </div>
+
+            <div>
+                <label class="font-bold">Apellido</label>
+                <input name="apellido" required
+                       class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+            </div>
+        </div>
+
+        <div>
+            <label class="font-bold">Correo</label>
+            <input name="correo" type="email" required
+                   class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+        </div>
+
+        <div>
+            <label class="font-bold">Contraseña temporal</label>
+            <input name="password" type="password" required
+                   class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+        </div>
+
+        <div>
+            <label class="font-bold">Rol</label>
+            <select name="roleId"
+                    class="mt-2 w-full px-4 py-3 rounded-xl bg-[#17342E] border border-white/10 outline-none">
+                <option th:each="role : ${roles}"
+                        th:value="${role.id}"
+                        th:text="${role.nombre}">
+                    Rol
+                </option>
+            </select>
+        </div>
+
+        <button type="submit"
+                class="bg-yellow-400 text-black px-6 py-3 rounded-2xl font-bold">
+            Crear usuario
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>

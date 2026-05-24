@@ -24,4 +24,7 @@ public class Role {
     public String getDescripcion() {
         return descripcion;
     }
+    public void setId(Long id) { this.id = id; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 }

@@ -33,6 +33,12 @@
                 + Nueva conversación
             </a>
 
+            <a href="/users"
+               sec:authorize="hasRole('ADMIN')"
+               class="bg-purple-500 hover:bg-purple-400 transition text-white px-5 py-3 rounded-2xl font-bold text-center">
+                Usuarios
+            </a>
+
             <a href="/conversations/export/csv"
                sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"
                class="bg-teal-400 text-black px-5 py-3 rounded-2xl font-bold text-center">
