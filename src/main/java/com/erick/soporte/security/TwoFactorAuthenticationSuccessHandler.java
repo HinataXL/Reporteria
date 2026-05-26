@@ -39,6 +39,10 @@ public class TwoFactorAuthenticationSuccessHandler implements AuthenticationSucc
         }
 
         request.getSession().setAttribute("2FA_VERIFIED", true);
-        response.sendRedirect("/conversations");
+        if (principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_SUPERVISOR"))) {
+            response.sendRedirect("/supervisor/dashboard");
+        } else {
+            response.sendRedirect("/conversations");
+        }
     }
 }

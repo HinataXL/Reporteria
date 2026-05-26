@@ -46,6 +46,12 @@ public class Conversation {
     @Column(name = "priority_id")
     private Long priorityId;
 
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(name = "agente_nombre")
+    private String agenteNombre;
+
     // Getters y Setters
 
     public Long getId() {
@@ -146,5 +152,21 @@ public class Conversation {
 
     public void setPriorityId(Long priorityId) {
         this.priorityId = priorityId;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public String getAgenteNombre() {
+        return agenteNombre;
+    }
+
+    public void setAgenteNombre(String agenteNombre) {
+        this.agenteNombre = agenteNombre;
     }
 }

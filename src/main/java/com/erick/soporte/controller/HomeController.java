@@ -11,6 +11,8 @@ import org.springframework.security.core.Authentication;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.format.DateTimeFormatter;
+import com.erick.soporte.security.CustomUserPrincipal;
+import org.springframework.security.core.Authentication;
 
 @Controller
 public class HomeController {
@@ -46,7 +48,15 @@ public class HomeController {
     }
 
     @PostMapping("/conversations/save")
-    public String saveConversation(@ModelAttribute Conversation conversation) {
+    public String saveConversation(
+            @ModelAttribute Conversation conversation,
+            Authentication authentication
+    ) {
+        CustomUserPrincipal user = (CustomUserPrincipal) authentication.getPrincipal();
+
+        conversation.setUserId(user.getId());
+        conversation.setAgenteNombre(user.getNombreCompleto());
+
         Conversation saved = conversationRepository.save(conversation);
 
         if (saved.getCodigo() == null || saved.getCodigo().isBlank()) {

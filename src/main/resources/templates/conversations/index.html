@@ -1,47 +1,200 @@
 <!doctype html>
-<html lang="es">
 <html lang="es"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>Conversaciones</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            background:
+                    radial-gradient(circle at top left, rgba(0, 217, 255, 0.14), transparent 35%),
+                    radial-gradient(circle at bottom right, rgba(255, 215, 0, 0.10), transparent 30%),
+                    #10231F;
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+            border: 1px solid rgba(255,255,255,0.12);
+            box-shadow: 0 18px 40px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.10);
+        }
+
+        .row-card {
+            transition: all .22s ease;
+            box-shadow: 0 0 0 rgba(0,0,0,0);
+        }
+
+        .row-card:hover {
+            transform: translateY(-3px);
+            background: rgba(255,255,255,0.12);
+            box-shadow: 0 14px 30px rgba(0,0,0,0.28);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-weight: 900;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .badge-success {
+            background: linear-gradient(135deg, rgba(0,255,136,.22), rgba(0,255,136,.08));
+            color: #00ff88;
+            border: 1px solid rgba(0,255,136,.25);
+        }
+
+        .badge-warning {
+            background: linear-gradient(135deg, rgba(255,170,0,.24), rgba(255,215,0,.08));
+            color: #ffd700;
+            border: 1px solid rgba(255,215,0,.25);
+        }
+
+        .badge-active {
+            background: linear-gradient(135deg, rgba(0,217,255,.24), rgba(0,217,255,.08));
+            color: #00d9ff;
+            border: 1px solid rgba(0,217,255,.25);
+        }
+
+        .badge-danger {
+            background: linear-gradient(135deg, rgba(255,107,107,.24), rgba(255,107,107,.08));
+            color: #ff6b6b;
+            border: 1px solid rgba(255,107,107,.25);
+        }
+
+        .pulse-escalado {
+            animation: pulseEscalado 1.6s ease-in-out infinite;
+        }
+
+        @keyframes pulseEscalado {
+            0%, 100% {
+                box-shadow: 0 0 0 rgba(255,107,107,0);
+            }
+            50% {
+                box-shadow: 0 0 18px rgba(255,107,107,.45);
+            }
+        }
+
+        .search-input {
+            transition: all .2s ease;
+        }
+
+        .search-input:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 0 0 3px rgba(0,217,255,.15), 0 12px 25px rgba(0,0,0,.25);
+            border-color: rgba(0,217,255,.55);
+        }
+
+        .action-menu {
+            opacity: 0;
+            transform: translateY(4px);
+            pointer-events: none;
+            transition: all .18s ease;
+        }
+
+        .row-card:hover .action-menu {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .copy-btn {
+            transition: all .18s ease;
+        }
+
+        .copy-btn:hover {
+            color: #ffd700;
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            table, thead, tbody, tr, td {
+                display: block;
+                width: 100%;
+            }
+
+            thead {
+                display: none;
+            }
+
+            tr {
+                margin-bottom: 16px;
+                border-radius: 24px;
+                padding: 16px;
+            }
+
+            td {
+                padding: 8px 0 !important;
+            }
+
+            td::before {
+                content: attr(data-label);
+                display: block;
+                color: rgba(244,240,230,.55);
+                font-size: 12px;
+                font-weight: 800;
+                margin-bottom: 4px;
+            }
+        }
+    </style>
 </head>
 
-<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+<body class="text-[#F4F0E6] min-h-screen">
 
 <div class="max-w-7xl mx-auto p-6">
 
-    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-5 mb-8">
+    <header class="flex flex-col xl:flex-row xl:justify-between xl:items-start gap-6 mb-8">
 
         <div>
-            <h1 class="text-4xl font-extrabold">Conversaciones</h1>
-            <p class="opacity-70">Historial de conversaciones de soporte</p>
+            <p class="text-[#00d9ff] text-sm font-black uppercase tracking-[0.22em] mb-2">
+                Skill soporte
+            </p>
+
+            <h1 class="text-5xl font-black tracking-tight">
+                Conversaciones
+            </h1>
+
+            <p class="text-slate-300 text-sm mt-2">
+                Historial operativo de conversaciones registradas.
+            </p>
         </div>
 
-        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div class="flex flex-col lg:flex-row lg:items-center gap-3">
 
-            <div class="text-right bg-white/10 border border-white/10 px-4 py-3 rounded-2xl">
-                <p class="font-bold" th:text="${userName}">Erick Pedroza</p>
-                <p class="text-sm opacity-60" th:text="${userRole}">ADMIN</p>
-                <p class="text-xs opacity-50" th:text="${userEmail}">admin@soporte.com</p>
+            <div class="bg-white/10 border border-white/10 px-5 py-3 rounded-3xl shadow-lg">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#00d9ff] to-[#ffd700] text-black font-black flex items-center justify-center">
+                        👤
+                    </div>
+
+                    <div>
+                        <p class="font-black leading-tight" th:text="${userName}">Erick Pedroza</p>
+                        <p class="text-xs text-[#ffd700] font-bold" th:text="${userRole}">ADMIN</p>
+                        <p class="text-xs opacity-50" th:text="${userEmail}">admin@soporte.com</p>
+                    </div>
+                </div>
             </div>
 
             <a href="/conversations/create"
-               class="bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold text-center">
+               class="bg-[#ffd700] hover:bg-yellow-300 transition text-black px-5 py-3 rounded-2xl font-black text-center shadow-lg shadow-yellow-500/20">
                 + Nueva conversación
             </a>
 
             <a href="/users"
                sec:authorize="hasRole('ADMIN')"
-               class="bg-purple-500 hover:bg-purple-400 transition text-white px-5 py-3 rounded-2xl font-bold text-center">
+               class="bg-purple-500 hover:bg-purple-400 transition text-white px-5 py-3 rounded-2xl font-black text-center">
                 Usuarios
             </a>
 
             <a href="/conversations/export/csv"
                sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"
-               class="bg-teal-400 text-black px-5 py-3 rounded-2xl font-bold text-center">
+               class="bg-[#00d9ff] hover:bg-cyan-300 transition text-black px-5 py-3 rounded-2xl font-black text-center">
                 Exportar CSV
             </a>
 
@@ -51,112 +204,354 @@
                        th:value="${_csrf.token}" />
 
                 <button type="submit"
-                        class="bg-red-500 hover:bg-red-400 transition text-white px-5 py-3 rounded-2xl font-bold w-full">
+                        class="bg-[#ff6b6b] hover:bg-red-400 transition text-white px-5 py-3 rounded-2xl font-black w-full">
                     Cerrar sesión
                 </button>
             </form>
 
         </div>
 
-    </div>
+    </header>
 
-    <div class="bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur">
+    <section class="glass-card rounded-[32px] p-6 mb-6">
 
-        <div class="flex gap-3 mb-6">
-            <input type="text"
-                   placeholder="Buscar cliente, teléfono o asunto..."
-                   class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+        <div class="flex flex-col lg:flex-row gap-3">
 
-            <button class="bg-teal-400 text-black px-5 py-3 rounded-xl font-bold">
-                Buscar
+            <div class="relative flex-1">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#00d9ff]">
+                    🔎
+                </span>
+
+                <input id="searchInput"
+                       type="text"
+                       placeholder="Buscar por código, cliente, canal, estado, prioridad o agente..."
+                       class="search-input w-full pl-12 pr-4 py-4 rounded-2xl bg-white/10 border border-white/10 outline-none">
+            </div>
+
+            <button id="toggleFilters"
+                    type="button"
+                    class="bg-white/10 hover:bg-white/15 border border-white/10 transition px-5 py-4 rounded-2xl font-black">
+                Filtros avanzados
             </button>
+
         </div>
 
+        <div id="advancedFilters"
+             class="hidden grid md:grid-cols-4 gap-3 mt-4">
+
+            <select id="filterStatus"
+                    class="bg-[#17342E] border border-white/10 rounded-2xl px-4 py-3 outline-none">
+                <option value="">Todos los estados</option>
+                <option value="Pendiente">Pendiente</option>
+                <option value="En Proceso">En Proceso</option>
+                <option value="Resuelto">Resuelto</option>
+                <option value="Escalado">Escalado</option>
+                <option value="Cerrado">Cerrado</option>
+            </select>
+
+            <select id="filterPriority"
+                    class="bg-[#17342E] border border-white/10 rounded-2xl px-4 py-3 outline-none">
+                <option value="">Todas las prioridades</option>
+                <option value="Baja">Baja</option>
+                <option value="Media">Media</option>
+                <option value="Alta">Alta</option>
+                <option value="Crítica">Crítica</option>
+            </select>
+
+            <button id="clearFilters"
+                    type="button"
+                    class="bg-[#ffd700] text-black px-5 py-3 rounded-2xl font-black">
+                Limpiar filtros
+            </button>
+
+            <p id="resultCounter"
+               class="flex items-center text-sm text-slate-300 font-bold">
+                Mostrando registros
+            </p>
+
+        </div>
+
+    </section>
+
+    <section class="glass-card rounded-[32px] p-6">
+
         <div class="overflow-x-auto">
-            <table class="w-full text-left">
+            <table class="w-full text-left border-separate border-spacing-y-3">
+
                 <thead>
-                <tr class="border-b border-white/10">
-                    <th class="py-3">Código</th>
-                    <th>Cliente</th>
-                    <th>Canal</th>
-                    <th>Estado</th>
-                    <th>Prioridad</th>
-                    <th>Agente</th>
-                    <th>Fecha</th>
-                    <th>Acción</th>
+                <tr class="text-slate-300 text-sm uppercase tracking-wide">
+                    <th class="py-3 px-4">Código</th>
+                    <th class="px-4">Cliente</th>
+                    <th class="px-4">Canal</th>
+                    <th class="px-4">Estado</th>
+                    <th class="px-4">Prioridad</th>
+                    <th class="px-4">Agente</th>
+                    <th class="px-4">Fecha</th>
+                    <th class="px-4">Acción</th>
                 </tr>
                 </thead>
 
-                <tbody>
-                <tr th:each="conversation : ${conversations}"
-                    class="border-b border-white/5">
+                <tbody id="conversationTable">
 
-                    <td class="py-4" th:text="${conversation.codigo}">CONV-00001</td>
+                <tr th:each="conversation, iterStat : ${conversations}"
+                    class="row-card cursor-pointer"
+                    th:classappend="${iterStat.even} ? ' bg-white/[0.045]' : ' bg-white/[0.075]'"
+                    th:attr="data-detail-url=@{/conversations/{id}(id=${conversation.id})}">
 
-                    <td th:text="${conversation.clienteNombre}">Cliente</td>
+                    <td data-label="Código"
+                        class="py-4 px-4 rounded-l-3xl">
 
-                    <td>
-                        <span th:switch="${conversation.channelId}">
-                            <span th:case="1">WhatsApp</span>
-                            <span th:case="2">Facebook</span>
-                            <span th:case="3">Instagram</span>
-                            <span th:case="4">Web Chat</span>
-                            <span th:case="5">Correo</span>
-                            <span th:case="*">Desconocido</span>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#00d9ff] to-[#ffd700] text-black font-black flex items-center justify-center">
+                                💬
+                            </div>
+
+                            <div>
+                                <button type="button"
+                                        class="copy-btn font-black text-[#ffd700]"
+                                        onclick="copyCode(event, this)"
+                                        th:text="${conversation.codigo}">
+                                    CONV-00001
+                                </button>
+
+                                <p class="text-xs text-slate-400">
+                                    Click para copiar
+                                </p>
+                            </div>
+                        </div>
+
+                    </td>
+
+                    <td data-label="Cliente"
+                        class="px-4 font-bold"
+                        th:text="${conversation.clienteNombre}">
+                        Cliente
+                    </td>
+
+                    <td data-label="Canal"
+                        class="px-4">
+                        <span class="badge badge-active" th:switch="${conversation.channelId}">
+                            <span th:case="1">→ WhatsApp</span>
+                            <span th:case="2">→ Facebook</span>
+                            <span th:case="3">→ Instagram</span>
+                            <span th:case="4">→ Web Chat</span>
+                            <span th:case="5">→ Correo</span>
+                            <span th:case="*">→ Desconocido</span>
                         </span>
                     </td>
 
-                    <td>
-                        <span class="px-3 py-1 rounded-lg"
-                              th:classappend="${conversation.statusId == 1} ? 'bg-yellow-500/20 text-yellow-300' :
-                              (${conversation.statusId == 2} ? 'bg-cyan-500/20 text-cyan-300' :
-                              (${conversation.statusId == 3} ? 'bg-green-500/20 text-green-300' :
-                              (${conversation.statusId == 4} ? 'bg-red-500/20 text-red-300' :
-                              'bg-green-500/20 text-green-300')))"
-                              th:text="${conversation.statusId == 1} ? 'Pendiente' :
-                              (${conversation.statusId == 2} ? 'En Proceso' :
-                              (${conversation.statusId == 3} ? 'Resuelto' :
-                              (${conversation.statusId == 4} ? 'Escalado' :
-                              'Cerrado')))">
-                            Estado
+                    <td data-label="Estado"
+                        class="px-4">
+                        <span th:if="${conversation.statusId == 1}"
+                              class="badge badge-warning"
+                              title="Pendiente de gestión">
+                            ⚠️ Pendiente
+                        </span>
+
+                        <span th:if="${conversation.statusId == 2}"
+                              class="badge badge-active"
+                              title="Atención en proceso">
+                            → En Proceso
+                        </span>
+
+                        <span th:if="${conversation.statusId == 3}"
+                              class="badge badge-success"
+                              title="Caso resuelto correctamente">
+                            ✓ Resuelto
+                        </span>
+
+                        <span th:if="${conversation.statusId == 4}"
+                              class="badge badge-danger pulse-escalado"
+                              title="Caso escalado">
+                            ✕ Escalado
+                        </span>
+
+                        <span th:if="${conversation.statusId == 5}"
+                              class="badge badge-success"
+                              title="Caso cerrado">
+                            ✓ Cerrado
                         </span>
                     </td>
 
-                    <td>
-                        <span class="px-3 py-1 rounded-lg"
-                              th:classappend="${conversation.priorityId == 1} ? 'bg-gray-500/20 text-gray-300' :
-                              (${conversation.priorityId == 2} ? 'bg-yellow-500/20 text-yellow-300' :
-                              (${conversation.priorityId == 3} ? 'bg-red-500/20 text-red-300' :
-                              'bg-purple-500/20 text-purple-300'))"
-                              th:text="${conversation.priorityId == 1} ? 'Baja' :
-                              (${conversation.priorityId == 2} ? 'Media' :
-                              (${conversation.priorityId == 3} ? 'Alta' :
-                              'Crítica'))">
-                            Prioridad
+                    <td data-label="Prioridad"
+                        class="px-4">
+                        <span th:if="${conversation.priorityId == 1}"
+                              class="badge bg-slate-500/20 text-slate-300 border border-slate-400/20">
+                            Baja
+                        </span>
+
+                        <span th:if="${conversation.priorityId == 2}"
+                              class="badge badge-warning">
+                            Media
+                        </span>
+
+                        <span th:if="${conversation.priorityId == 3}"
+                              class="badge bg-orange-500/20 text-orange-300 border border-orange-400/20">
+                            Alta
+                        </span>
+
+                        <span th:if="${conversation.priorityId == 4}"
+                              class="badge badge-danger pulse-escalado">
+                            Crítica
                         </span>
                     </td>
 
-                    <td th:text="${userEmail}">Agente</td>
+                    <td data-label="Agente"
+                        class="px-4">
+                        <span th:text="${conversation.agenteNombre != null ? conversation.agenteNombre : userName}">
+                            Agente
+                        </span>
+                    </td>
 
-                    <td th:text="${conversation.fechaInicio != null ? #temporals.format(conversation.fechaInicio, 'dd/MM/yyyy') : 'Sin fecha'}">
+                    <td data-label="Fecha"
+                        class="px-4"
+                        th:text="${conversation.fechaInicio != null ? #temporals.format(conversation.fechaInicio, 'dd/MM/yyyy') : 'Sin fecha'}">
                         Fecha
                     </td>
 
-                    <td>
-                        <a th:href="@{/conversations/{id}(id=${conversation.id})}"
-                           class="text-yellow-300 font-bold hover:underline">
-                            Ver
-                        </a>
+                    <td data-label="Acción"
+                        class="px-4 rounded-r-3xl">
+
+                        <div class="flex items-center gap-2">
+
+                            <a th:href="@{/conversations/{id}(id=${conversation.id})}"
+                               onclick="event.stopPropagation()"
+                               class="bg-[#00d9ff] hover:bg-cyan-300 transition text-black px-3 py-2 rounded-xl font-black"
+                               title="Ver detalle">
+                                👁 Ver
+                            </a>
+
+                            <div class="relative action-menu">
+                                <button type="button"
+                                        onclick="toggleMenu(event, this)"
+                                        class="bg-white/10 hover:bg-white/20 transition px-3 py-2 rounded-xl font-black">
+                                    ⋯
+                                </button>
+
+                                <div class="hidden absolute right-0 mt-2 w-44 bg-[#17342E] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-20">
+                                    <a th:href="@{/conversations/{id}(id=${conversation.id})}"
+                                       class="block px-4 py-3 hover:bg-white/10">
+                                        👁 Ver detalle
+                                    </a>
+
+                                    <a th:href="@{/conversations/edit/{id}(id=${conversation.id})}"
+                                       sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"
+                                       class="block px-4 py-3 hover:bg-white/10">
+                                        ✏️ Editar
+                                    </a>
+
+                                    <a th:href="@{/conversations/export/csv}"
+                                       sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"
+                                       class="block px-4 py-3 hover:bg-white/10">
+                                        ⬇ Descargar CSV
+                                    </a>
+                                </div>
+                            </div>
+
+                        </div>
+
                     </td>
 
                 </tr>
+
                 </tbody>
+
             </table>
         </div>
 
-    </div>
+    </section>
 
 </div>
+
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const filterStatus = document.getElementById('filterStatus');
+    const filterPriority = document.getElementById('filterPriority');
+    const resultCounter = document.getElementById('resultCounter');
+
+    function normalize(text) {
+        return (text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function filterRows() {
+        const query = normalize(searchInput.value);
+        const status = normalize(filterStatus.value);
+        const priority = normalize(filterPriority.value);
+
+        let visible = 0;
+
+        document.querySelectorAll('#conversationTable tr').forEach(row => {
+            const text = normalize(row.innerText);
+            const matchQuery = !query || text.includes(query);
+            const matchStatus = !status || text.includes(status);
+            const matchPriority = !priority || text.includes(priority);
+
+            const show = matchQuery && matchStatus && matchPriority;
+            row.style.display = show ? '' : 'none';
+
+            if (show) visible++;
+        });
+
+        resultCounter.textContent = `Mostrando ${visible} registro(s)`;
+    }
+
+    searchInput.addEventListener('input', filterRows);
+    filterStatus.addEventListener('change', filterRows);
+    filterPriority.addEventListener('change', filterRows);
+
+    document.getElementById('toggleFilters').addEventListener('click', () => {
+        document.getElementById('advancedFilters').classList.toggle('hidden');
+    });
+
+    document.getElementById('clearFilters').addEventListener('click', () => {
+        searchInput.value = '';
+        filterStatus.value = '';
+        filterPriority.value = '';
+        filterRows();
+    });
+
+    document.querySelectorAll('#conversationTable tr').forEach(row => {
+        row.addEventListener('click', () => {
+            const url = row.getAttribute('data-detail-url');
+            if (url) window.location.href = url;
+        });
+    });
+
+    function copyCode(event, button) {
+        event.stopPropagation();
+
+        const code = button.innerText.trim();
+
+        navigator.clipboard.writeText(code).then(() => {
+            const original = button.innerText;
+            button.innerText = 'Copiado ✓';
+
+            setTimeout(() => {
+                button.innerText = original;
+            }, 1200);
+        });
+    }
+
+    function toggleMenu(event, button) {
+        event.stopPropagation();
+
+        document.querySelectorAll('.action-menu > div').forEach(menu => {
+            if (menu !== button.nextElementSibling) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        button.nextElementSibling.classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.action-menu > div').forEach(menu => {
+            menu.classList.add('hidden');
+        });
+    });
+
+    filterRows();
+</script>
 
 </body>
 </html>

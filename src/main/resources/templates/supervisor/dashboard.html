@@ -1,79 +1,442 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <title>Dashboard Supervisor</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      background:
+              radial-gradient(circle at top left, rgba(27, 160, 200, 0.20), transparent 35%),
+              radial-gradient(circle at bottom right, rgba(255, 215, 0, 0.12), transparent 30%),
+              #1a2f3a;
+    }
+
+    .dashboard-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow:
+              0 18px 40px rgba(0,0,0,0.28),
+              inset 0 1px 0 rgba(255,255,255,0.10);
+      transition: all 0.25s ease;
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-4px);
+      box-shadow:
+              0 24px 55px rgba(0,0,0,0.38),
+              0 0 24px rgba(27,160,200,0.16),
+              inset 0 1px 0 rgba(255,255,255,0.12);
+    }
+
+    .metric-number {
+      color: #FFD700;
+      animation: pulseNumber 2.4s ease-in-out infinite;
+    }
+
+    .fade-up {
+      animation: fadeUp 0.7s ease both;
+    }
+
+    .delay-1 { animation-delay: 0.08s; }
+    .delay-2 { animation-delay: 0.16s; }
+    .delay-3 { animation-delay: 0.24s; }
+    .delay-4 { animation-delay: 0.32s; }
+
+    @keyframes fadeUp {
+      from {
+        transform: translateY(16px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes pulseNumber {
+      0%, 100% {
+        text-shadow: 0 0 0 rgba(255, 215, 0, 0);
+      }
+      50% {
+        text-shadow: 0 0 18px rgba(255, 215, 0, 0.35);
+      }
+    }
+
+    .chart-box {
+      position: relative;
+    }
+
+    .chart-box::before {
+      content: "";
+      position: absolute;
+      inset: 16px;
+      border-radius: 24px;
+      background: radial-gradient(circle at center, rgba(27,160,200,0.08), transparent 65%);
+      pointer-events: none;
+    }
+  </style>
 </head>
 
-<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+<body class="text-[#F4F0E6] min-h-screen">
 
 <div class="max-w-7xl mx-auto p-6">
 
-  <div class="flex justify-between items-center mb-8">
+  <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-5 mb-8 fade-up">
     <div>
-      <h1 class="text-4xl font-extrabold">Dashboard Supervisor</h1>
-      <p class="opacity-70">Métricas generales del equipo de soporte</p>
+      <p class="text-[#1BA0C8] text-sm font-bold uppercase tracking-[0.25em] mb-2">
+        Panel de supervisión
+      </p>
+
+      <h1 class="text-5xl font-black tracking-tight">
+        Dashboard Supervisor
+      </h1>
+
+      <p class="text-slate-300 text-sm mt-2">
+        Métricas generales del equipo de soporte y productividad diaria.
+      </p>
     </div>
 
     <a href="/conversations"
-       class="bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold">
+       class="bg-[#FFD700] hover:bg-yellow-300 transition text-black px-6 py-3 rounded-2xl font-black shadow-lg shadow-yellow-500/20">
       Ver conversaciones
     </a>
-  </div>
+  </header>
 
-  <section class="grid md:grid-cols-4 gap-5 mb-8">
+  <section class="grid md:grid-cols-4 gap-6 mb-8">
 
-    <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
-      <p class="opacity-70 font-bold">Total conversaciones</p>
-      <h2 class="text-4xl font-extrabold mt-3" th:text="${total}">0</h2>
+    <div class="dashboard-card rounded-3xl p-6 fade-up delay-1">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-slate-300 text-sm font-bold">Total conversaciones</p>
+          <h2 class="metric-number text-5xl font-black mt-3" th:text="${total}">0</h2>
+        </div>
+        <div class="bg-cyan-400/20 text-cyan-300 rounded-2xl px-3 py-2 text-xl">💬</div>
+      </div>
     </div>
 
-    <div class="bg-green-500/10 border border-green-500/20 rounded-3xl p-6">
-      <p class="opacity-70 font-bold">Resueltas</p>
-      <h2 class="text-4xl font-extrabold mt-3" th:text="${resueltas}">0</h2>
+    <div class="dashboard-card rounded-3xl p-6 fade-up delay-2">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-slate-300 text-sm font-bold">Resueltas</p>
+          <h2 class="metric-number text-5xl font-black mt-3" th:text="${resueltas}">0</h2>
+        </div>
+        <div class="bg-green-400/20 text-green-300 rounded-2xl px-3 py-2 text-xl">✅</div>
+      </div>
     </div>
 
-    <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-3xl p-6">
-      <p class="opacity-70 font-bold">Pendientes</p>
-      <h2 class="text-4xl font-extrabold mt-3" th:text="${pendientes}">0</h2>
+    <div class="dashboard-card rounded-3xl p-6 fade-up delay-3">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-slate-300 text-sm font-bold">Pendientes</p>
+          <h2 class="metric-number text-5xl font-black mt-3" th:text="${pendientes}">0</h2>
+        </div>
+        <div class="bg-yellow-400/20 text-yellow-300 rounded-2xl px-3 py-2 text-xl">⏳</div>
+      </div>
     </div>
 
-    <div class="bg-red-500/10 border border-red-500/20 rounded-3xl p-6">
-      <p class="opacity-70 font-bold">Escaladas</p>
-      <h2 class="text-4xl font-extrabold mt-3" th:text="${escaladas}">0</h2>
+    <div class="dashboard-card rounded-3xl p-6 fade-up delay-4">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-slate-300 text-sm font-bold">Escaladas</p>
+          <h2 class="metric-number text-5xl font-black mt-3" th:text="${escaladas}">0</h2>
+        </div>
+        <div class="bg-red-400/20 text-red-300 rounded-2xl px-3 py-2 text-xl">🚨</div>
+      </div>
     </div>
 
   </section>
 
-  <section class="grid md:grid-cols-2 gap-6">
+  <section class="grid lg:grid-cols-3 gap-6 mb-8">
 
-    <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
-      <h2 class="text-2xl font-extrabold mb-4">Tiempo promedio de gestión</h2>
+    <div class="dashboard-card rounded-3xl p-6 lg:col-span-2 fade-up delay-2">
+      <h2 class="text-2xl font-black mb-2">
+        Productividad diaria
+      </h2>
 
-      <p class="text-5xl font-extrabold text-yellow-300">
-        <span th:text="${promedioTiempo}">0</span> min
+      <p class="text-slate-300 text-sm mb-5">
+        Conversaciones registradas por día.
       </p>
 
-      <p class="opacity-70 mt-3">
-        Promedio calculado con base en las conversaciones registradas.
-      </p>
+      <div class="h-[280px] chart-box">
+        <canvas id="dailyChart"></canvas>
+      </div>
     </div>
 
-    <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
-      <h2 class="text-2xl font-extrabold mb-4">Indicadores próximos</h2>
+    <div class="dashboard-card rounded-3xl p-6 fade-up delay-3">
+      <h2 class="text-2xl font-black mb-4">
+        Tiempo promedio
+      </h2>
 
-      <ul class="space-y-3 opacity-80">
-        <li>• Conversaciones por agente</li>
-        <li>• Conversaciones por canal</li>
-        <li>• Conversaciones por prioridad</li>
-        <li>• Productividad diaria</li>
-      </ul>
+      <p class="text-6xl font-black text-[#FFD700]">
+        <span th:text="${promedioTiempo}">0</span>
+      </p>
+
+      <p class="text-slate-300 mt-2 font-bold">
+        minutos por gestión
+      </p>
+
+      <div class="mt-6 border-t border-white/10 pt-5">
+        <p class="text-sm text-slate-300">
+          Promedio calculado con base en conversaciones registradas.
+        </p>
+      </div>
+    </div>
+
+  </section>
+
+  <section class="grid lg:grid-cols-3 gap-6">
+
+    <div class="dashboard-card rounded-3xl p-6 fade-up delay-1">
+      <h2 class="text-2xl font-black mb-2">
+        Por agente
+      </h2>
+
+      <p class="text-slate-300 text-sm mb-5">
+        Cantidad de conversaciones asignadas por usuario.
+      </p>
+
+      <div class="h-[260px] chart-box">
+        <canvas id="agentChart"></canvas>
+      </div>
+    </div>
+
+    <div class="dashboard-card rounded-3xl p-6 fade-up delay-2">
+      <h2 class="text-2xl font-black mb-2">
+        Por canal
+      </h2>
+
+      <p class="text-slate-300 text-sm mb-5">
+        Distribución por origen de atención.
+      </p>
+
+      <div class="h-[260px] chart-box">
+        <canvas id="channelChart"></canvas>
+      </div>
+    </div>
+
+    <div class="dashboard-card rounded-3xl p-6 fade-up delay-3">
+      <h2 class="text-2xl font-black mb-2">
+        Por prioridad
+      </h2>
+
+      <p class="text-slate-300 text-sm mb-5">
+        Distribución por criticidad del caso.
+      </p>
+
+      <div class="h-[260px] chart-box">
+        <canvas id="priorityChart"></canvas>
+      </div>
     </div>
 
   </section>
 
 </div>
+
+<script th:inline="javascript">
+  Chart.defaults.color = '#F4F0E6';
+  Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+  Chart.defaults.plugins.legend.labels.usePointStyle = true;
+  Chart.defaults.plugins.legend.labels.boxWidth = 8;
+
+  const agenteLabels = /*[[${agenteLabels}]]*/ [];
+  const agenteValues = /*[[${agenteValues}]]*/ [];
+
+  const canalLabels = /*[[${canalLabels}]]*/ [];
+  const canalValues = /*[[${canalValues}]]*/ [];
+
+  const prioridadLabels = /*[[${prioridadLabels}]]*/ [];
+  const prioridadValues = /*[[${prioridadValues}]]*/ [];
+
+  const productividadLabels = /*[[${productividadLabels}]]*/ [];
+  const productividadValues = /*[[${productividadValues}]]*/ [];
+
+  function createBlueGradient(ctx) {
+    const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+    gradient.addColorStop(0, '#1BA0C8');
+    gradient.addColorStop(1, '#22D3EE');
+    return gradient;
+  }
+
+  function createGoldGradient(ctx) {
+    const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+    gradient.addColorStop(0, '#FFD700');
+    gradient.addColorStop(1, '#F59E0B');
+    return gradient;
+  }
+
+  function baseTooltip() {
+    return {
+      backgroundColor: 'rgba(10, 25, 35, 0.95)',
+      titleColor: '#FFD700',
+      bodyColor: '#F4F0E6',
+      borderColor: 'rgba(255,255,255,0.12)',
+      borderWidth: 1,
+      padding: 12,
+      cornerRadius: 14
+    };
+  }
+
+  const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+  const dailyGradient = createBlueGradient(dailyCtx);
+
+  new Chart(dailyCtx, {
+    type: 'line',
+    data: {
+      labels: productividadLabels,
+      datasets: [{
+        label: 'Conversaciones por día',
+        data: productividadValues,
+        borderColor: '#1BA0C8',
+        backgroundColor: 'rgba(27,160,200,0.18)',
+        pointBackgroundColor: '#FFD700',
+        pointBorderColor: '#FFD700',
+        pointRadius: 5,
+        pointHoverRadius: 8,
+        borderWidth: 4,
+        fill: true,
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 1200,
+        easing: 'easeOutQuart'
+      },
+      plugins: {
+        tooltip: baseTooltip()
+      },
+      scales: {
+        x: {
+          grid: {
+            color: 'rgba(255,255,255,0.06)'
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0
+          },
+          grid: {
+            color: 'rgba(255,255,255,0.06)'
+          }
+        }
+      }
+    }
+  });
+
+  const agentCtx = document.getElementById('agentChart').getContext('2d');
+
+  new Chart(agentCtx, {
+    type: 'bar',
+    data: {
+      labels: agenteLabels,
+      datasets: [{
+        label: 'Conversaciones',
+        data: agenteValues,
+        backgroundColor: createBlueGradient(agentCtx),
+        borderColor: '#22D3EE',
+        borderWidth: 1,
+        borderRadius: 16,
+        hoverBackgroundColor: createGoldGradient(agentCtx)
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 1200,
+        easing: 'easeOutBounce'
+      },
+      plugins: {
+        tooltip: baseTooltip()
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0
+          },
+          grid: {
+            color: 'rgba(255,255,255,0.06)'
+          }
+        }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('channelChart'), {
+    type: 'doughnut',
+    data: {
+      labels: canalLabels,
+      datasets: [{
+        data: canalValues,
+        backgroundColor: [
+          '#1BA0C8',
+          '#22D3EE',
+          '#FFD700',
+          '#34D399',
+          '#A78BFA'
+        ],
+        borderColor: '#1a2f3a',
+        borderWidth: 4,
+        hoverOffset: 16
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '62%',
+      animation: {
+        animateRotate: true,
+        duration: 1200
+      },
+      plugins: {
+        tooltip: baseTooltip()
+      }
+    }
+  });
+
+  new Chart(document.getElementById('priorityChart'), {
+    type: 'pie',
+    data: {
+      labels: prioridadLabels,
+      datasets: [{
+        data: prioridadValues,
+        backgroundColor: [
+          '#34D399',
+          '#FFD700',
+          '#F97316',
+          '#EF4444'
+        ],
+        borderColor: '#1a2f3a',
+        borderWidth: 4,
+        hoverOffset: 16
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        animateScale: true,
+        duration: 1100
+      },
+      plugins: {
+        tooltip: baseTooltip()
+      }
+    }
+  });
+</script>
 
 </body>
 </html>
