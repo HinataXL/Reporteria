@@ -45,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers("/conversations/create", "/conversations/save").hasAnyRole("ADMIN", "SUPERVISOR", "AGENTE")
                         .requestMatchers("/conversations/**").hasAnyRole("ADMIN", "SUPERVISOR", "AGENTE")
                         .requestMatchers("/supervisor/**").hasAnyRole("ADMIN", "SUPERVISOR")
+                        .requestMatchers("/api/dashboard/**").hasAnyRole("ADMIN", "SUPERVISOR")
 
                         .anyRequest().authenticated()
                 )

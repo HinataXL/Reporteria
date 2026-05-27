@@ -88,11 +88,11 @@
   <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-5 mb-8 fade-up">
     <div>
       <p class="text-[#1BA0C8] text-sm font-bold uppercase tracking-[0.25em] mb-2">
-        Panel de supervisión
+        Panel de Métricas
       </p>
 
       <h1 class="text-5xl font-black tracking-tight">
-        Dashboard Supervisor
+        Dashboard Métricas
       </h1>
 
       <p class="text-slate-300 text-sm mt-2">
@@ -112,7 +112,7 @@
       <div class="flex justify-between items-start">
         <div>
           <p class="text-slate-300 text-sm font-bold">Total conversaciones</p>
-          <h2 class="metric-number text-5xl font-black mt-3" th:text="${total}">0</h2>
+          <h2 id="totalMetric" class="metric-number text-5xl font-black mt-3" th:text="${total}">0</h2>
         </div>
         <div class="bg-cyan-400/20 text-cyan-300 rounded-2xl px-3 py-2 text-xl">💬</div>
       </div>
@@ -122,7 +122,7 @@
       <div class="flex justify-between items-start">
         <div>
           <p class="text-slate-300 text-sm font-bold">Resueltas</p>
-          <h2 class="metric-number text-5xl font-black mt-3" th:text="${resueltas}">0</h2>
+          <h2 id="resolvedMetric" class="metric-number text-5xl font-black mt-3" th:text="${resueltas}">0</h2>
         </div>
         <div class="bg-green-400/20 text-green-300 rounded-2xl px-3 py-2 text-xl">✅</div>
       </div>
@@ -132,7 +132,7 @@
       <div class="flex justify-between items-start">
         <div>
           <p class="text-slate-300 text-sm font-bold">Pendientes</p>
-          <h2 class="metric-number text-5xl font-black mt-3" th:text="${pendientes}">0</h2>
+          <h2 id="pendingMetric" class="metric-number text-5xl font-black mt-3" th:text="${pendientes}">0</h2>
         </div>
         <div class="bg-yellow-400/20 text-yellow-300 rounded-2xl px-3 py-2 text-xl">⏳</div>
       </div>
@@ -142,7 +142,7 @@
       <div class="flex justify-between items-start">
         <div>
           <p class="text-slate-300 text-sm font-bold">Escaladas</p>
-          <h2 class="metric-number text-5xl font-black mt-3" th:text="${escaladas}">0</h2>
+          <h2 id="escalatedMetric" class="metric-number text-5xl font-black mt-3" th:text="${escaladas}">0</h2>
         </div>
         <div class="bg-red-400/20 text-red-300 rounded-2xl px-3 py-2 text-xl">🚨</div>
       </div>
@@ -172,7 +172,7 @@
       </h2>
 
       <p class="text-6xl font-black text-[#FFD700]">
-        <span th:text="${promedioTiempo}">0</span>
+        <span id="avgMetric" th:text="${promedioTiempo}">0</span>
       </p>
 
       <p class="text-slate-300 mt-2 font-bold">
@@ -233,7 +233,62 @@
     </div>
 
   </section>
+  <div>
 
+  </div>
+  <section class="dashboard-card rounded-3xl p-6 mb-8 fade-up delay-2">
+
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+      <div>
+        <h2 class="text-3xl font-black">Análisis Metricas IA</h2>
+        <p class="text-slate-300 text-sm mt-1">
+          Reporte automático basado en las métricas actuales.
+        </p>
+      </div>
+
+      <button onclick="generateAiReport()"
+              class="bg-[#FFD700] hover:bg-yellow-300 transition text-black px-5 py-3 rounded-2xl font-black">
+        Generar análisis IA
+      </button>
+    </div>
+
+    <div id="aiReportBox"
+         class="bg-white/5 border border-white/10 rounded-3xl p-5 hidden">
+
+      <div class="flex items-center gap-3 mb-4">
+            <span class="bg-[#00d9ff]/20 text-[#00d9ff] px-3 py-1 rounded-full font-black text-sm">
+                IA
+            </span>
+
+        <span id="aiRiskBadge"
+              class="px-3 py-1 rounded-full font-black text-sm">
+                Riesgo
+            </span>
+      </div>
+
+      <h3 id="aiReportTitle"
+          class="text-2xl font-black mb-3">
+        Título
+      </h3>
+
+      <p id="aiReportSummary"
+         class="text-slate-200 leading-relaxed mb-5">
+        Resumen
+      </p>
+
+      <div>
+        <h4 class="font-black text-[#FFD700] mb-3">
+          Puntos de mejora
+        </h4>
+
+        <ul id="aiRecommendations"
+            class="space-y-3 text-slate-200">
+        </ul>
+      </div>
+
+    </div>
+
+  </section>
 </div>
 
 <script th:inline="javascript">
@@ -281,9 +336,11 @@
   }
 
   const dailyCtx = document.getElementById('dailyChart').getContext('2d');
-  const dailyGradient = createBlueGradient(dailyCtx);
+  const agentCtx = document.getElementById('agentChart').getContext('2d');
+  const channelCtx = document.getElementById('channelChart').getContext('2d');
+  const priorityCtx = document.getElementById('priorityChart').getContext('2d');
 
-  new Chart(dailyCtx, {
+  const dailyChart = new Chart(dailyCtx, {
     type: 'line',
     data: {
       labels: productividadLabels,
@@ -305,7 +362,7 @@
       responsive: true,
       maintainAspectRatio: false,
       animation: {
-        duration: 1200,
+        duration: 900,
         easing: 'easeOutQuart'
       },
       plugins: {
@@ -330,9 +387,7 @@
     }
   });
 
-  const agentCtx = document.getElementById('agentChart').getContext('2d');
-
-  new Chart(agentCtx, {
+  const agentChart = new Chart(agentCtx, {
     type: 'bar',
     data: {
       labels: agenteLabels,
@@ -350,8 +405,8 @@
       responsive: true,
       maintainAspectRatio: false,
       animation: {
-        duration: 1200,
-        easing: 'easeOutBounce'
+        duration: 900,
+        easing: 'easeOutQuart'
       },
       plugins: {
         tooltip: baseTooltip()
@@ -375,7 +430,7 @@
     }
   });
 
-  new Chart(document.getElementById('channelChart'), {
+  const channelChart = new Chart(channelCtx, {
     type: 'doughnut',
     data: {
       labels: canalLabels,
@@ -399,7 +454,7 @@
       cutout: '62%',
       animation: {
         animateRotate: true,
-        duration: 1200
+        duration: 900
       },
       plugins: {
         tooltip: baseTooltip()
@@ -407,7 +462,7 @@
     }
   });
 
-  new Chart(document.getElementById('priorityChart'), {
+  const priorityChart = new Chart(priorityCtx, {
     type: 'pie',
     data: {
       labels: prioridadLabels,
@@ -429,13 +484,111 @@
       maintainAspectRatio: false,
       animation: {
         animateScale: true,
-        duration: 1100
+        duration: 900
       },
       plugins: {
         tooltip: baseTooltip()
       }
     }
   });
+
+  async function refreshDashboardMetrics() {
+    try {
+      const response = await fetch('/api/dashboard/metrics');
+
+      if (!response.ok) {
+        console.error('Error consultando métricas');
+        return;
+      }
+
+      const data = await response.json();
+
+      document.getElementById('totalMetric').innerText = data.total;
+      document.getElementById('resolvedMetric').innerText = data.resueltas;
+      document.getElementById('pendingMetric').innerText = data.pendientes;
+      document.getElementById('escalatedMetric').innerText = data.escaladas;
+      document.getElementById('avgMetric').innerText = data.promedioTiempo;
+
+      agentChart.data.labels = data.agenteLabels;
+      agentChart.data.datasets[0].data = data.agenteValues;
+      agentChart.update();
+
+      channelChart.data.labels = data.canalLabels;
+      channelChart.data.datasets[0].data = data.canalValues;
+      channelChart.update();
+
+      priorityChart.data.labels = data.prioridadLabels;
+      priorityChart.data.datasets[0].data = data.prioridadValues;
+      priorityChart.update();
+
+      dailyChart.data.labels = data.productividadLabels;
+      dailyChart.data.datasets[0].data = data.productividadValues;
+      dailyChart.update();
+
+      console.log('Dashboard actualizado');
+
+    } catch (error) {
+      console.error('Error actualizando dashboard', error);
+    }
+  }
+
+  setInterval(refreshDashboardMetrics, 10000);
+
+  async function generateAiReport() {
+
+    const box = document.getElementById('aiReportBox');
+
+    box.classList.remove('hidden');
+
+    document.getElementById('aiReportTitle').innerText =
+            'Generando análisis IA...';
+
+    document.getElementById('aiReportSummary').innerHTML =
+            `
+        <div class="flex items-center gap-3">
+            <div class="w-5 h-5 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+            <span>OpenAI está analizando métricas...</span>
+        </div>
+        `;
+
+    document.getElementById('aiRecommendations').innerHTML = '';
+
+    try {
+
+      const response = await fetch('/api/dashboard/ai-report');
+
+      if (!response.ok) {
+        throw new Error('Error generando reporte');
+      }
+
+      const data = await response.json();
+
+      document.getElementById('aiReportTitle').innerText =
+              'Análisis IA del Supervisor';
+
+      document.getElementById('aiReportSummary').innerHTML =
+              `
+            <div class="whitespace-pre-line leading-relaxed text-slate-200">
+                ${data.report}
+            </div>
+            `;
+
+    } catch (error) {
+
+      console.error(error);
+
+      document.getElementById('aiReportTitle').innerText =
+              'Error';
+
+      document.getElementById('aiReportSummary').innerHTML =
+              `
+            <div class="text-red-300 font-bold">
+                No fue posible generar el análisis IA.
+            </div>
+            `;
+    }
+  }
+
 </script>
 
 </body>

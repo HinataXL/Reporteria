@@ -6,110 +6,331 @@
     <title>Login - Soporte</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandCyan: '#06b6d4', // Cyan-500
+                        brandTeal: '#0f766e', // Teal-700
+                        brandLime: '#a3e635', // Lime-400
+                    },
+                    animation: {
+                        'slide-in-left': 'slideInLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'slide-in-right': 'slideInRight 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'float-slow': 'float 8s ease-in-out infinite',
+                        'float-med': 'float 6s ease-in-out infinite alternate',
+                        'float-fast': 'float 5s ease-in-out infinite alternate-reverse',
+                        'shake': 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both',
+                        'spin-slow': 'spin 1.5s linear infinite',
+                    },
+                    keyframes: {
+                        slideInLeft: {
+                            '0%': { opacity: 0, transform: 'translateX(-50px)' },
+                            '100%': { opacity: 1, transform: 'translateX(0)' },
+                        },
+                        slideInRight: {
+                            '0%': { opacity: 0, transform: 'translateX(50px)' },
+                            '100%': { opacity: 1, transform: 'translateX(0)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-20px) rotate(5deg)' },
+                        },
+                        shake: {
+                            '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+                            '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+                            '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+                            '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Ocultar el icono por defecto de revelado de contraseña en Edge/IE */
+        input::-ms-reveal, input::-ms-clear { display: none; }
+
+        /* Ripple effect para el botón premium */
+        .ripple-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple-anim 600ms linear;
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+        @keyframes ripple-anim {
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        /* Estilos del autofill para inputs blancos */
+        input:-webkit-autofill {
+            -webkit-box-shadow: 0 0 0 1000px #f3f4f6 inset !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+    </style>
 </head>
 
-<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen flex items-center justify-center">
+<body class="bg-gray-50 text-gray-800 min-h-screen flex items-center justify-center p-4 sm:p-6 font-sans selection:bg-brandCyan selection:text-white">
 
-<div class="w-full max-w-md bg-white/10 border border-white/10 rounded-3xl p-8 backdrop-blur">
+<div class="w-full max-w-5xl bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex flex-col md:flex-row overflow-hidden min-h-[600px] relative z-10">
 
-    <!-- ERROR LOGIN -->
+    <div class="w-full md:w-1/2 bg-gradient-to-br from-brandCyan to-brandTeal p-10 lg:p-14 text-white relative overflow-hidden flex flex-col justify-between hidden sm:flex">
 
-    <div th:if="${param.error}"
-         class="mb-4 bg-red-500/20 text-red-300 border border-red-500/30 rounded-xl px-4 py-3 font-bold">
+        <div class="absolute inset-0 pointer-events-none z-0">
+            <div class="absolute top-10 left-10 w-24 h-24 bg-brandLime/20 rounded-full blur-xl animate-float-slow"></div>
+            <div class="absolute bottom-20 right-10 w-32 h-32 bg-brandLime/30 rounded-full blur-2xl animate-float-med"></div>
+            <div class="absolute top-1/2 left-1/3 w-16 h-16 bg-white/10 rounded-full blur-lg animate-float-fast"></div>
 
-        Usuario o contraseña incorrectos.
-
-    </div>
-
-    <!-- LOGOUT -->
-
-    <div th:if="${param.logout}"
-         class="mb-4 bg-green-500/20 text-green-300 border border-green-500/30 rounded-xl px-4 py-3 font-bold">
-
-        Sesión cerrada correctamente.
-
-    </div>
-
-    <!-- TITULO -->
-
-    <h1 class="text-3xl font-extrabold mb-2">
-        Iniciar sesión
-    </h1>
-
-    <p class="opacity-70 mb-6">
-        Sistema de reportería de soporte
-    </p>
-
-    <!-- FORM -->
-
-    <form th:action="@{/login}"
-          method="post"
-          class="space-y-5">
-
-        <!-- CSRF TOKEN -->
-
-        <input type="hidden"
-               th:name="${_csrf.parameterName}"
-               th:value="${_csrf.token}" />
-
-        <!-- EMAIL -->
-
-        <div>
-
-            <label class="font-bold">
-                Correo
-            </label>
-
-            <input
-                    name="username"
-                    type="email"
-                    autocomplete="username"
-                    required
-
-                    class="mt-2 w-full px-4 py-3 rounded-xl
-                    bg-white/10 border border-white/10
-                    outline-none focus:border-yellow-400">
-
+            <svg class="absolute top-1/4 right-1/4 w-12 h-12 text-white/10 rotate-12" fill="currentColor" viewBox="0 0 24 24"><polygon points="12,2 22,22 2,22"/></svg>
+            <svg class="absolute bottom-1/3 left-10 w-16 h-16 text-brandLime/10 -rotate-45" fill="currentColor" viewBox="0 0 24 24"><polygon points="12,2 22,22 2,22"/></svg>
+            <svg class="absolute top-10 right-20 w-8 h-8 text-white/5 rotate-90" fill="currentColor" viewBox="0 0 24 24"><polygon points="12,2 22,22 2,22"/></svg>
         </div>
 
-        <!-- PASSWORD -->
+        <div class="relative z-10 opacity-0 animate-slide-in-left" style="animation-delay: 0.1s;">
+            <div class="w-12 h-12 bg-white/20 rounded-xl backdrop-blur-sm flex items-center justify-center mb-8 border border-white/30 shadow-lg">
+                <i class="fas fa-headset text-2xl"></i>
+            </div>
 
-        <div>
+            <h1 class="text-4xl lg:text-5xl font-extrabold mb-4 leading-tight tracking-tight">
+                Welcome<br>back!
+            </h1>
 
-            <label class="font-bold">
-                Contraseña
-            </label>
-
-            <input
-                    name="password"
-                    type="password"
-                    autocomplete="current-password"
-                    required
-
-                    class="mt-2 w-full px-4 py-3 rounded-xl
-                    bg-white/10 border border-white/10
-                    outline-none focus:border-yellow-400">
-
+            <p class="text-white/80 text-lg max-w-sm font-medium leading-relaxed">
+                Sistema central de reportería. Gestiona tus tickets e integraciones con una experiencia renovada.
+            </p>
         </div>
 
-        <!-- BOTON -->
+        <div class="relative z-10 flex gap-2 opacity-0 animate-slide-in-left" style="animation-delay: 0.3s;">
+            <div class="w-8 h-2 bg-brandLime rounded-full"></div>
+            <div class="w-2 h-2 bg-white/30 rounded-full hover:bg-white/50 transition-colors cursor-pointer"></div>
+            <div class="w-2 h-2 bg-white/30 rounded-full hover:bg-white/50 transition-colors cursor-pointer"></div>
+        </div>
+    </div>
 
-        <button
-                type="submit"
+    <div class="w-full md:w-1/2 p-8 sm:p-10 lg:p-14 flex flex-col justify-center bg-white relative">
 
-                class="w-full bg-yellow-400
-                hover:bg-yellow-300
-                transition
-                text-black px-5 py-3
-                rounded-2xl font-bold">
+        <div class="max-w-md w-full mx-auto opacity-0 animate-slide-in-right" style="animation-delay: 0.2s;">
 
-            Entrar
+            <div class="sm:hidden mb-8 text-center">
+                <div class="w-12 h-12 bg-gradient-to-br from-brandCyan to-brandTeal rounded-xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg">
+                    <i class="fas fa-headset text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-extrabold text-gray-900">Welcome back!</h1>
+            </div>
 
-        </button>
+            <h2 class="text-3xl font-extrabold text-gray-900 mb-2">Sign In</h2>
+            <p class="text-gray-500 font-medium mb-8">Ingresa tus credenciales para continuar.</p>
 
-    </form>
+            <div th:if="${param.error}" class="mb-6 bg-red-50 text-red-600 border border-red-200 rounded-xl px-4 py-3 text-sm font-bold flex items-center gap-3 animate-shake">
+                <i class="fas fa-exclamation-circle text-red-500"></i>
+                Usuario o contraseña incorrectos.
+            </div>
 
+            <div th:if="${param.logout}" class="mb-6 bg-green-50 text-green-700 border border-green-200 rounded-xl px-4 py-3 text-sm font-bold flex items-center gap-3">
+                <i class="fas fa-check-circle text-green-500"></i>
+                Sesión cerrada correctamente.
+            </div>
+
+            <form th:action="@{/login}" method="post" id="loginForm" novalidate class="space-y-6">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <div class="group input-wrapper">
+                    <label class="flex items-center text-sm font-bold text-gray-700 mb-2 group-focus-within:text-brandCyan transition-colors">
+                        <i class="fas fa-envelope text-gray-400 mr-2 group-focus-within:text-brandCyan transition-colors"></i> Correo
+                    </label>
+                    <div class="relative">
+                        <input name="username" id="email" type="email" autocomplete="username" required placeholder="tu@correo.com"
+                               class="w-full px-4 py-3.5 rounded-xl bg-gray-100 border-2 border-transparent text-gray-900 placeholder-gray-400 outline-none focus:bg-white focus:border-brandCyan focus:shadow-[0_0_15px_rgba(6,182,212,0.15)] transition-all duration-300">
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none opacity-0 transition-opacity status-icon">
+                            <i class="fas fa-check-circle text-brandLime hidden valid-icon"></i>
+                            <i class="fas fa-exclamation-circle text-red-500 hidden invalid-icon"></i>
+                        </div>
+                    </div>
+                    <p class="error-msg text-red-500 text-xs mt-1.5 hidden opacity-0 transition-opacity font-medium">Ingresa un correo válido.</p>
+                </div>
+
+                <div class="group input-wrapper">
+                    <label class="flex items-center text-sm font-bold text-gray-700 mb-2 group-focus-within:text-brandCyan transition-colors">
+                        <i class="fas fa-lock text-gray-400 mr-2 group-focus-within:text-brandCyan transition-colors"></i> Contraseña
+                    </label>
+                    <div class="relative">
+                        <input name="password" id="password" type="password" autocomplete="current-password" required placeholder="••••••••"
+                               class="w-full pl-4 pr-12 py-3.5 rounded-xl bg-gray-100 border-2 border-transparent text-gray-900 placeholder-gray-400 outline-none focus:bg-white focus:border-brandCyan focus:shadow-[0_0_15px_rgba(6,182,212,0.15)] transition-all duration-300 pr-10">
+
+                        <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 px-4 flex items-center text-gray-400 hover:text-brandCyan focus:outline-none transition-colors">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <p class="error-msg text-red-500 text-xs mt-1.5 hidden opacity-0 transition-opacity font-medium">Mínimo 6 caracteres.</p>
+                </div>
+
+                <div class="flex items-center justify-between mt-2">
+                    <div class="flex items-center">
+                        <input id="remember" type="checkbox" class="w-4 h-4 text-brandCyan bg-gray-100 border-gray-300 rounded focus:ring-brandCyan focus:ring-2 cursor-pointer accent-brandCyan">
+                        <label for="remember" class="ml-2 text-sm text-gray-600 font-medium cursor-pointer select-none">Recordarme</label>
+                    </div>
+                    <a href="#" class="text-sm font-bold text-gray-600 hover:text-brandCyan transition-colors duration-300">
+                        ¿Forgot password?
+                    </a>
+                </div>
+
+                <button type="submit" id="submitBtn"
+                        class="relative w-full overflow-hidden bg-gradient-to-r from-brandCyan to-brandLime hover:to-lime-300 text-white px-5 py-4 rounded-2xl font-extrabold text-lg shadow-[0_10px_20px_rgba(6,182,212,0.3)] hover:shadow-[0_15px_25px_rgba(6,182,212,0.4)] transform hover:-translate-y-1 active:translate-y-0 transition-all duration-300 ripple-btn mt-6 flex justify-center items-center">
+                    <span id="btnText">Sign In</span>
+                    <svg id="btnSpinner" class="hidden animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+
+                <p class="text-center text-sm font-medium text-gray-500 mt-6">
+                    ¿No tienes una cuenta?
+                    <a href="#" class="font-bold text-gray-800 hover:text-brandCyan hover:underline underline-offset-4 transition-all duration-300">
+                        Create an account
+                    </a>
+                </p>
+
+            </form>
+        </div>
+    </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // 1. Password Toggle
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        togglePassword.addEventListener('click', function () {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        });
+
+        // 2. Ripple Effect para Botón
+        const rippleButtons = document.querySelectorAll('.ripple-btn');
+        rippleButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const ripples = document.createElement('span');
+                ripples.style.left = x + 'px';
+                ripples.style.top = y + 'px';
+                ripples.classList.add('ripple');
+
+                this.appendChild(ripples);
+                setTimeout(() => ripples.remove(), 600);
+            });
+        });
+
+        // 3. Validación Visual (Email & Pass min length)
+        const form = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        const validateField = (input, isValid, customCondition = true) => {
+            const wrapper = input.closest('.input-wrapper');
+            const statusIcon = wrapper.querySelector('.status-icon');
+            const validIcon = wrapper.querySelector('.valid-icon');
+            const invalidIcon = wrapper.querySelector('.invalid-icon');
+            const errorMsg = wrapper.querySelector('.error-msg');
+
+            statusIcon.classList.remove('opacity-0');
+            statusIcon.classList.add('opacity-100');
+
+            if (isValid && customCondition && input.value.trim() !== '') {
+                // Correcto: Quitar errores, borde gris, agregar borde lime
+                input.classList.remove('border-red-500', 'border-transparent', 'focus:border-red-500');
+                input.classList.add('border-brandLime', 'focus:border-brandLime');
+
+                validIcon.classList.remove('hidden');
+                invalidIcon.classList.add('hidden');
+
+                errorMsg.classList.add('hidden');
+                errorMsg.classList.remove('opacity-100');
+                wrapper.classList.remove('animate-shake');
+                return true;
+            } else if (input.value.length > 0) {
+                // Incorrecto
+                input.classList.remove('border-brandLime', 'border-transparent', 'focus:border-brandLime');
+                input.classList.add('border-red-500', 'focus:border-red-500');
+
+                validIcon.classList.add('hidden');
+                invalidIcon.classList.remove('hidden');
+
+                errorMsg.classList.remove('hidden');
+                setTimeout(() => errorMsg.classList.add('opacity-100'), 10);
+
+                // Aplicar animación shake, reseteándola para que pueda ocurrir varias veces
+                wrapper.classList.remove('animate-shake');
+                void wrapper.offsetWidth; // trigger reflow
+                wrapper.classList.add('animate-shake');
+                return false;
+            }
+            return false;
+        };
+
+        // Blur validation Email
+        emailInput.addEventListener('blur', () => {
+            if(emailInput.value.length > 0) {
+                validateField(emailInput, emailInput.checkValidity(), emailRegex.test(emailInput.value));
+            }
+        });
+
+        // Blur validation Password
+        passwordInput.addEventListener('blur', () => {
+            if(passwordInput.value.length > 0) {
+                validateField(passwordInput, passwordInput.checkValidity(), passwordInput.value.length >= 6);
+            }
+        });
+
+        // 4. Submit y Loading State
+        form.addEventListener('submit', (e) => {
+            const isEmailValid = emailRegex.test(emailInput.value);
+            const isPassValid = passwordInput.value.length >= 6;
+
+            if (!isEmailValid || !isPassValid) {
+                e.preventDefault();
+
+                // Shake elements invalidos
+                if(!isEmailValid) validateField(emailInput, false, false);
+                if(!isPassValid) validateField(passwordInput, false, false);
+
+                // Shake botón
+                const btn = document.getElementById('submitBtn');
+                btn.classList.remove('animate-shake');
+                void btn.offsetWidth;
+                btn.classList.add('animate-shake');
+            } else {
+                // Estado Loading validado
+                const btnText = document.getElementById('btnText');
+                const btnSpinner = document.getElementById('btnSpinner');
+                const btn = document.getElementById('submitBtn');
+
+                btnText.classList.add('hidden');
+                btnSpinner.classList.remove('hidden');
+                btn.classList.add('pointer-events-none', 'opacity-90');
+
+                // Dejamos que el form haga su submit natural por thymeleaf
+            }
+        });
+    });
+</script>
 
 </body>
 </html>
