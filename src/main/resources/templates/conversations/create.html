@@ -2,126 +2,471 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Nueva Conversación</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Conversación | Soporte</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#10231F',
+                        darkCard: '#142a25',
+                        darkBorder: '#1f423b',
+                        qGold: '#FBBF24',
+                        qCyan: '#22d3ee',
+                        textMain: '#F4F0E6'
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: 0, transform: 'translateY(20px)' },
+                            '100%': { opacity: 1, transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Estilos base para el scrollbar y autofill */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #10231F; }
+        ::-webkit-scrollbar-thumb { background: #1f423b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #22d3ee; }
+
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        textarea:-webkit-autofill,
+        textarea:-webkit-autofill:hover,
+        textarea:-webkit-autofill:focus {
+            -webkit-text-fill-color: #F4F0E6;
+            -webkit-box-shadow: 0 0 0px 1000px #142a25 inset;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        /* Utilidad para el efecto Ripple */
+        .ripple-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple-anim 600ms linear;
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+        @keyframes ripple-anim {
+            to { transform: scale(4); opacity: 0; }
+        }
+    </style>
 </head>
-<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+<body class="bg-darkBg text-textMain min-h-screen font-sans selection:bg-qCyan selection:text-black pb-12">
 
-<div class="max-w-5xl mx-auto p-6">
+<div class="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
 
-    <div class="mb-8">
-        <a href="/conversations" class="text-yellow-300 font-bold hover:underline">
-            ← Volver
+    <div class="mb-8 animate-fade-in-up" style="animation-delay: 0.1s;">
+        <a href="/conversations" class="inline-flex items-center justify-center px-5 py-2 rounded-full border border-qGold text-qGold font-bold hover:bg-qGold/10 hover:text-yellow-300 transition-all duration-300 group w-max">
+            <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Volver
         </a>
 
-        <h1 class="text-4xl font-extrabold mt-4">Nueva conversación</h1>
-        <p class="opacity-70">Registro manual de atención de soporte</p>
+        <div class="mt-6 flex items-center justify-between">
+            <div>
+                <h1 class="text-4xl sm:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-textMain to-gray-400">
+                    Nueva conversación
+                </h1>
+                <p class="opacity-70 mt-2 text-lg flex items-center">
+                    <i class="fas fa-headset mr-2 text-qCyan"></i> Registro manual de atención de soporte
+                </p>
+            </div>
+            <div class="hidden md:flex items-center gap-2 bg-darkCard px-4 py-2 rounded-full border border-darkBorder shadow-inner">
+                <span class="h-2 w-2 rounded-full bg-qCyan animate-pulse"></span>
+                <span class="text-sm font-medium text-gray-300">Sistema Activo</span>
+            </div>
+        </div>
     </div>
 
-    <form action="/conversations/save" method="post"
-          class="bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur grid gap-5">
-        <input type="hidden"
-               th:name="${_csrf.parameterName}"
-               th:value="${_csrf.token}" />
+    <form action="/conversations/save" method="post" id="supportForm" novalidate
+          class="bg-gradient-to-br from-darkCard to-[#0f1d1a] border border-darkBorder rounded-3xl p-6 sm:p-8 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_15px_40px_rgba(0,0,0,0.6)] backdrop-blur grid gap-8 animate-fade-in-up relative" style="animation-delay: 0.2s;">
 
-        <div class="grid md:grid-cols-2 gap-5">
-            <div>
-                <label class="font-bold">Nombre del cliente</label>
-                <input name="clienteNombre" type="text" required
-                       class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+        <div class="grid md:grid-cols-2 gap-6 relative">
+
+            <div class="group field-container">
+                <label for="clienteNombre" class="flex items-center text-sm font-bold text-gray-300 mb-2 group-focus-within:text-qCyan transition-colors duration-300">
+                    <i class="fas fa-user text-gray-500 mr-2 group-focus-within:text-qCyan transition-colors"></i> Nombre del cliente <span class="text-red-500 ml-1">*</span>
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-qCyan transition-colors">
+                        <i class="fas fa-id-badge"></i>
+                    </div>
+                    <input id="clienteNombre" name="clienteNombre" type="text" required placeholder="Ej. Juan Pérez"
+                           class="w-full pl-11 pr-10 py-3.5 min-h-[44px] rounded-xl bg-darkBg/50 border border-darkBorder text-textMain placeholder-gray-500 outline-none focus:border-qCyan focus:ring-2 focus:ring-qCyan/30 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all duration-300 validation-input">
+                    <div class="status-icon absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none opacity-0 transition-opacity">
+                        <i class="fas fa-check-circle text-green-500 hidden valid-icon"></i>
+                        <i class="fas fa-exclamation-circle text-red-500 hidden invalid-icon"></i>
+                    </div>
+                </div>
+                <p class="error-msg text-red-400 text-xs mt-1 hidden opacity-0 transition-opacity">El nombre es requerido.</p>
             </div>
 
-            <div>
-                <label class="font-bold">Teléfono</label>
-                <input name="clienteTelefono" type="text"
-                       class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
-            </div>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-5">
-            <div>
-                <label class="font-bold">Correo</label>
-                <input name="clienteCorreo" type="email"
-                       class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
-            </div>
-
-            <div>
-                <label class="font-bold">Canal</label>
-                <select name="channelId"
-                        class="mt-2 w-full px-4 py-3 rounded-xl bg-[#17342E] border border-white/10 outline-none">
-                    <option value="1">WhatsApp</option>
-                    <option value="2">Facebook</option>
-                    <option value="3">Instagram</option>
-                    <option value="4">Web Chat</option>
-                    <option value="5">Correo</option>
-                </select>
-            </div>
-        </div>
-
-        <div>
-            <label class="font-bold">Asunto</label>
-            <input name="asunto" type="text" required
-                   class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
-        </div>
-
-        <div>
-            <label class="font-bold">Descripción de la conversación</label>
-            <textarea name="descripcion" rows="5"
-                      class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none"></textarea>
-        </div>
-
-        <div class="grid md:grid-cols-3 gap-5">
-            <div>
-                <label class="font-bold">Estado</label>
-                <select name="statusId"
-                        class="mt-2 w-full px-4 py-3 rounded-xl bg-[#17342E] border border-white/10 outline-none">
-                    <option value="1">Pendiente</option>
-                    <option value="2">En Proceso</option>
-                    <option value="3">Resuelto</option>
-                    <option value="4">Escalado</option>
-                    <option value="5">Cerrado</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="font-bold">Prioridad</label>
-                <select name="priorityId"
-                        class="mt-2 w-full px-4 py-3 rounded-xl bg-[#17342E] border border-white/10 outline-none">
-                    <option value="1">Baja</option>
-                    <option value="2">Media</option>
-                    <option value="3">Alta</option>
-                    <option value="4">Crítica</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="font-bold">Tiempo gestión minutos</label>
-                <input name="tiempoGestionMinutos" type="number" min="0"
-                       class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+            <div class="group field-container">
+                <label for="clienteTelefono" class="flex items-center text-sm font-bold text-gray-300 mb-2 group-focus-within:text-qCyan transition-colors duration-300">
+                    <i class="fas fa-phone text-gray-500 mr-2 group-focus-within:text-qCyan transition-colors"></i> Teléfono
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-qCyan transition-colors">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <input id="clienteTelefono" name="clienteTelefono" type="tel" placeholder="+502 0000-0000"
+                           class="w-full pl-11 pr-4 py-3.5 min-h-[44px] rounded-xl bg-darkBg/50 border border-darkBorder text-textMain placeholder-gray-500 outline-none focus:border-qCyan focus:ring-2 focus:ring-qCyan/30 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all duration-300">
+                </div>
             </div>
         </div>
 
-        <div>
-            <label class="font-bold">Observaciones</label>
-            <textarea name="observaciones" rows="4"
-                      class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none"></textarea>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="group field-container">
+                <label for="clienteCorreo" class="flex items-center text-sm font-bold text-gray-300 mb-2 group-focus-within:text-qCyan transition-colors duration-300">
+                    <i class="fas fa-envelope text-gray-500 mr-2 group-focus-within:text-qCyan transition-colors"></i> Correo
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-qCyan transition-colors">
+                        <i class="fas fa-at"></i>
+                    </div>
+                    <input id="clienteCorreo" name="clienteCorreo" type="email" placeholder="cliente@empresa.com"
+                           class="w-full pl-11 pr-10 py-3.5 min-h-[44px] rounded-xl bg-darkBg/50 border border-darkBorder text-textMain placeholder-gray-500 outline-none focus:border-qCyan focus:ring-2 focus:ring-qCyan/30 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all duration-300 validation-input">
+                    <div class="status-icon absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none opacity-0 transition-opacity">
+                        <i class="fas fa-check-circle text-green-500 hidden valid-icon"></i>
+                        <i class="fas fa-exclamation-circle text-red-500 hidden invalid-icon"></i>
+                    </div>
+                </div>
+                <p class="error-msg text-red-400 text-xs mt-1 hidden opacity-0 transition-opacity">Ingrese un correo válido.</p>
+            </div>
+
+            <div class="group" id="canalDropdownContainer">
+                <label class="flex items-center text-sm font-bold text-gray-300 mb-2 group-focus-within:text-qCyan transition-colors duration-300">
+                    <i class="fas fa-project-diagram text-gray-500 mr-2 group-focus-within:text-qCyan transition-colors"></i> Canal de origen
+                </label>
+                <div class="relative custom-dropdown" id="canalDropdown">
+                    <select id="channelId" name="channelId" class="hidden">
+                        <option value="1" selected>WhatsApp</option>
+                        <option value="2">Facebook</option>
+                        <option value="3">Instagram</option>
+                        <option value="4">Telegram</option>
+                        <option value="5">Correo electrónico</option>
+                    </select>
+
+                    <div class="dropdown-selected w-full pl-4 pr-10 py-3.5 min-h-[44px] rounded-xl bg-darkBg/50 border border-darkBorder text-textMain outline-none focus:border-qCyan focus:ring-2 focus:ring-qCyan/30 transition-all duration-300 cursor-pointer flex items-center hover:bg-darkBorder/50" tabindex="0">
+                        <i class="fab fa-whatsapp text-green-500 text-lg w-6 text-center selected-icon transition-colors"></i>
+                        <span class="selected-text ml-2">WhatsApp</span>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+                            <i class="fas fa-chevron-down text-sm transition-transform duration-300 dropdown-arrow"></i>
+                        </div>
+                    </div>
+
+                    <div class="dropdown-list absolute z-50 w-full mt-2 bg-darkCard border border-darkBorder rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] opacity-0 invisible translate-y-[-10px] transition-all duration-300 overflow-hidden">
+                        <div class="p-1 flex flex-col gap-1">
+                            <div class="dropdown-item px-3 py-2.5 rounded-lg hover:bg-darkBorder/60 cursor-pointer flex items-center gap-3 transition-colors bg-darkBorder/30" data-value="1" data-icon="fab fa-whatsapp text-green-500">
+                                <i class="fab fa-whatsapp text-green-500 text-lg w-6 text-center"></i> <span>WhatsApp</span>
+                            </div>
+                            <div class="dropdown-item px-3 py-2.5 rounded-lg hover:bg-darkBorder/60 cursor-pointer flex items-center gap-3 transition-colors" data-value="2" data-icon="fab fa-facebook text-blue-500">
+                                <i class="fab fa-facebook text-blue-500 text-lg w-6 text-center"></i> <span>Facebook</span>
+                            </div>
+                            <div class="dropdown-item px-3 py-2.5 rounded-lg hover:bg-darkBorder/60 cursor-pointer flex items-center gap-3 transition-colors" data-value="3" data-icon="fab fa-instagram text-pink-500">
+                                <i class="fab fa-instagram text-pink-500 text-lg w-6 text-center"></i> <span>Instagram</span>
+                            </div>
+                            <div class="dropdown-item px-3 py-2.5 rounded-lg hover:bg-darkBorder/60 cursor-pointer flex items-center gap-3 transition-colors" data-value="4" data-icon="fab fa-telegram text-blue-400">
+                                <i class="fab fa-telegram text-blue-400 text-lg w-6 text-center"></i> <span>Telegram</span>
+                            </div>
+                            <div class="dropdown-item px-3 py-2.5 rounded-lg hover:bg-darkBorder/60 cursor-pointer flex items-center gap-3 transition-colors" data-value="5" data-icon="fas fa-envelope text-gray-400">
+                                <i class="fas fa-envelope text-gray-400 text-lg w-6 text-center"></i> <span>Correo electrónico</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="flex justify-end gap-3">
+        <hr class="border-darkBorder my-2">
+
+        <div class="group field-container">
+            <label for="asunto" class="flex items-center text-sm font-bold text-gray-300 mb-2 group-focus-within:text-qCyan transition-colors duration-300">
+                <i class="fas fa-tag text-gray-500 mr-2 group-focus-within:text-qCyan transition-colors"></i> Asunto <span class="text-red-500 ml-1">*</span>
+            </label>
+            <div class="relative">
+                <input id="asunto" name="asunto" type="text" required placeholder="Motivo principal del contacto..."
+                       class="w-full px-4 py-3.5 min-h-[44px] rounded-xl bg-darkBg/50 border border-darkBorder text-textMain placeholder-gray-500 outline-none focus:border-qCyan focus:ring-2 focus:ring-qCyan/30 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all duration-300 validation-input">
+                <div class="status-icon absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none opacity-0 transition-opacity">
+                    <i class="fas fa-check-circle text-green-500 hidden valid-icon"></i>
+                    <i class="fas fa-exclamation-circle text-red-500 hidden invalid-icon"></i>
+                </div>
+            </div>
+            <p class="error-msg text-red-400 text-xs mt-1 hidden opacity-0 transition-opacity">El asunto es obligatorio.</p>
+        </div>
+
+        <div class="group">
+            <label for="descripcion" class="flex items-center justify-between text-sm font-bold text-gray-300 mb-2 group-focus-within:text-qCyan transition-colors duration-300">
+                <span><i class="fas fa-align-left text-gray-500 mr-2 group-focus-within:text-qCyan transition-colors"></i> Descripción de la conversación</span>
+                <span class="text-gray-500 hover:text-qCyan cursor-help" title="Detalla el problema, pasos reproducidos o requerimiento del cliente."><i class="fas fa-info-circle"></i></span>
+            </label>
+            <div class="relative">
+                <textarea id="descripcion" name="descripcion" rows="4" maxlength="1000" placeholder="Escribe el detalle aquí..."
+                          class="w-full px-4 py-3.5 rounded-xl bg-darkBg/50 border border-darkBorder text-textMain placeholder-gray-500 outline-none focus:border-qCyan focus:ring-2 focus:ring-qCyan/30 focus:shadow-[0_0_20px_rgba(34,211,238,0.15)] transition-all duration-300 resize-y char-countable"></textarea>
+                <i class="fas fa-grip-lines absolute bottom-4 right-4 text-gray-600 pointer-events-none opacity-50"></i>
+            </div>
+            <div class="flex justify-end mt-1">
+                <span class="text-xs text-gray-500 char-counter">0 / 1000</span>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6 bg-[#0f1d1a] p-5 rounded-2xl border border-darkBorder/50">
+            <div class="group">
+                <label for="statusId" class="flex items-center text-sm font-bold text-gray-300 mb-2 group-focus-within:text-qCyan transition-colors duration-300">
+                    <i class="fas fa-tasks text-gray-500 mr-2 group-focus-within:text-qCyan transition-colors"></i> Estado
+                </label>
+                <div class="relative">
+                    <select id="statusId" name="statusId"
+                            class="w-full px-4 py-3.5 min-h-[44px] rounded-xl bg-darkCard border border-darkBorder text-textMain outline-none focus:border-qCyan focus:ring-2 focus:ring-qCyan/30 transition-all duration-300 appearance-none cursor-pointer">
+                        <option value="1">Pendiente</option>
+                        <option value="2">En Proceso</option>
+                        <option value="3">Resuelto</option>
+                        <option value="4">Escalado</option>
+                        <option value="5">Cerrado</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400 group-focus-within:text-qCyan">
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-300 group-focus-within:rotate-180"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group">
+                <label for="priorityId" class="flex items-center text-sm font-bold text-gray-300 mb-2 group-focus-within:text-qCyan transition-colors duration-300">
+                    <i class="fas fa-exclamation-triangle text-gray-500 mr-2 group-focus-within:text-qCyan transition-colors"></i> Prioridad
+                </label>
+                <div class="relative">
+                    <select id="priorityId" name="priorityId"
+                            class="w-full px-4 py-3.5 min-h-[44px] rounded-xl bg-darkCard border border-darkBorder text-textMain outline-none focus:border-qCyan focus:ring-2 focus:ring-qCyan/30 transition-all duration-300 appearance-none cursor-pointer">
+                        <option value="1">Baja</option>
+                        <option value="2" selected>Media</option>
+                        <option value="3" class="text-orange-400 font-bold">Alta</option>
+                        <option value="4" class="text-red-500 font-bold">Crítica</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400 group-focus-within:text-qCyan">
+                        <i class="fas fa-chevron-down text-sm transition-transform duration-300 group-focus-within:rotate-180"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group field-container">
+                <label for="tiempoGestionMinutos" class="flex items-center text-sm font-bold text-gray-300 mb-2 group-focus-within:text-qCyan transition-colors duration-300">
+                    <i class="fas fa-stopwatch text-gray-500 mr-2 group-focus-within:text-qCyan transition-colors"></i> Tiempo (Min)
+                </label>
+                <div class="relative">
+                    <input id="tiempoGestionMinutos" name="tiempoGestionMinutos" type="number" min="0" placeholder="0"
+                           class="w-full pl-4 pr-10 py-3.5 min-h-[44px] rounded-xl bg-darkCard border border-darkBorder text-textMain placeholder-gray-500 outline-none focus:border-qCyan focus:ring-2 focus:ring-qCyan/30 focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all duration-300 text-center font-mono text-lg">
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-500">
+                        m
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="group">
+            <label for="observaciones" class="flex items-center text-sm font-bold text-gray-300 mb-2 group-focus-within:text-qCyan transition-colors duration-300">
+                <i class="fas fa-eye-slash text-gray-500 mr-2 group-focus-within:text-qCyan transition-colors"></i> Observaciones (Interno)
+            </label>
+            <div class="relative">
+                <textarea id="observaciones" name="observaciones" rows="3" maxlength="500" placeholder="Notas adicionales que el cliente no verá..."
+                          class="w-full px-4 py-3.5 rounded-xl bg-darkBg/30 border border-dashed border-darkBorder text-textMain placeholder-gray-600 outline-none focus:border-qCyan focus:border-solid focus:ring-2 focus:ring-qCyan/30 focus:shadow-[0_0_15px_rgba(34,211,238,0.1)] transition-all duration-300 resize-y char-countable"></textarea>
+            </div>
+            <div class="flex justify-end mt-1">
+                <span class="text-xs text-gray-600 char-counter">0 / 500</span>
+            </div>
+        </div>
+
+        <div class="flex flex-col-reverse sm:flex-row justify-end gap-4 mt-4 pt-6 border-t border-darkBorder">
             <a href="/conversations"
-               class="px-5 py-3 rounded-2xl border border-white/10 font-bold">
-                Cancelar
+               class="flex items-center justify-center px-6 py-3.5 min-h-[44px] rounded-2xl border border-gray-600 text-gray-300 font-bold hover:bg-white/5 hover:text-white hover:border-gray-400 transition-all duration-300 ripple-btn group">
+                <i class="fas fa-times mr-2 group-hover:rotate-90 transition-transform duration-300"></i> Cancelar
             </a>
 
-            <button type="submit"
-                    class="bg-yellow-400 text-black px-6 py-3 rounded-2xl font-bold">
-                Guardar conversación
+            <button type="submit" id="submitBtn"
+                    class="flex items-center justify-center bg-gradient-to-r from-qGold to-yellow-500 text-black px-8 py-3.5 min-h-[44px] rounded-2xl font-extrabold shadow-[0_4px_15px_rgba(251,191,36,0.3)] hover:shadow-[0_6px_25px_rgba(251,191,36,0.5)] transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 ripple-btn group">
+                <i class="fas fa-save mr-2 group-hover:scale-110 transition-transform"></i> Guardar conversación
             </button>
         </div>
 
     </form>
-
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // 1. Contador de Caracteres para Textareas
+        const textareas = document.querySelectorAll('.char-countable');
+        textareas.forEach(textarea => {
+            const counter = textarea.parentElement.nextElementSibling.querySelector('.char-counter');
+            const maxLength = textarea.getAttribute('maxlength');
+
+            textarea.addEventListener('input', () => {
+                const currentLength = textarea.value.length;
+                counter.textContent = `${currentLength} / ${maxLength}`;
+
+                if (currentLength >= maxLength * 0.9) {
+                    counter.classList.add('text-qGold');
+                    counter.classList.remove('text-gray-500', 'text-gray-600');
+                } else {
+                    counter.classList.remove('text-qGold');
+                    counter.classList.add(textarea.id === 'descripcion' ? 'text-gray-500' : 'text-gray-600');
+                }
+            });
+        });
+
+        // 2. Efecto Ripple en botones
+        const rippleButtons = document.querySelectorAll('.ripple-btn');
+        rippleButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const x = e.clientX - e.target.getBoundingClientRect().left;
+                const y = e.clientY - e.target.getBoundingClientRect().top;
+
+                const ripples = document.createElement('span');
+                ripples.style.left = x + 'px';
+                ripples.style.top = y + 'px';
+                ripples.classList.add('ripple');
+
+                this.appendChild(ripples);
+                setTimeout(() => { ripples.remove() }, 600);
+            });
+        });
+
+        // 3. Custom Dropdown para "Canal de Origen"
+        const customDropdown = document.getElementById('canalDropdown');
+        if(customDropdown) {
+            const selectedDiv = customDropdown.querySelector('.dropdown-selected');
+            const dropdownList = customDropdown.querySelector('.dropdown-list');
+            const dropdownItems = customDropdown.querySelectorAll('.dropdown-item');
+            const hiddenSelect = document.getElementById('channelId');
+            const selectedText = customDropdown.querySelector('.selected-text');
+            const selectedIcon = customDropdown.querySelector('.selected-icon');
+            const dropdownArrow = customDropdown.querySelector('.dropdown-arrow');
+
+            // Abrir/Cerrar Dropdown
+            selectedDiv.addEventListener('click', (e) => {
+                dropdownList.classList.toggle('opacity-0');
+                dropdownList.classList.toggle('invisible');
+                dropdownList.classList.toggle('translate-y-[-10px]');
+                dropdownArrow.classList.toggle('rotate-180');
+                selectedDiv.classList.toggle('border-qCyan');
+                selectedDiv.classList.toggle('ring-2');
+                selectedDiv.classList.toggle('ring-qCyan/30');
+                e.stopPropagation();
+            });
+
+            // Cerrar si se hace click fuera
+            document.addEventListener('click', (e) => {
+                if (!customDropdown.contains(e.target)) {
+                    dropdownList.classList.add('opacity-0', 'invisible', 'translate-y-[-10px]');
+                    dropdownArrow.classList.remove('rotate-180');
+                    selectedDiv.classList.remove('border-qCyan', 'ring-2', 'ring-qCyan/30');
+                }
+            });
+
+            // Seleccionar Item
+            dropdownItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const value = item.getAttribute('data-value');
+                    const iconClass = item.getAttribute('data-icon');
+                    const text = item.querySelector('span').textContent;
+
+                    selectedText.textContent = text;
+                    selectedIcon.className = iconClass + " text-lg w-6 text-center selected-icon transition-colors";
+
+                    hiddenSelect.value = value;
+
+                    dropdownItems.forEach(el => el.classList.remove('bg-darkBorder/30'));
+                    item.classList.add('bg-darkBorder/30');
+
+                    dropdownList.classList.add('opacity-0', 'invisible', 'translate-y-[-10px]');
+                    dropdownArrow.classList.remove('rotate-180');
+                    selectedDiv.classList.remove('border-qCyan', 'ring-2', 'ring-qCyan/30');
+                });
+            });
+        }
+
+        // 4. Validación en tiempo real
+        const form = document.getElementById('supportForm');
+        const validatableInputs = document.querySelectorAll('.validation-input');
+
+        const validateInput = (input) => {
+            const container = input.closest('.field-container');
+            const statusIcon = container.querySelector('.status-icon');
+            const validIcon = container.querySelector('.valid-icon');
+            const invalidIcon = container.querySelector('.invalid-icon');
+            const errorMsg = container.querySelector('.error-msg');
+
+            statusIcon.classList.remove('opacity-0');
+            statusIcon.classList.add('opacity-100');
+
+            if (input.checkValidity() && input.value.trim() !== '') {
+                input.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500/30');
+                input.classList.add('border-green-500', 'focus:border-green-500', 'focus:ring-green-500/30');
+
+                validIcon.classList.remove('hidden');
+                invalidIcon.classList.add('hidden');
+
+                errorMsg.classList.add('hidden');
+                errorMsg.classList.remove('opacity-100');
+            } else if (input.value.length > 0 || input.hasAttribute('required')) {
+                input.classList.remove('border-darkBorder', 'border-green-500', 'focus:border-qCyan', 'focus:border-green-500', 'focus:ring-qCyan/30', 'focus:ring-green-500/30');
+                input.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500/30');
+
+                validIcon.classList.add('hidden');
+                invalidIcon.classList.remove('hidden');
+
+                errorMsg.classList.remove('hidden');
+                setTimeout(() => errorMsg.classList.add('opacity-100'), 10);
+            }
+        };
+
+        validatableInputs.forEach(input => {
+            input.addEventListener('blur', () => {
+                if(input.value.trim() !== '' || input.hasAttribute('required')) {
+                    validateInput(input);
+                }
+            });
+            input.addEventListener('input', () => {
+                if (input.classList.contains('border-red-500') || input.value.trim() !== '') {
+                    validateInput(input);
+                }
+            });
+        });
+
+        form.addEventListener('submit', (e) => {
+            let isValid = true;
+            validatableInputs.forEach(input => {
+                if (!input.checkValidity() || (input.hasAttribute('required') && input.value.trim() === '')) {
+                    isValid = false;
+                    validateInput(input);
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                const btn = document.getElementById('submitBtn');
+                btn.classList.add('animate-bounce');
+                setTimeout(() => btn.classList.remove('animate-bounce'), 1000);
+            }
+        });
+    });
+</script>
 
 </body>
 </html>

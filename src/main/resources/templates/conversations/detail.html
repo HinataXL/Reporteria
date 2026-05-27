@@ -1,150 +1,493 @@
 <!doctype html>
-<html lang="es">
-<html lang="es"
-      xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title>Detalle Conversación</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de Conversación </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
+    <style>
+        :root {
+            --primary: #1ba0c8;
+            --secondary: #ffd700;
+            --accent: #00d9ff;
+            --dark: #10231F;
+        }
 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            color: #F4F0E6;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .header {
+            animation: slideDown 0.5s ease;
+        }
+
+        .card {
+            background: linear-gradient(135deg, rgba(27, 160, 200, 0.08) 0%, rgba(44, 83, 100, 0.08) 100%);
+            border: 1px solid rgba(27, 160, 200, 0.25);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            animation: slideUp 0.6s ease backwards;
+        }
+
+        .card:hover {
+            border-color: rgba(27, 160, 200, 0.5);
+            background: linear-gradient(135deg, rgba(27, 160, 200, 0.12) 0%, rgba(44, 83, 100, 0.12) 100%);
+            box-shadow: 0 15px 40px rgba(27, 160, 200, 0.15);
+            transform: translateY(-5px);
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid rgba(27, 160, 200, 0.3);
+            padding-bottom: 12px;
+        }
+
+        .card-title i {
+            color: var(--primary);
+            font-size: 1.2em;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: 700;
+            border: 1px solid;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .badge-pending {
+            background: linear-gradient(135deg, rgba(255, 170, 0, 0.2), rgba(255, 193, 7, 0.1));
+            color: #ffc107;
+            border-color: #ffc107;
+        }
+
+        .badge-process {
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(0, 200, 200, 0.1));
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .badge-resolved {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 200, 100, 0.1));
+            color: #00ff88;
+            border-color: #00ff88;
+        }
+
+        .badge-escalated {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(255, 152, 0, 0.1));
+            color: #ff6b6b;
+            border-color: #ff6b6b;
+            animation: pulse-badge 2s infinite;
+        }
+
+        @keyframes pulse-badge {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+            50% { box-shadow: 0 0 0 6px rgba(255, 107, 107, 0); }
+        }
+
+        .badge-baja {
+            background: linear-gradient(135deg, rgba(100, 200, 100, 0.2), rgba(0, 200, 100, 0.1));
+            color: #90ee90;
+            border-color: #90ee90;
+        }
+
+        .badge-media {
+            background: linear-gradient(135deg, rgba(255, 200, 100, 0.2), rgba(255, 193, 7, 0.1));
+            color: #ffc107;
+            border-color: #ffc107;
+        }
+
+        .badge-alta {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(255, 152, 0, 0.1));
+            color: #ff6b6b;
+            border-color: #ff6b6b;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(27, 160, 200, 0.1), rgba(44, 83, 100, 0.1));
+            border: 1px solid rgba(27, 160, 200, 0.25);
+            border-radius: 12px;
+            transition: all 0.3s;
+            animation: slideUp 0.6s ease backwards;
+        }
+
+        .stat-card:hover {
+            background: linear-gradient(135deg, rgba(27, 160, 200, 0.15), rgba(44, 83, 100, 0.15));
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(27, 160, 200, 0.2);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, var(--secondary) 0%, #ffed4e 100%);
+            color: var(--dark);
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(255, 215, 0, 0.5);
+        }
+
+        .btn-edit:active {
+            transform: scale(0.98);
+        }
+
+        .back-link {
+            color: var(--secondary);
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.3s;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 215, 0, 0.1);
+            transform: translateX(-5px);
+        }
+
+        .action-icons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .action-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            border: 1px solid rgba(27, 160, 200, 0.4);
+            background: linear-gradient(135deg, rgba(27, 160, 200, 0.1), rgba(44, 83, 100, 0.1));
+            color: var(--primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .action-icon:hover {
+            background: linear-gradient(135deg, rgba(27, 160, 200, 0.2), rgba(44, 83, 100, 0.2));
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(27, 160, 200, 0.2);
+        }
+
+        .info-value {
+            padding: 8px 12px;
+            background: rgba(27, 160, 200, 0.05);
+            border-radius: 6px;
+            border-left: 3px solid var(--primary);
+            transition: all 0.3s;
+        }
+
+        .info-value:hover {
+            background: rgba(27, 160, 200, 0.1);
+            padding-left: 16px;
+        }
+
+        hr { border: none; border-top: 1px solid rgba(27, 160, 200, 0.2); }
+
+        @media (max-width: 1024px) {
+            .action-icons { width: 100%; }
+            .action-icon { flex: 1; }
+        }
+
+        .feedback {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: #fff;
+            padding: 14px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(27, 160, 200, 0.4);
+            animation: slideUp 0.3s ease;
+            z-index: 1000;
+        }
+    </style>
+</head>
 <body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
 
 <div class="max-w-6xl mx-auto p-6">
 
-    <div class="mb-8">
-        <a href="/conversations" class="text-yellow-300 font-bold hover:underline">
-            ← Volver
-        </a>
-
-        <h1 class="text-4xl font-extrabold mt-4">Detalle de conversación</h1>
-        <p class="opacity-70" th:text="${conversation.codigo}">CONV-00001</p>
+    <!-- HEADER -->
+    <div class="header mb-8 flex justify-between items-start flex-wrap gap-4">
+        <div>
+            <a href="/conversations" class="back-link">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            <h1 class="text-4xl font-extrabold mt-4 bg-gradient-to-r from-white via-cyan-300 to-cyan-100 bg-clip-text text-transparent">
+                Detalle de conversación
+            </h1>
+            <p class="opacity-70 text-cyan-300 font-semibold" th:text="${conversation.codigo}">CONV-00001</p>
+        </div>
+        <div class="action-icons">
+            <button class="action-icon" onclick="copyCode()" title="Copiar código">
+                <i class="fas fa-copy"></i>
+            </button>
+            <button class="action-icon" onclick="shareConversation()" title="Compartir">
+                <i class="fas fa-share-alt"></i>
+            </button>
+            <button class="action-icon" onclick="printConversation()" title="Imprimir">
+                <i class="fas fa-print"></i>
+            </button>
+            <button class="action-icon" onclick="downloadPDF()" title="Descargar PDF">
+                <i class="fas fa-file-pdf"></i>
+            </button>
+        </div>
     </div>
 
+    <!-- MAIN GRID -->
     <div class="grid lg:grid-cols-3 gap-6">
 
-        <section class="lg:col-span-2 bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur">
+        <!-- LEFT COLUMN -->
+        <section class="lg:col-span-2">
 
-            <h2 class="text-2xl font-extrabold mb-5">Información principal</h2>
+            <!-- INFORMACIÓN PRINCIPAL -->
+            <div class="card bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur mb-6">
+                <h2 class="card-title text-2xl font-extrabold mb-5">
+                    <i class="fas fa-user-circle"></i> Información principal
+                </h2>
 
-            <div class="grid md:grid-cols-2 gap-5">
-                <div>
-                    <p class="opacity-60">Cliente</p>
-                    <p class="font-bold text-lg" th:text="${conversation.clienteNombre}">Cliente</p>
+                <div class="grid md:grid-cols-2 gap-5">
+                    <div>
+                        <p class="opacity-60 text-sm uppercase font-semibold mb-2">
+                            <i class="fas fa-user text-cyan-400"></i> Cliente
+                        </p>
+                        <p class="font-bold text-lg info-value" th:text="${conversation.clienteNombre}">Cliente</p>
+                    </div>
+
+                    <div>
+                        <p class="opacity-60 text-sm uppercase font-semibold mb-2">
+                            <i class="fas fa-phone text-cyan-400"></i> Teléfono
+                        </p>
+                        <p class="font-bold text-lg info-value" th:text="${conversation.clienteTelefono}">Teléfono</p>
+                    </div>
+
+                    <div>
+                        <p class="opacity-60 text-sm uppercase font-semibold mb-2">
+                            <i class="fas fa-envelope text-cyan-400"></i> Correo
+                        </p>
+                        <p class="font-bold text-lg info-value" th:text="${conversation.clienteCorreo}">Correo</p>
+                    </div>
+
+                    <div>
+                        <p class="opacity-60 text-sm uppercase font-semibold mb-2">
+                            <i class="fab fa-whatsapp text-green-400"></i> Canal
+                        </p>
+                        <p class="font-bold text-lg info-value"
+                           th:text="${conversation.channelId == 1 ? 'WhatsApp' :
+                           (conversation.channelId == 2 ? 'Facebook' :
+                           (conversation.channelId == 3 ? 'Instagram' :
+                           (conversation.channelId == 4 ? 'Web Chat' :
+                           (conversation.channelId == 5 ? 'Correo' : 'Desconocido'))))}">
+                            Canal
+                        </p>
+                    </div>
                 </div>
 
-                <div>
-                    <p class="opacity-60">Teléfono</p>
-                    <p class="font-bold text-lg" th:text="${conversation.clienteTelefono}">Teléfono</p>
+                <hr class="my-6">
+
+                <div class="mb-6">
+                    <p class="opacity-60 text-sm uppercase font-semibold mb-2">
+                        <i class="fas fa-heading text-cyan-400"></i> Asunto
+                    </p>
+                    <p class="font-bold text-xl info-value" th:text="${conversation.asunto}">Asunto</p>
                 </div>
 
-                <div>
-                    <p class="opacity-60">Correo</p>
-                    <p class="font-bold text-lg" th:text="${conversation.clienteCorreo}">Correo</p>
-                </div>
-
-                <div>
-                    <p class="opacity-60">Canal</p>
-                    <p class="font-bold text-lg"
-                       th:text="${conversation.channelId == 1 ? 'WhatsApp' :
-                       (conversation.channelId == 2 ? 'Facebook' :
-                       (conversation.channelId == 3 ? 'Instagram' :
-                       (conversation.channelId == 4 ? 'Web Chat' :
-                       (conversation.channelId == 5 ? 'Correo' : 'Desconocido'))))}">
-                        Canal
+                <div class="mb-6">
+                    <p class="opacity-60 text-sm uppercase font-semibold mb-2">
+                        <i class="fas fa-file-alt text-cyan-400"></i> Descripción
+                    </p>
+                    <p class="leading-relaxed info-value min-h-20" th:text="${conversation.descripcion}">
+                        Descripción
                     </p>
                 </div>
-            </div>
 
-            <hr class="border-white/10 my-6">
-
-            <div>
-                <p class="opacity-60">Asunto</p>
-                <p class="font-bold text-xl" th:text="${conversation.asunto}">Asunto</p>
-            </div>
-
-            <div class="mt-5">
-                <p class="opacity-60">Descripción</p>
-                <p class="leading-relaxed" th:text="${conversation.descripcion}">
-                    Descripción
-                </p>
-            </div>
-
-            <div class="mt-5">
-                <p class="opacity-60">Observaciones</p>
-                <p class="leading-relaxed" th:text="${conversation.observaciones}">
-                    Observaciones
-                </p>
+                <div>
+                    <p class="opacity-60 text-sm uppercase font-semibold mb-2">
+                        <i class="fas fa-comment text-cyan-400"></i> Observaciones
+                    </p>
+                    <p class="leading-relaxed info-value min-h-20" th:text="${conversation.observaciones}">
+                        Observaciones
+                    </p>
+                </div>
             </div>
 
         </section>
 
-        <aside class="bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur">
+        <!-- SIDEBAR -->
+        <aside>
 
-            <h2 class="text-2xl font-extrabold mb-5">Estado</h2>
+            <!-- ESTADO -->
+            <div class="card bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur mb-6">
+                <h2 class="card-title text-2xl font-extrabold mb-5">
+                    <i class="fas fa-circle-notch"></i> Estado
+                </h2>
 
-            <div class="space-y-4">
+                <div class="space-y-4">
+                    <div>
+                        <p class="opacity-60 text-sm uppercase font-semibold mb-2">Estado</p>
+                        <span class="badge"
+                              th:classappend="${conversation.statusId == 1 ? 'badge-pending' :
+                              (conversation.statusId == 2 ? 'badge-process' :
+                              (conversation.statusId == 3 ? 'badge-resolved' :
+                              (conversation.statusId == 4 ? 'badge-escalated' :
+                              'badge-resolved')))}"
+                              th:text="${conversation.statusId == 1 ? '⏳ Pendiente' :
+                              (conversation.statusId == 2 ? '🔄 En Proceso' :
+                              (conversation.statusId == 3 ? '✓ Resuelto' :
+                              (conversation.statusId == 4 ? '⚠️ Escalado' :
+                              '✓ Cerrado')))}">
+                            Estado
+                        </span>
+                    </div>
 
-                <div>
-                    <p class="opacity-60">Estado</p>
-                    <span class="inline-block px-3 py-1 rounded-lg mt-1"
-                          th:classappend="${conversation.statusId == 1 ? 'bg-yellow-500/20 text-yellow-300' :
-                          (conversation.statusId == 2 ? 'bg-cyan-500/20 text-cyan-300' :
-                          (conversation.statusId == 3 ? 'bg-green-500/20 text-green-300' :
-                          (conversation.statusId == 4 ? 'bg-red-500/20 text-red-300' :
-                          'bg-green-500/20 text-green-300')))}"
-                          th:text="${conversation.statusId == 1 ? 'Pendiente' :
-                          (conversation.statusId == 2 ? 'En Proceso' :
-                          (conversation.statusId == 3 ? 'Resuelto' :
-                          (conversation.statusId == 4 ? 'Escalado' :
-                          'Cerrado')))}">
-                        Estado
-                    </span>
+                    <div>
+                        <p class="opacity-60 text-sm uppercase font-semibold mb-2">Prioridad</p>
+                        <span class="badge"
+                              th:classappend="${conversation.priorityId == 1 ? 'badge-baja' :
+                              (conversation.priorityId == 2 ? 'badge-media' :
+                              (conversation.priorityId == 3 ? 'badge-alta' :
+                              'badge-alta'))}"
+                              th:text="${conversation.priorityId == 1 ? '↓ Baja' :
+                              (conversation.priorityId == 2 ? '→ Media' :
+                              (conversation.priorityId == 3 ? '↑ Alta' :
+                              '⚡ Crítica'))}">
+                            Prioridad
+                        </span>
+                    </div>
+
+                    <div>
+                        <p class="opacity-60 text-sm uppercase font-semibold">Agente</p>
+                        <p class="font-bold mt-2 info-value">
+                            <i class="fas fa-user text-cyan-400"></i> Renato Flores
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="opacity-60 text-sm uppercase font-semibold">Tiempo gestión</p>
+                        <p class="font-bold mt-2">
+                            <span class="text-yellow-400 text-xl" th:text="${conversation.tiempoGestionMinutos}">0</span>
+                            <span class="text-sm opacity-70">minutos</span>
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="opacity-60 text-sm uppercase font-semibold">Fecha inicio</p>
+                        <p class="font-bold mt-2 info-value"
+                           th:text="${conversation.fechaInicio != null ? #temporals.format(conversation.fechaInicio, 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">
+                            Fecha
+                        </p>
+                    </div>
                 </div>
 
-                <div>
-                    <p class="opacity-60">Prioridad</p>
-                    <span class="inline-block px-3 py-1 rounded-lg mt-1"
-                          th:classappend="${conversation.priorityId == 1 ? 'bg-gray-500/20 text-gray-300' :
-                          (conversation.priorityId == 2 ? 'bg-yellow-500/20 text-yellow-300' :
-                          (conversation.priorityId == 3 ? 'bg-red-500/20 text-red-300' :
-                          'bg-purple-500/20 text-purple-300'))}"
-                          th:text="${conversation.priorityId == 1 ? 'Baja' :
-                          (conversation.priorityId == 2 ? 'Media' :
-                          (conversation.priorityId == 3 ? 'Alta' :
-                          'Crítica'))}">
-                        Prioridad
-                    </span>
-                </div>
-
-                <div>
-                    <p class="opacity-60">Tiempo gestión</p>
-                    <p class="font-bold">
-                        <span th:text="${conversation.tiempoGestionMinutos}">0</span> minutos
-                    </p>
-                </div>
-
-                <div>
-                    <p class="opacity-60">Fecha inicio</p>
-                    <p class="font-bold"
-                       th:text="${conversation.fechaInicio != null ? #temporals.format(conversation.fechaInicio, 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">
-                        Fecha
-                    </p>
-                </div>
+                <a th:href="@{/conversations/edit/{id}(id=${conversation.id})}"
+                   sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"
+                   class="btn-edit mt-8 block w-full px-5 py-3 rounded-2xl font-bold text-center flex items-center justify-center gap-2">
+                    <i class="fas fa-edit"></i> Editar conversación
+                </a>
             </div>
 
-            <a th:href="@{/conversations/edit/{id}(id=${conversation.id})}"
-               sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"
-               class="mt-8 block w-full bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold text-center">
-                Editar conversación
-            </a>
+            <!-- ESTADÍSTICAS -->
+            <div class="stat-card bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur text-center mb-6">
+                <div class="stat-value">1 min</div>
+                <div class="text-xs text-cyan-300 font-semibold uppercase tracking-wide">Tiempo de gestión</div>
+            </div>
+
+            <div class="stat-card bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur text-center mb-6">
+                <div class="stat-value">4</div>
+                <div class="text-xs text-cyan-300 font-semibold uppercase tracking-wide">Mensajes</div>
+            </div>
+
+            <div class="stat-card bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur text-center">
+                <div class="stat-value text-lg">21/05 21:16</div>
+                <div class="text-xs text-cyan-300 font-semibold uppercase tracking-wide">Fecha inicio</div>
+            </div>
 
         </aside>
 
     </div>
 
 </div>
+
+<script>
+    function copyCode() {
+        const code = document.querySelector('[th\\:text*="codigo"]')?.textContent || 'CONV-00001';
+        navigator.clipboard.writeText(code);
+        showFeedback('✓ Código copiado: ' + code);
+    }
+
+    function shareConversation() {
+        showFeedback('📤 Compartiendo conversación...');
+    }
+
+    function printConversation() {
+        window.print();
+        showFeedback('🖨️ Imprimiendo...');
+    }
+
+    function downloadPDF() {
+        showFeedback('📥 Descargando PDF...');
+    }
+
+    function showFeedback(message) {
+        const feedback = document.createElement('div');
+        feedback.className = 'feedback';
+        feedback.textContent = message;
+        document.body.appendChild(feedback);
+        setTimeout(() => feedback.remove(), 2500);
+    }
+</script>
 
 </body>
 </html>
