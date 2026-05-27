@@ -6,21 +6,20 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.LinkedHashMap;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import com.erick.soporte.service.OpenAiReportService;
+import com.erick.soporte.service.GeminiReportService;
 
 @RestController
 public class DashboardApiController {
 
     private final ConversationRepository conversationRepository;
-    private final OpenAiReportService openAiReportService;
+    private final GeminiReportService geminiReportService;
 
-    public DashboardApiController(ConversationRepository conversationRepository, OpenAiReportService openAiReportService) {
+    public DashboardApiController(ConversationRepository conversationRepository, GeminiReportService geminiReportService) {
         this.conversationRepository = conversationRepository;
-        this.openAiReportService = openAiReportService;
+        this.geminiReportService = geminiReportService;
 
     }
     @GetMapping("/api/dashboard/ai-report")
@@ -48,7 +47,7 @@ public class DashboardApiController {
                 .average()
                 .orElse(0);
 
-        String reporte = openAiReportService.generateDashboardReport(
+        String reporte = geminiReportService.generateDashboardReport(
                 total,
                 pendientes,
                 resueltas,
