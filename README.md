@@ -1,211 +1,124 @@
 # 📊 Sistema de Reportería para Skill de Soporte
 
-Aplicación web desarrollada con **Spring Boot + Thymeleaf + MySQL** para registrar manualmente conversaciones de soporte y generar reportería operativa.
+# 📊 Sistema de Reportería de Soporte
+
+Sistema web desarrollado con Spring Boot para la gestión y monitoreo de conversaciones de soporte, incluyendo autenticación segura, dashboard en tiempo real, reportería y análisis con IA.
 
 ---
 
-# 🚀 Objetivo del proyecto
+# 🚀 Tecnologías utilizadas
 
-Centralizar el registro de conversaciones manejadas por agentes de soporte en distintos canales:
-
-- WhatsApp
-- Facebook
-- Instagram
-- Web Chat
-- Otros canales multicanal
-
-El sistema permitirá:
-- Registrar conversaciones
-- Consultar historial
-- Visualizar métricas
-- Exportar reportes
-- Administrar agentes y estados
-
----
-
-# 🛠️ Tecnologías utilizadas
-
-| Tecnología | Uso |
-|---|---|
-| Java 21 | Backend |
-| Spring Boot | Framework MVC |
-| Thymeleaf | Renderizado HTML |
-| MySQL | Base de datos |
-| TailwindCSS | Diseño UI |
-| Maven | Gestión de dependencias |
-| Git/GitHub | Control de versiones |
-| IntelliJ IDEA | IDE principal |
-
----
-
-# 📁 Estructura del proyecto
-
-```bash
-src/
-├── main/
-│   ├── java/
-│   │   └── com/erick/soporte/
-│   │       ├── controller/
-│   │       ├── service/
-│   │       ├── repository/
-│   │       ├── entity/
-│   │       └── SoporteApplication.java
-│   │
-│   └── resources/
-│       ├── static/
-│       │   ├── img/
-│       │   ├── css/
-│       │   └── js/
-│       │
-│       ├── templates/
-│       │   └── index.html
-│       │
-│       └── application.properties
-```
-
----
-
-# ⚙️ Configuración inicial
-
-## 1. Clonar repositorio
-
-```bash
-git clone https://github.com/TU_USUARIO/soporte-multicanal.git
-```
-
----
-
-## 2. Entrar al proyecto
-
-```bash
-cd soporte-multicanal
-```
-
----
-
-## 3. Configurar MySQL
-
-Crear base de datos:
-
-```sql
-CREATE DATABASE soporte_db;
-```
-
----
-
-## 4. Configurar application.properties
-
-Ruta:
-
-```bash
-src/main/resources/application.properties
-```
-
-Ejemplo:
-
-```properties
-spring.application.name=soporte
-
-server.port=8080
-
-spring.datasource.url=jdbc:mysql://localhost:3306/soporte_db
-spring.datasource.username=root
-spring.datasource.password=
-
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-
-spring.thymeleaf.cache=false
-```
-
----
-
-# ▶️ Ejecutar aplicación
-
-## Desde IntelliJ
-
-Ejecutar:
-
-```text
-SoporteApplication.java
-```
-
----
-
-## Desde terminal
-
-Linux/Mac:
-
-```bash
-./mvnw spring-boot:run
-```
-
-Windows:
-
-```powershell
-.\mvnw spring-boot:run
-```
-
----
-
-# 🌐 Acceso local
-
-```text
-http://localhost:8080
-```
-
----
-
-# 🔥 Hot Reload
-
-El proyecto utiliza:
-
-```xml
-spring-boot-devtools
-```
-
-Para recarga automática durante desarrollo.
-
----
-
-# 📌 Funcionalidades planeadas
-
-## MVP inicial
-
-- [x] Dashboard principal
-- [x] Integración MySQL
-- [x] MVC Spring Boot
-- [ ] CRUD conversaciones
-- [ ] Registro manual de chats
-- [ ] Tabla historial
-- [ ] Filtros por fecha/agente/canal
-- [ ] Exportar Excel
-- [ ] Exportar PDF
-
----
-
-# 🔐 Futuras mejoras
-
-- Login y autenticación
-- Roles de usuario
-- Dashboard en tiempo real
-- Integración API multicanal
-- Métricas avanzadas
-- WebSockets
-- Reportería automática
-
----
-
-# 🎨 Diseño UI
-
-El frontend está basado en:
+- Java 21
+- Spring Boot 4
+- Spring Security
+- Thymeleaf
+- PostgreSQL
+- Supabase
 - TailwindCSS
-- Glassmorphism
-- Dashboard interactivo
-- Responsive Design
+- Chart.js
+- OpenAI API
+- ngrok
+- Maven
 
 ---
 
+# 🔐 Funcionalidades principales
+
+## Autenticación y seguridad
+
+- Login personalizado
+- Roles:
+  - ADMIN
+  - SUPERVISOR
+  - AGENTE
+- Protección por rutas
+- 2FA (OTP con aplicación autenticadora)
+- Sesiones protegidas
+- Logout seguro
+
+---
+
+# 👥 Gestión de usuarios
+
+- Creación de usuarios
+- Roles dinámicos
+- Contraseñas cifradas con BCrypt
+- Lectura de usuarios desde Supabase
+
+---
+
+# 💬 Gestión de conversaciones
+
+- Crear conversaciones
+- Editar conversaciones
+- Ver detalle completo
+- Exportar CSV
+- Estados:
+  - Pendiente
+  - En proceso
+  - Resuelto
+  - Escalado
+  - Cerrado
+- Prioridades:
+  - Baja
+  - Media
+  - Alta
+  - Crítica
+
+---
+
+# 📈 Dashboard Supervisor
+
+Dashboard dinámico con métricas en tiempo real:
+
+- Conversaciones por agente
+- Conversaciones por canal
+- Conversaciones por prioridad
+- Productividad diaria
+- Tiempo promedio de gestión
+- Conversaciones pendientes
+- Conversaciones resueltas
+- Conversaciones escaladas
+
+## Características visuales
+
+- Diseño glassmorphism
+- Chart.js
+- Gradientes
+- Animaciones
+- Actualización automática vía polling API
+
+---
+
+# 🤖 Inteligencia Artificial
+
+Integración con OpenAI para:
+
+- Análisis automático de métricas
+- Reportes operativos
+- Riesgos operacionales
+- Recomendaciones automáticas
+- Puntos de mejora
+
+---
+
+# 🌐 Acceso público con ngrok
+
+El sistema puede exponerse públicamente usando ngrok para:
+
+- QA
+- Demos
+- Pruebas móviles
+- Testing remoto
+
+---
+
+# ⚙️ Variables de entorno
+
+## OpenAI
+
+```env
+OPENAI_API_KEY=tu_api_key
 # 👨‍💻 Autor
 
 **Erick Alejandro Pedroza Miguel**
