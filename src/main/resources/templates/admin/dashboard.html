@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Administrador</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+
+<div class="max-w-7xl mx-auto p-6">
+
+    <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-5 mb-8">
+        <div>
+            <p class="text-[#00d9ff] text-sm font-black uppercase tracking-[0.22em] mb-2">
+                Administración
+            </p>
+
+            <h1 class="text-5xl font-black">
+                Panel Administrador
+            </h1>
+
+            <p class="text-slate-300 text-sm mt-2">
+                Control general del sistema, usuarios, seguridad y reportería.
+            </p>
+        </div>
+
+        <a href="/conversations"
+           class="bg-[#ffd700] hover:bg-yellow-300 text-black px-5 py-3 rounded-2xl font-black">
+            Volver a conversaciones
+        </a>
+    </header>
+
+    <section class="grid md:grid-cols-4 gap-5 mb-8">
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Usuarios</p>
+            <h2 class="text-5xl font-black text-[#ffd700] mt-3" th:text="${totalUsers}">0</h2>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Conversaciones</p>
+            <h2 class="text-5xl font-black text-[#00d9ff] mt-3" th:text="${totalConversations}">0</h2>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">2FA</p>
+            <h2 class="text-3xl font-black text-[#00ff88] mt-3">Activo</h2>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">IA</p>
+            <h2 class="text-3xl font-black text-[#ffd700] mt-3">Gemini</h2>
+        </div>
+
+    </section>
+
+    <section class="grid lg:grid-cols-3 gap-6">
+
+        <a href="/users"
+           class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
+            <h2 class="text-2xl font-black mb-2">👥 Usuarios</h2>
+            <p class="text-slate-300 text-sm">
+                Crear, consultar y administrar usuarios del sistema.
+            </p>
+        </a>
+
+        <a href="/supervisor/dashboard"
+           class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
+            <h2 class="text-2xl font-black mb-2">📊 Dashboard Supervisor</h2>
+            <p class="text-slate-300 text-sm">
+                Métricas, gráficos y análisis operativo del equipo.
+            </p>
+        </a>
+
+        <a href="/settings/2fa"
+           class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
+            <h2 class="text-2xl font-black mb-2">🔐 Seguridad 2FA</h2>
+            <p class="text-slate-300 text-sm">
+                Configuración de autenticación con app autenticadora.
+            </p>
+        </a>
+
+        <a href="/conversations/export/csv"
+           class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
+            <h2 class="text-2xl font-black mb-2">⬇ Exportar CSV</h2>
+            <p class="text-slate-300 text-sm">
+                Descargar histórico completo de conversaciones.
+            </p>
+        </a>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <h2 class="text-2xl font-black mb-2">🤖 Estado IA</h2>
+            <p class="text-slate-300 text-sm">
+                Servicio preparado para análisis automático con Gemini.
+            </p>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <h2 class="text-2xl font-black mb-2">🧾 Auditoría</h2>
+            <p class="text-slate-300 text-sm">
+                Próximamente: historial de acciones y cambios del sistema.
+            </p>
+        </div>
+
+    </section>
+
+</div>
+
+</body>
+</html>

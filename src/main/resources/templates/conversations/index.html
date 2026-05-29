@@ -181,9 +181,20 @@
                 </div>
             </div>
 
+            <a href="/profile"
+               class="bg-white/10 hover:bg-white/15 border border-white/10 text-white px-5 py-3 rounded-2xl font-black text-center">
+                Mi perfil
+            </a>
+
             <a href="/conversations/create"
                class="bg-[#ffd700] hover:bg-yellow-300 transition text-black px-5 py-3 rounded-2xl font-black text-center shadow-lg shadow-yellow-500/20">
                 + Nueva conversación
+            </a>
+
+            <a href="/admin/dashboard"
+               sec:authorize="hasRole('ADMIN')"
+               class="bg-[#ffd700] text-black px-5 py-3 rounded-2xl font-black text-center">
+                Panel Admin
             </a>
 
             <a href="/users"
