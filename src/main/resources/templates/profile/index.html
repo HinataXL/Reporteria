@@ -4,139 +4,563 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title>Mi Perfil</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil | Seguridad</title>
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#10231F',
+                        darkCard: '#142a25',
+                        darkBorder: '#1f423b',
+                        brandCyan: '#00d9ff',
+                        brandGold: '#ffd700',
+                        textMain: '#F4F0E6'
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'slide-toast': 'slideToast 0.3s ease-out forwards',
+                        'shake': 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: 0, transform: 'translateY(20px)' },
+                            '100%': { opacity: 1, transform: 'translateY(0)' },
+                        },
+                        slideToast: {
+                            '0%': { transform: 'translateY(100%)', opacity: 0 },
+                            '100%': { transform: 'translateY(0)', opacity: 1 },
+                        },
+                        shake: {
+                            '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+                            '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+                            '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+                            '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Scrollbar & Autofill */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #10231F; }
+        ::-webkit-scrollbar-thumb { background: #1f423b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00d9ff; }
+
+        input:-webkit-autofill {
+            -webkit-text-fill-color: #F4F0E6 !important;
+            -webkit-box-shadow: 0 0 0px 1000px #142a25 inset !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        /* Ripple Effect */
+        .ripple-btn { position: relative; overflow: hidden; }
+        .ripple {
+            position: absolute; border-radius: 50%; transform: scale(0);
+            animation: ripple-anim 600ms linear; background-color: rgba(255, 255, 255, 0.3);
+        }
+        @keyframes ripple-anim { to { transform: scale(4); opacity: 0; } }
+    </style>
 </head>
 
-<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+<body class="bg-darkBg text-textMain min-h-screen font-sans selection:bg-brandCyan selection:text-black pb-12">
 
-<div class="max-w-5xl mx-auto p-6">
+<!-- Toast Notification Container -->
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-darkCard border border-brandCyan/50 shadow-[0_5px_20px_rgba(0,217,255,0.2)] text-textMain px-6 py-3 rounded-full flex items-center gap-3 z-50 hidden opacity-0 transition-opacity duration-300">
+    <i class="fas fa-check-circle text-brandCyan"></i>
+    <span id="toast-msg" class="font-bold text-sm">Copiado al portapapeles</span>
+</div>
 
-    <div class="flex justify-between items-center mb-8">
+<div class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- HEADER: Animación en cascada -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 animate-fade-in-up" style="animation-delay: 0.1s;">
         <div>
-            <a href="/conversations" class="text-yellow-300 font-bold hover:underline">
-                ← Volver
+            <a href="/conversations" class="inline-flex items-center justify-center px-4 py-2 rounded-full border border-brandGold/30 text-brandGold font-bold hover:bg-brandGold/10 transition-all duration-300 group text-sm mb-4 w-max">
+                <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Volver al panel
             </a>
 
-            <h1 class="text-4xl font-black mt-4">Mi perfil</h1>
-            <p class="opacity-70">Gestiona tu cuenta, contraseña y seguridad.</p>
+            <h1 class="text-4xl sm:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-textMain to-gray-400">
+                Mi perfil
+            </h1>
+            <p class="opacity-70 mt-2 flex items-center gap-2">
+                <i class="fas fa-shield-alt text-brandCyan"></i> Gestiona tu cuenta, contraseña y seguridad.
+            </p>
         </div>
 
-        <a href="/settings/2fa"
-           class="bg-[#00d9ff] text-black px-5 py-3 rounded-2xl font-black">
-            Configurar 2FA
-        </a>
+        <!-- Acciones principales Header -->
+        <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+            <!-- Indicador visual: Nivel de cuenta -->
+            <div class="hidden lg:flex items-center gap-3 bg-darkCard px-4 py-2 rounded-2xl border border-darkBorder group relative cursor-help">
+                <div class="relative w-10 h-10 flex items-center justify-center">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                        <path class="text-darkBorder" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <!-- Dinámico según 2FA: si tiene, 100%, si no 50% -->
+                        <path th:classappend="${user.totpEnabled ? 'text-green-500' : 'text-brandGold'}"
+                              th:attr="stroke-dasharray=${user.totpEnabled ? '100, 100' : '50, 100'}"
+                              stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <i th:classappend="${user.totpEnabled ? 'fas fa-check text-green-500' : 'fas fa-exclamation text-brandGold'}" class="absolute text-xs"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Seguridad</span>
+                    <span class="text-sm font-black text-white" th:text="${user.totpEnabled ? '100% Protegida' : '50% - Falta 2FA'}"></span>
+                </div>
+                <!-- Tooltip -->
+                <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-black text-xs px-3 py-1.5 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-20">
+                    Nivel de seguridad de la cuenta
+                </div>
+            </div>
+
+            <!-- Botón 2FA (Secundario bordeado) -->
+            <a href="/settings/2fa" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 min-h-[48px] rounded-2xl border-2 border-brandCyan text-brandCyan font-black hover:bg-brandCyan/10 hover:shadow-[0_0_15px_rgba(0,217,255,0.2)] transition-all duration-300 ripple-btn group">
+                <i class="fas fa-qrcode mr-2 group-hover:scale-110 transition-transform"></i> Configurar 2FA
+            </a>
+        </div>
     </div>
 
-    <div th:if="${success}"
-         class="mb-5 bg-green-500/20 text-green-300 border border-green-500/30 rounded-2xl px-4 py-3 font-bold"
-         th:text="${success}">
+    <!-- Alertas (Success / Error) con animación -->
+    <div th:if="${success}" class="mb-6 bg-green-500/10 border border-green-500/30 rounded-2xl p-4 flex items-start gap-4 animate-fade-in-up" style="animation-delay: 0.2s;">
+        <div class="bg-green-500/20 p-2 rounded-full mt-0.5"><i class="fas fa-check text-green-400"></i></div>
+        <div>
+            <h4 class="text-green-400 font-bold">¡Acción exitosa!</h4>
+            <p class="text-green-300/80 text-sm mt-1 font-medium" th:text="${success}"></p>
+        </div>
     </div>
 
-    <div th:if="${error}"
-         class="mb-5 bg-red-500/20 text-red-300 border border-red-500/30 rounded-2xl px-4 py-3 font-bold"
-         th:text="${error}">
+    <div th:if="${error}" class="mb-6 bg-red-500/10 border border-red-500/30 rounded-2xl p-4 flex items-start gap-4 animate-fade-in-up" style="animation-delay: 0.2s;">
+        <div class="bg-red-500/20 p-2 rounded-full mt-0.5"><i class="fas fa-exclamation-triangle text-red-400"></i></div>
+        <div>
+            <h4 class="text-red-400 font-bold">Ocurrió un problema</h4>
+            <p class="text-red-300/80 text-sm mt-1 font-medium" th:text="${error}"></p>
+        </div>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-6">
+    <!-- GRID PRINCIPAL -->
+    <div class="grid lg:grid-cols-2 gap-8">
 
-        <section class="bg-white/10 border border-white/10 rounded-3xl p-6">
-            <h2 class="text-2xl font-black mb-5">Datos de usuario</h2>
+        <!-- ============================== -->
+        <!-- SECCIÓN 1: DATOS DE USUARIO    -->
+        <!-- ============================== -->
+        <section class="bg-gradient-to-br from-darkCard to-[#0f1d1a] border border-darkBorder rounded-[2rem] p-6 sm:p-8 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_15px_40px_rgba(0,0,0,0.6)] backdrop-blur animate-fade-in-up relative overflow-hidden group/card" style="animation-delay: 0.3s;">
 
-            <div class="space-y-4">
-                <div>
-                    <p class="opacity-60">Nombre</p>
-                    <p class="font-bold text-xl" th:text="${user.nombre + ' ' + user.apellido}">
-                        Nombre Usuario
-                    </p>
+            <!-- Deco de fondo -->
+            <div class="absolute top-0 right-0 w-32 h-32 bg-brandCyan/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none transition-opacity opacity-50 group-hover/card:opacity-100"></div>
+
+            <h2 class="text-2xl font-black mb-6 flex items-center border-b border-darkBorder pb-4">
+                <i class="fas fa-id-card text-brandCyan mr-3"></i> Información Personal
+            </h2>
+
+            <div class="space-y-6">
+                <!-- Nombre -->
+                <div class="flex items-center justify-between group p-3 -mx-3 rounded-xl hover:bg-white/5 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-darkBg border border-darkBorder flex items-center justify-center text-gray-400 group-hover:text-brandCyan group-hover:border-brandCyan/50 transition-colors">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <p class="opacity-60 text-xs font-bold uppercase tracking-wider mb-0.5">Nombre completo</p>
+                            <p class="font-bold text-lg" th:text="${user.nombre + ' ' + user.apellido}">Usuario</p>
+                        </div>
+                    </div>
+                    <!-- Inline Edit Mock Button -->
+                    <button class="text-gray-500 hover:text-brandCyan p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all tooltip-trigger" data-tooltip="Editar nombre">
+                        <i class="fas fa-pen text-sm"></i>
+                    </button>
                 </div>
 
-                <div>
-                    <p class="opacity-60">Correo</p>
-                    <p class="font-bold text-xl text-[#00d9ff]" th:text="${user.correo}">
-                        correo@email.com
-                    </p>
+                <!-- Correo -->
+                <div class="flex items-center justify-between group p-3 -mx-3 rounded-xl hover:bg-white/5 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-darkBg border border-darkBorder flex items-center justify-center text-gray-400 group-hover:text-brandCyan group-hover:border-brandCyan/50 transition-colors">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div>
+                            <p class="opacity-60 text-xs font-bold uppercase tracking-wider mb-0.5">Correo electrónico</p>
+                            <p class="font-bold text-lg text-brandCyan copy-target" th:text="${user.correo}">correo@email.com</p>
+                        </div>
+                    </div>
+                    <!-- Copy to clipboard -->
+                    <button class="copy-btn text-gray-500 hover:text-brandCyan p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all tooltip-trigger" data-tooltip="Copiar correo">
+                        <i class="far fa-copy"></i>
+                    </button>
                 </div>
 
-                <div>
-                    <p class="opacity-60">Rol</p>
-                    <p class="font-bold text-xl text-[#ffd700]" th:text="${user.role.nombre}">
-                        ADMIN
-                    </p>
+                <!-- Detalles en Grid: Rol y Estado -->
+                <div class="grid grid-cols-2 gap-4 pt-2">
+                    <!-- Rol -->
+                    <div class="bg-darkBg/50 p-4 rounded-2xl border border-darkBorder/50">
+                        <div class="flex items-center gap-2 opacity-60 text-xs font-bold uppercase tracking-wider mb-2">
+                            <i class="fas fa-crown"></i> Rol asignado
+                        </div>
+                        <p class="font-black text-xl text-brandGold bg-brandGold/10 inline-block px-3 py-1 rounded-lg border border-brandGold/20" th:text="${user.role.nombre}">ADMIN</p>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="bg-darkBg/50 p-4 rounded-2xl border border-darkBorder/50 relative overflow-hidden">
+                        <div class="flex items-center gap-2 opacity-60 text-xs font-bold uppercase tracking-wider mb-2">
+                            <i class="fas fa-signal"></i> Estado actual
+                        </div>
+
+                        <div th:if="${user.estado == 1}" class="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/30 text-green-400 px-3 py-1 rounded-lg font-bold">
+                            <span class="relative flex h-2.5 w-2.5">
+                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                            </span>
+                            Activo
+                        </div>
+
+                        <div th:if="${user.estado == 0}" class="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-1 rounded-lg font-bold">
+                            <i class="fas fa-ban text-xs"></i> Inactivo
+                        </div>
+                    </div>
                 </div>
 
-                <div>
-                    <p class="opacity-60">Estado</p>
-                    <span th:if="${user.estado == 1}"
-                          class="inline-block bg-green-500/20 text-green-300 px-3 py-1 rounded-xl font-bold">
-                        Activo
-                    </span>
+                <!-- Bloque 2FA (Insignia destacada) -->
+                <div class="mt-4 pt-6 border-t border-darkBorder flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-lock text-gray-500 text-xl"></i>
+                        <div>
+                            <p class="font-bold">Autenticación de dos pasos</p>
+                            <p class="text-xs opacity-60">Protege tu cuenta con seguridad adicional</p>
+                        </div>
+                    </div>
 
-                    <span th:if="${user.estado == 0}"
-                          class="inline-block bg-red-500/20 text-red-300 px-3 py-1 rounded-xl font-bold">
-                        Inactivo
-                    </span>
+                    <!-- Toggle Visual -->
+                    <div class="relative inline-flex items-center cursor-help">
+                        <div th:if="${user.totpEnabled == true}" class="flex items-center gap-2 bg-green-500/10 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-full font-bold text-sm shadow-[0_0_10px_rgba(34,197,94,0.2)]">
+                            <i class="fas fa-shield-check"></i> Activado
+                        </div>
+
+                        <div th:unless="${user.totpEnabled == true}" class="flex items-center gap-2 bg-orange-500/10 text-orange-400 border border-orange-500/30 px-3 py-1.5 rounded-full font-bold text-sm shadow-[0_0_10px_rgba(249,115,22,0.2)] animate-pulse">
+                            <i class="fas fa-exclamation-triangle"></i> Vulnerable
+                        </div>
+                    </div>
                 </div>
 
-                <div>
-                    <p class="opacity-60">2FA</p>
-                    <span th:if="${user.totpEnabled == true}"
-                          class="inline-block bg-green-500/20 text-green-300 px-3 py-1 rounded-xl font-bold">
-                        Activado
-                    </span>
-
-                    <span th:unless="${user.totpEnabled == true}"
-                          class="inline-block bg-yellow-500/20 text-yellow-300 px-3 py-1 rounded-xl font-bold">
-                        No activado
-                    </span>
+                <!-- Extra Acciones Contextuales -->
+                <div class="flex gap-3 pt-2">
+                    <button type="button" class="flex-1 bg-white/5 hover:bg-white/10 text-sm font-bold py-2.5 rounded-xl border border-white/10 transition-colors flex items-center justify-center gap-2 ripple-btn">
+                        <i class="fas fa-download opacity-70"></i> Mis Datos
+                    </button>
+                    <button type="button" class="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-bold py-2.5 rounded-xl border border-red-500/20 transition-colors flex items-center justify-center gap-2 ripple-btn">
+                        <i class="fas fa-sign-out-alt opacity-70"></i> Cerrar Sesiones
+                    </button>
                 </div>
             </div>
         </section>
 
-        <section class="bg-white/10 border border-white/10 rounded-3xl p-6">
-            <h2 class="text-2xl font-black mb-5">Cambiar contraseña</h2>
+        <!-- ============================== -->
+        <!-- SECCIÓN 2: CAMBIAR CONTRASEÑA  -->
+        <!-- ============================== -->
+        <section class="bg-gradient-to-br from-darkCard to-[#0f1d1a] border border-darkBorder rounded-[2rem] p-6 sm:p-8 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_15px_40px_rgba(0,0,0,0.6)] backdrop-blur animate-fade-in-up relative" style="animation-delay: 0.4s;">
 
-            <form th:action="@{/profile/change-password}" method="post" class="space-y-4">
+            <h2 class="text-2xl font-black mb-6 flex items-center border-b border-darkBorder pb-4">
+                <i class="fas fa-key text-brandGold mr-3"></i> Cambiar Contraseña
+            </h2>
 
-                <input type="hidden"
-                       th:name="${_csrf.parameterName}"
-                       th:value="${_csrf.token}" />
+            <form th:action="@{/profile/change-password}" method="post" id="pwdForm" class="space-y-6" novalidate>
 
-                <div>
-                    <label class="font-bold">Contraseña actual</label>
-                    <input name="currentPassword"
-                           type="password"
-                           required
-                           class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <!-- Contraseña Actual -->
+                <div class="group input-wrapper relative">
+                    <label class="flex items-center text-sm font-bold text-gray-300 mb-2 group-focus-within:text-brandGold transition-colors">
+                        Contraseña actual
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-brandGold transition-colors">
+                            <i class="fas fa-unlock-alt"></i>
+                        </div>
+                        <input name="currentPassword" id="currentPassword" type="password" required placeholder="Ingresa tu contraseña actual"
+                               class="w-full pl-11 pr-12 py-3.5 min-h-[48px] rounded-xl bg-darkBg/50 border border-darkBorder text-textMain placeholder-gray-600 outline-none focus:border-brandGold focus:ring-2 focus:ring-brandGold/30 focus:shadow-[0_0_15px_rgba(255,215,0,0.15)] transition-all duration-300 pwd-input">
+
+                        <button type="button" class="toggle-pwd absolute inset-y-0 right-0 px-4 flex items-center text-gray-500 hover:text-white transition-colors">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <div>
-                    <label class="font-bold">Nueva contraseña</label>
-                    <input name="newPassword"
-                           type="password"
-                           required
-                           class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+                <!-- Nueva Contraseña -->
+                <div class="group input-wrapper relative">
+                    <label class="flex items-center text-sm font-bold text-gray-300 mb-2 group-focus-within:text-brandCyan transition-colors justify-between">
+                        <span>Nueva contraseña</span>
+                        <!-- Icono Tooltip info requerimientos -->
+                        <span class="text-gray-500 hover:text-brandCyan cursor-help tooltip-trigger" data-tooltip="Mínimo 8 caracteres, números y símbolos"><i class="fas fa-info-circle"></i></span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-brandCyan transition-colors">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <input name="newPassword" id="newPassword" type="password" required placeholder="Crea una contraseña fuerte"
+                               class="w-full pl-11 pr-12 py-3.5 min-h-[48px] rounded-xl bg-darkBg/50 border border-darkBorder text-textMain placeholder-gray-600 outline-none focus:border-brandCyan focus:ring-2 focus:ring-brandCyan/30 focus:shadow-[0_0_15px_rgba(0,217,255,0.15)] transition-all duration-300 pwd-input">
+
+                        <button type="button" class="toggle-pwd absolute inset-y-0 right-0 px-4 flex items-center text-gray-500 hover:text-white transition-colors">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <!-- Password Strength Bar -->
+                    <div class="mt-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-bold text-gray-500" id="pwd-strength-text">Fuerza de la contraseña</span>
+                        </div>
+                        <div class="flex gap-1 h-1.5 w-full bg-darkBg rounded-full overflow-hidden">
+                            <div id="str-1" class="h-full w-1/3 bg-darkBorder transition-colors duration-300"></div>
+                            <div id="str-2" class="h-full w-1/3 bg-darkBorder transition-colors duration-300"></div>
+                            <div id="str-3" class="h-full w-1/3 bg-darkBorder transition-colors duration-300"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <div>
-                    <label class="font-bold">Confirmar nueva contraseña</label>
-                    <input name="confirmPassword"
-                           type="password"
-                           required
-                           class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+                <!-- Confirmar Contraseña -->
+                <div class="group input-wrapper relative">
+                    <label class="flex items-center text-sm font-bold text-gray-300 mb-2 group-focus-within:text-brandCyan transition-colors">
+                        Confirmar nueva contraseña
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-brandCyan transition-colors">
+                            <i class="fas fa-check-double"></i>
+                        </div>
+                        <input name="confirmPassword" id="confirmPassword" type="password" required placeholder="Repite la nueva contraseña"
+                               class="w-full pl-11 pr-12 py-3.5 min-h-[48px] rounded-xl bg-darkBg/50 border border-darkBorder text-textMain placeholder-gray-600 outline-none focus:border-brandCyan focus:ring-2 focus:ring-brandCyan/30 transition-all duration-300 pwd-input validate-match">
+
+                        <button type="button" class="toggle-pwd absolute inset-y-0 right-0 px-4 flex items-center text-gray-500 hover:text-white transition-colors">
+                            <i class="fas fa-eye"></i>
+                        </button>
+
+                        <!-- Icono Status Match -->
+                        <div class="absolute inset-y-0 right-10 pr-2 flex items-center pointer-events-none opacity-0 transition-opacity" id="match-icon">
+                            <i class="fas fa-check-circle text-green-500 hidden valid-icon"></i>
+                            <i class="fas fa-times-circle text-red-500 hidden invalid-icon"></i>
+                        </div>
+                    </div>
+                    <p class="error-msg text-red-400 text-xs mt-1.5 hidden opacity-0 transition-opacity font-medium">Las contraseñas no coinciden.</p>
                 </div>
 
-                <button type="submit"
-                        class="w-full bg-[#ffd700] hover:bg-yellow-300 text-black px-5 py-3 rounded-2xl font-black">
-                    Actualizar contraseña
+                <!-- Botón Principal Premium -->
+                <button type="submit" id="submitBtn"
+                        class="w-full relative overflow-hidden bg-gradient-to-r from-brandGold to-yellow-500 hover:to-yellow-400 text-black px-5 py-4 min-h-[48px] rounded-2xl font-black text-lg shadow-[0_5px_15px_rgba(255,215,0,0.3)] hover:shadow-[0_8px_25px_rgba(255,215,0,0.5)] transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 ripple-btn mt-4 flex items-center justify-center gap-2 group">
+                    <span id="btnText"><i class="fas fa-save mr-1 group-hover:scale-110 transition-transform"></i> Actualizar contraseña</span>
+
+                    <!-- Loading Spinner (Oculto) -->
+                    <svg id="btnSpinner" class="hidden animate-spin h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                 </button>
 
             </form>
         </section>
 
     </div>
-
 </div>
+
+<!-- SCRIPTS UX -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // 1. Copy to Clipboard con Toast Feedback
+        const copyBtns = document.querySelectorAll('.copy-btn');
+        const toast = document.getElementById('toast');
+
+        copyBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const targetText = e.currentTarget.parentElement.querySelector('.copy-target').textContent;
+                navigator.clipboard.writeText(targetText).then(() => {
+                    // Mostrar Toast
+                    toast.classList.remove('hidden', 'opacity-0');
+                    toast.classList.add('animate-slide-toast');
+
+                    setTimeout(() => {
+                        toast.classList.remove('animate-slide-toast');
+                        toast.classList.add('opacity-0');
+                        setTimeout(() => toast.classList.add('hidden'), 300); // Esperar CSS transition
+                    }, 2500);
+                });
+            });
+        });
+
+        // 2. Ripple Effect Buttons
+        const rippleButtons = document.querySelectorAll('.ripple-btn');
+        rippleButtons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const ripples = document.createElement('span');
+                ripples.style.left = x + 'px';
+                ripples.style.top = y + 'px';
+                ripples.classList.add('ripple');
+                this.appendChild(ripples);
+                setTimeout(() => ripples.remove(), 600);
+            });
+        });
+
+        // 3. Toggle Show/Hide Password
+        const toggleBtns = document.querySelectorAll('.toggle-pwd');
+        toggleBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const input = this.previousElementSibling;
+                const icon = this.querySelector('i');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash', 'text-brandCyan');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash', 'text-brandCyan');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        });
+
+        // 4. Password Strength Meter
+        const newPwdInput = document.getElementById('newPassword');
+        const strText = document.getElementById('pwd-strength-text');
+        const str1 = document.getElementById('str-1');
+        const str2 = document.getElementById('str-2');
+        const str3 = document.getElementById('str-3');
+
+        newPwdInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            let strength = 0;
+
+            // Reseteo
+            [str1, str2, str3].forEach(el => el.className = 'h-full w-1/3 bg-darkBorder transition-colors duration-300');
+            strText.textContent = "Fuerza de la contraseña";
+            strText.className = "text-xs font-bold text-gray-500";
+
+            if(val.length > 0) {
+                strength++;
+                if(val.length >= 6) strength++;
+                if(val.length >= 8 && /[A-Z]/.test(val) && /[0-9!@#\$%\^\&*\)\(+=._-]/.test(val)) strength++;
+
+                if(strength === 1) {
+                    str1.classList.replace('bg-darkBorder', 'bg-red-500');
+                    strText.textContent = "Débil";
+                    strText.classList.replace('text-gray-500', 'text-red-500');
+                } else if(strength === 2) {
+                    str1.classList.replace('bg-darkBorder', 'bg-yellow-500');
+                    str2.classList.replace('bg-darkBorder', 'bg-yellow-500');
+                    strText.textContent = "Media";
+                    strText.classList.replace('text-gray-500', 'text-yellow-500');
+                } else if(strength === 3) {
+                    str1.classList.replace('bg-darkBorder', 'bg-green-500');
+                    str2.classList.replace('bg-darkBorder', 'bg-green-500');
+                    str3.classList.replace('bg-darkBorder', 'bg-green-500');
+                    strText.textContent = "Fuerte";
+                    strText.classList.replace('text-gray-500', 'text-green-500');
+                }
+            }
+            validateMatch(); // Re-validar coincidencia al cambiar pwd base
+        });
+
+        // 5. Validar Match de Contraseñas (Real-time)
+        const confirmPwdInput = document.getElementById('confirmPassword');
+        const matchIconContainer = document.getElementById('match-icon');
+        const validIcon = matchIconContainer.querySelector('.valid-icon');
+        const invalidIcon = matchIconContainer.querySelector('.invalid-icon');
+        const errorMsg = confirmPwdInput.closest('.input-wrapper').querySelector('.error-msg');
+
+        const validateMatch = () => {
+            if(confirmPwdInput.value.length === 0) {
+                matchIconContainer.classList.add('opacity-0');
+                errorMsg.classList.add('hidden');
+                confirmPwdInput.classList.remove('border-red-500', 'border-green-500');
+                return true;
+            }
+
+            matchIconContainer.classList.remove('opacity-0');
+
+            if(confirmPwdInput.value === newPwdInput.value) {
+                // Match
+                confirmPwdInput.classList.remove('border-red-500', 'focus:border-red-500');
+                confirmPwdInput.classList.add('border-green-500', 'focus:border-green-500');
+                validIcon.classList.remove('hidden');
+                invalidIcon.classList.add('hidden');
+                errorMsg.classList.add('hidden');
+                errorMsg.classList.remove('opacity-100');
+                return true;
+            } else {
+                // No Match
+                confirmPwdInput.classList.remove('border-green-500', 'focus:border-green-500');
+                confirmPwdInput.classList.add('border-red-500', 'focus:border-red-500');
+                validIcon.classList.add('hidden');
+                invalidIcon.classList.remove('hidden');
+                errorMsg.classList.remove('hidden');
+                setTimeout(() => errorMsg.classList.add('opacity-100'), 10);
+                return false;
+            }
+        };
+
+        confirmPwdInput.addEventListener('input', validateMatch);
+
+        // 6. Submit y Loading State
+        const form = document.getElementById('pwdForm');
+        form.addEventListener('submit', (e) => {
+            let isValid = true;
+
+            // Check HTML5 required
+            const inputs = form.querySelectorAll('input[required]');
+            inputs.forEach(inp => {
+                if(!inp.value) isValid = false;
+            });
+
+            // Check Match
+            if(!validateMatch()) isValid = false;
+
+            if(!isValid) {
+                e.preventDefault();
+                // Animación Shake en el botón
+                const btn = document.getElementById('submitBtn');
+                btn.classList.remove('animate-shake');
+                void btn.offsetWidth; // trigger reflow
+                btn.classList.add('animate-shake');
+            } else {
+                // Activar Loading
+                const btnText = document.getElementById('btnText');
+                const btnSpinner = document.getElementById('btnSpinner');
+                const btn = document.getElementById('submitBtn');
+
+                btnText.classList.add('hidden');
+                btnSpinner.classList.remove('hidden');
+                btn.classList.add('pointer-events-none', 'opacity-90');
+            }
+        });
+
+        // 7. Tooltips Dinámicos (Positioning on Hover vía JS/CSS - Simple Custom impl)
+        const tooltips = document.querySelectorAll('.tooltip-trigger');
+        tooltips.forEach(trigger => {
+            trigger.addEventListener('mouseenter', function() {
+                const tipText = this.getAttribute('data-tooltip');
+                if(!tipText) return;
+
+                const tip = document.createElement('div');
+                tip.className = 'absolute bg-black text-white text-xs px-2.5 py-1.5 rounded-lg z-50 whitespace-nowrap animate-fade-in-up -mt-10 pointer-events-none custom-tooltip';
+                tip.textContent = tipText;
+
+                this.appendChild(tip);
+            });
+            trigger.addEventListener('mouseleave', function() {
+                const tip = this.querySelector('.custom-tooltip');
+                if(tip) tip.remove();
+            });
+        });
+
+    });
+</script>
 
 </body>
 </html>
