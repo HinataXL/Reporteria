@@ -2,6 +2,7 @@ package com.erick.soporte.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import com.erick.soporte.entity.IssueType;
 
 @Entity
 @Table(name = "conversations")
@@ -51,6 +52,15 @@ public class Conversation {
 
     @Column(name = "agente_nombre")
     private String agenteNombre;
+
+    private Integer issueTypeId;
+    private Integer rejectionCodeId;
+
+    private Boolean ticketAperturado = false;
+    private String numeroTicket;
+
+    private Boolean conversacionTransferida = false;
+    private Integer departmentId;
 
     // Getters y Setters
 
@@ -169,4 +179,53 @@ public class Conversation {
     public void setAgenteNombre(String agenteNombre) {
         this.agenteNombre = agenteNombre;
     }
+
+    public Integer getIssueTypeId() {
+        return issueTypeId;
+    }
+
+    public void setIssueTypeId(Integer issueTypeId) {
+        this.issueTypeId = issueTypeId;
+    }
+
+    public Integer getRejectionCodeId() {
+        return rejectionCodeId;
+    }
+
+    public void setRejectionCodeId(Integer rejectionCodeId) {
+        this.rejectionCodeId = rejectionCodeId;
+    }
+
+    public Boolean getTicketAperturado() {
+        return ticketAperturado;
+    }
+
+    public void setTicketAperturado(Boolean ticketAperturado) {
+        this.ticketAperturado = ticketAperturado;
+    }
+
+    public String getNumeroTicket() {
+        return numeroTicket;
+    }
+
+    public void setNumeroTicket(String numeroTicket) {
+        this.numeroTicket = numeroTicket;
+    }
+
+    public Boolean getConversacionTransferida() {
+        return conversacionTransferida;
+    }
+
+    public void setConversacionTransferida(Boolean conversacionTransferida) {
+        this.conversacionTransferida = conversacionTransferida;
+    }
+
+    public Integer getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(Integer departmentId) {
+        this.departmentId = departmentId;
+    }
+    
 }
