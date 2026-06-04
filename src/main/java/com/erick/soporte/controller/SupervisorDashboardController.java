@@ -76,6 +76,13 @@ public class SupervisorDashboardController {
                         Collectors.counting()
                 ));
 
+        Map<String, Long> porAsunto = conversations.stream()
+                .collect(Collectors.groupingBy(
+                        c -> c.getAsunto() != null ? c.getAsunto() : "Sin asunto",
+                        LinkedHashMap::new,
+                        Collectors.counting()
+                ));
+
         model.addAttribute("total", total);
         model.addAttribute("pendientes", pendientes);
         model.addAttribute("resueltas", resueltas);
@@ -93,6 +100,8 @@ public class SupervisorDashboardController {
 
         model.addAttribute("productividadLabels", productividadDiaria.keySet());
         model.addAttribute("productividadValues", productividadDiaria.values());
+        model.addAttribute("asuntoLabels", porAsunto.keySet());
+        model.addAttribute("asuntoValues", porAsunto.values());
 
         return "supervisor/dashboard";
     }

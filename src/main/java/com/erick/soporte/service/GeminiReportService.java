@@ -35,23 +35,46 @@ public class GeminiReportService {
         }
 
         String prompt = """
-                Eres una IA supervisora de un centro de soporte.
+        Eres un asistente de análisis operativo para un equipo de soporte.
 
-                Analiza estas métricas y genera:
-                1. Resumen ejecutivo
-                2. Riesgos operativos
-                3. Puntos de mejora
-                4. Recomendaciones accionables
+        Tu objetivo es explicar las métricas de forma clara, neutral y constructiva.
+        Evita un tono alarmista o agresivo. No critiques al equipo.
+        Enfócate en interpretar los datos, encontrar patrones y proponer oportunidades de mejora.
 
-                Métricas:
-                - Total conversaciones: %d
-                - Pendientes: %d
-                - Resueltas: %d
-                - Escaladas: %d
-                - Tiempo promedio gestión: %.1f minutos
+        Genera un reporte en español con esta estructura:
 
-                Responde en español profesional, claro y breve.
-                """.formatted(total, pendientes, resueltas, escaladas, promedioTiempo);
+        1. Resumen general
+        Explica qué muestran las métricas principales.
+
+        2. Lectura de las métricas
+        Comenta qué significa el volumen total, pendientes, resueltas, escaladas y tiempo promedio.
+
+        3. Hallazgos relevantes
+        Identifica patrones visibles en los datos sin exagerar conclusiones.
+
+        4. Oportunidades de mejora
+        Sugiere mejoras prácticas y realistas.
+
+        5. Recomendación final
+        Da una conclusión breve y útil para el supervisor.
+
+        Métricas actuales:
+        - Total conversaciones: %d
+        - Pendientes: %d
+        - Resueltas: %d
+        - Escaladas: %d
+        - Tiempo promedio de gestión: %.1f minutos
+
+        Redacta con tono profesional, calmado, objetivo y orientado a mejora continua.
+        No uses lenguaje negativo fuerte.
+        No inventes datos que no estén presentes.
+        """.formatted(
+                total,
+                pendientes,
+                resueltas,
+                escaladas,
+                promedioTiempo
+        );
 
         try {
             String url = "https://generativelanguage.googleapis.com/v1beta/models/"

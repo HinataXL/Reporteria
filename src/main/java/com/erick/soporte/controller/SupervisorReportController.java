@@ -10,6 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,6 +24,27 @@ public class SupervisorReportController {
     private final ConversationRepository conversationRepository;
     private final GeminiReportService geminiReportService;
     private final PdfReportService pdfReportService;
+    private String channelName(Long id) {
+        if (id == null) return "Desconocido";
+
+        return switch (id.intValue()) {
+            case 1 -> "WhatsApp";
+            case 2 -> "Instagram";
+            case 3 -> "Facebook";
+            default -> "Desconocido";
+        };
+    }
+
+    private String priorityName(Long id) {
+        if (id == null) return "Desconocida";
+
+        return switch (id.intValue()) {
+            case 1 -> "Baja";
+            case 2 -> "Normal";
+            case 3 -> "Alta";
+            default -> "Desconocida";
+        };
+    }
 
     public SupervisorReportController(
             ConversationRepository conversationRepository,
@@ -36,6 +60,27 @@ public class SupervisorReportController {
     public ResponseEntity<byte[]> downloadPdf() {
 
         List<Conversation> conversations = conversationRepository.findAll();
+
+        Map<String, Long> porCanal = conversations.stream()
+                .collect(Collectors.groupingBy(
+                        c -> channelName(c.getChannelId()),
+                        LinkedHashMap::new,
+                        Collectors.counting()
+                ));
+
+        Map<String, Long> porPrioridad = conversations.stream()
+                .collect(Collectors.groupingBy(
+                        c -> priorityName(c.getPriorityId()),
+                        LinkedHashMap::new,
+                        Collectors.counting()
+                ));
+
+        Map<String, Long> porAsunto = conversations.stream()
+                .collect(Collectors.groupingBy(
+                        c -> c.getAsunto() != null ? c.getAsunto() : "Sin asunto",
+                        LinkedHashMap::new,
+                        Collectors.counting()
+                ));
 
         long total = conversations.size();
 
@@ -71,7 +116,10 @@ public class SupervisorReportController {
                 resueltas,
                 escaladas,
                 promedioTiempo,
-                aiReport
+                aiReport,
+                porCanal,
+                porPrioridad,
+                porAsunto
         );
 
         String fileName = "ReporteSupervisor_" +

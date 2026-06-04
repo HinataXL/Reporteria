@@ -146,8 +146,110 @@
 </head>
 
 <body class="text-[#F4F0E6] min-h-screen">
+<aside class="fixed left-0 top-0 h-screen w-72 bg-[#0B1F1B] border-r border-white/10 p-5 z-50">
 
-<div class="max-w-7xl mx-auto p-6">
+    <div class="mb-12">
+
+        <div class="bg-white/10 border border-white/10 px-5 py-3 rounded-3xl shadow-lg">
+            <div class="flex items-center gap-3">
+
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#00d9ff] to-[#ffd700] text-black font-black flex items-center justify-center">
+                    👤
+                </div>
+
+                <div>
+                    <p class="font-black leading-tight"
+                       th:text="${userName}">
+                        Erick Pedroza
+                    </p>
+
+                    <p class="text-xs text-[#ffd700] font-bold"
+                       th:text="${userRole}">
+                        ADMIN
+                    </p>
+
+                    <p class="text-xs opacity-50"
+                       th:text="${userEmail}">
+                        admin@soporte.com
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="mb-8">
+
+        <h2 class="text-3xl font-black text-white">
+            Menú
+        </h2>
+
+
+    </div>
+
+    <nav class="space-y-3">
+
+        <a href="/supervisor/dashboard"
+           sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"
+           class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 hover:bg-[#00d9ff] hover:text-black transition font-black">
+            <span>📊</span>
+            <span>Dashboard</span>
+        </a>
+
+        <a href="/conversations"
+           sec:authorize="hasAnyRole('ADMIN')"
+           class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 hover:bg-[#ffd700] hover:text-black transition font-black">
+            <span>💬</span>
+            <span>Conversaciones</span>
+        </a>
+
+        <a href="/conversations/create"
+           class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 hover:bg-[#ffd700] hover:text-black transition font-black">
+            <span>💬</span>
+           <span>Nueva conversación</span>
+        </a>
+
+        <a href="/profile"
+           class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/20 transition font-black">
+            <span>👤</span>
+            <span>Mi perfil</span>
+        </a>
+
+        <a href="/users"
+           sec:authorize="hasRole('ADMIN')"
+           class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 hover:bg-purple-400 hover:text-black transition font-black">
+            <span>👥</span>
+            <span>Usuarios</span>
+        </a>
+
+        <a href="/conversations/export/csv"
+           sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"
+           class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 hover:bg-green-400 hover:text-black transition font-black">
+            <span>📊</span>
+            <span>Exportar CSV</span>
+        </a>
+
+    </nav>
+
+    <div class="absolute bottom-5 left-5 right-5">
+
+        <form th:action="@{/logout}" method="post">
+            <input type="hidden"
+                   th:name="${_csrf.parameterName}"
+                   th:value="${_csrf.token}" />
+
+            <button type="submit"
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#ff6b6b] hover:bg-red-400 text-white transition font-black">
+                <span>🚪</span>
+                <span>Cerrar sesión</span>
+            </button>
+        </form>
+
+    </div>
+
+</aside>
+<div class="ml-72 p-6">
 
     <header class="flex flex-col xl:flex-row xl:justify-between xl:items-start gap-6 mb-8">
 
@@ -167,58 +269,7 @@
 
         <div class="flex flex-col lg:flex-row lg:items-center gap-3">
 
-            <div class="bg-white/10 border border-white/10 px-5 py-3 rounded-3xl shadow-lg">
-                <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#00d9ff] to-[#ffd700] text-black font-black flex items-center justify-center">
-                        👤
-                    </div>
 
-                    <div>
-                        <p class="font-black leading-tight" th:text="${userName}">Erick Pedroza</p>
-                        <p class="text-xs text-[#ffd700] font-bold" th:text="${userRole}">ADMIN</p>
-                        <p class="text-xs opacity-50" th:text="${userEmail}">admin@soporte.com</p>
-                    </div>
-                </div>
-            </div>
-
-            <a href="/profile"
-               class="bg-white/10 hover:bg-white/15 border border-white/10 text-white px-5 py-3 rounded-2xl font-black text-center">
-                Mi perfil
-            </a>
-
-            <a href="/conversations/create"
-               class="bg-[#ffd700] hover:bg-yellow-300 transition text-black px-5 py-3 rounded-2xl font-black text-center shadow-lg shadow-yellow-500/20">
-                + Nueva conversación
-            </a>
-
-            <a href="/admin/dashboard"
-               sec:authorize="hasRole('ADMIN')"
-               class="bg-[#ffd700] text-black px-5 py-3 rounded-2xl font-black text-center">
-                Panel Admin
-            </a>
-
-            <a href="/users"
-               sec:authorize="hasRole('ADMIN')"
-               class="bg-purple-500 hover:bg-purple-400 transition text-white px-5 py-3 rounded-2xl font-black text-center">
-                Usuarios
-            </a>
-
-            <a href="/conversations/export/csv"
-               sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"
-               class="bg-[#00d9ff] hover:bg-cyan-300 transition text-black px-5 py-3 rounded-2xl font-black text-center">
-                Exportar CSV
-            </a>
-
-            <form th:action="@{/logout}" method="post">
-                <input type="hidden"
-                       th:name="${_csrf.parameterName}"
-                       th:value="${_csrf.token}" />
-
-                <button type="submit"
-                        class="bg-[#ff6b6b] hover:bg-red-400 transition text-white px-5 py-3 rounded-2xl font-black w-full">
-                    Cerrar sesión
-                </button>
-            </form>
 
         </div>
 

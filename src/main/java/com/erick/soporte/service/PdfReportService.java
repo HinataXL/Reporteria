@@ -3,8 +3,8 @@ package com.erick.soporte.service;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import org.springframework.stereotype.Service;
 
-
 import java.io.ByteArrayOutputStream;
+import java.util.Map;
 
 @Service
 public class PdfReportService {
@@ -15,7 +15,10 @@ public class PdfReportService {
             long resueltas,
             long escaladas,
             double promedioTiempo,
-            String aiReport
+            String aiReport,
+            Map<String, Long> porCanal,
+            Map<String, Long> porPrioridad,
+            Map<String, Long> porAsunto
     ) {
         try {
             String html = buildPdfHtml(
@@ -24,7 +27,10 @@ public class PdfReportService {
                     resueltas,
                     escaladas,
                     promedioTiempo,
-                    aiReport
+                    aiReport,
+                    porCanal,
+                    porPrioridad,
+                    porAsunto
             );
 
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -41,6 +47,87 @@ public class PdfReportService {
             throw new RuntimeException("Error generando PDF", e);
         }
     }
+    private String buildPieChartSvg(Map<String, Long> data) {
+        if (data == null || data.isEmpty()) {
+            return "<p>No hay datos disponibles.</p>";
+        }
+
+        long total = data.values().stream().mapToLong(Long::longValue).sum();
+
+        if (total == 0) {
+            return "<p>No hay datos disponibles.</p>";
+        }
+
+        String[] colors = {
+                "#1BA0C8",
+                "#FFD700",
+                "#00A86B",
+                "#FF6B6B",
+                "#8B5CF6",
+                "#F97316",
+                "#22C55E",
+                "#E879F9"
+        };
+
+        double cumulative = 0;
+        StringBuilder svg = new StringBuilder();
+
+        svg.append("""
+            <svg width="260" height="260" viewBox="0 0 42 42">
+            """);
+
+        int index = 0;
+
+        for (Map.Entry<String, Long> entry : data.entrySet()) {
+            double value = entry.getValue();
+            double percent = value / total;
+            double dash = percent * 100;
+            double offset = 100 - cumulative;
+
+            svg.append("""
+                <circle r="15.9155" cx="21" cy="21"
+                        fill="transparent"
+                        stroke="%s"
+                        stroke-width="10"
+                        stroke-dasharray="%.2f %.2f"
+                        stroke-dashoffset="%.2f">
+                </circle>
+                """.formatted(
+                    colors[index % colors.length],
+                    dash,
+                    100 - dash,
+                    offset
+            ));
+
+            cumulative += dash;
+            index++;
+        }
+
+        svg.append("</svg>");
+
+        svg.append("<div class='legend'>");
+
+        index = 0;
+
+        for (Map.Entry<String, Long> entry : data.entrySet()) {
+            svg.append("""
+                <div class="legend-item">
+                    <span class="legend-color" style="background:%s;"></span>
+                    <span>%s: <strong>%d</strong></span>
+                </div>
+                """.formatted(
+                    colors[index % colors.length],
+                    escapeHtml(entry.getKey()),
+                    entry.getValue()
+            ));
+
+            index++;
+        }
+
+        svg.append("</div>");
+
+        return svg.toString();
+    }
 
     private String buildPdfHtml(
             long total,
@@ -48,7 +135,10 @@ public class PdfReportService {
             long resueltas,
             long escaladas,
             double promedioTiempo,
-            String aiReport
+            String aiReport,
+            Map<String, Long> porCanal,
+            Map<String, Long> porPrioridad,
+            Map<String, Long> porAsunto
     ) {
         return """
                 <html>
@@ -59,7 +149,29 @@ public class PdfReportService {
                             size: A4;
                             margin: 24px;
                         }
-
+                        .chart-row {
+                            text-align: center;
+                        }
+                
+                        .legend {
+                            margin-top: 12px;
+                            text-align: left;
+                        }
+                
+                        .legend-item {
+                            font-size: 12px;
+                            margin-bottom: 6px;
+                            color: #243B44;
+                        }
+                
+                        .legend-color {
+                            display: inline-block;
+                            width: 12px;
+                            height: 12px;
+                            border-radius: 50%%;
+                            margin-right: 8px;
+                        }
+                        
                         body {
                             font-family: Arial, sans-serif;
                             color: #10231F;
@@ -237,7 +349,27 @@ public class PdfReportService {
                             <strong>%.1f minutos</strong> por conversación registrada.
                         </div>
                     </div>
-
+                    <div class="section">
+                        <h2 class="section-title">Distribución por canal</h2>
+                        <div class="chart-row">
+                            %s
+                        </div>
+                    </div>
+                
+                    <div class="section">
+                        <h2 class="section-title">Distribución por prioridad</h2>
+                        <div class="chart-row">
+                            %s
+                        </div>
+                    </div>
+                
+                    <div class="section">
+                        <h2 class="section-title">Conversaciones por asunto</h2>
+                        <div class="chart-row">
+                            %s
+                        </div>
+                    </div>
+                    
                     <div class="section">
                         <h2 class="section-title">Análisis IA</h2>
                         <div class="ai-report">%s</div>
@@ -268,7 +400,11 @@ public class PdfReportService {
                 resueltas,
                 escaladas,
                 promedioTiempo,
+                buildPieChartSvg(porCanal),
+                buildPieChartSvg(porPrioridad),
+                buildPieChartSvg(porAsunto),
                 escapeHtml(aiReport)
+
         );
     }
 

@@ -88,22 +88,29 @@
   <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-5 mb-8 fade-up">
     <div>
       <p class="text-[#1BA0C8] text-sm font-bold uppercase tracking-[0.25em] mb-2">
-        Panel de Métricas
+        Panel de supervisión
       </p>
 
       <h1 class="text-5xl font-black tracking-tight">
-        Dashboard Métricas
+        Dashboard Métricas Generales
       </h1>
 
       <p class="text-slate-300 text-sm mt-2">
-        Métricas generales del equipo de soporte y productividad diaria.
+        Métricas generales skill soporte y productividad diaria.
       </p>
     </div>
 
-    <a href="/conversations"
-       class="bg-[#FFD700] hover:bg-yellow-300 transition text-black px-6 py-3 rounded-2xl font-black shadow-lg shadow-yellow-500/20">
-      Ver conversaciones
-    </a>
+    <div class="flex flex-wrap gap-3">
+      <a href="/supervisor/report/pdf"
+         class="bg-[#00d9ff] hover:bg-cyan-300 transition text-black px-6 py-3 rounded-2xl font-black shadow-lg">
+        📄 Descargar PDF
+      </a>
+
+      <a href="/conversations"
+         class="bg-[#FFD700] hover:bg-yellow-300 transition text-black px-6 py-3 rounded-2xl font-black shadow-lg shadow-yellow-500/20">
+        Ver conversaciones
+      </a>
+    </div>
   </header>
 
   <section class="grid md:grid-cols-4 gap-6 mb-8">
@@ -146,6 +153,53 @@
         </div>
         <div class="bg-red-400/20 text-red-300 rounded-2xl px-3 py-2 text-xl">🚨</div>
       </div>
+    </div>
+
+  </section>
+
+  <section class="dashboard-card rounded-3xl p-6 mb-8 fade-up delay-2">
+
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+      <div>
+        <h2 class="text-3xl font-black">Análisis IA del supervisor</h2>
+        <p class="text-slate-300 text-sm mt-1">
+          Reporte automático basado en las métricas actuales.
+        </p>
+      </div>
+
+      <button onclick="generateAiReport()"
+              class="bg-[#FFD700] hover:bg-yellow-300 transition text-black px-5 py-3 rounded-2xl font-black">
+        Generar análisis IA
+      </button>
+    </div>
+
+    <div id="aiReportBox"
+         class="bg-white/5 border border-white/10 rounded-3xl p-5 hidden">
+
+      <div class="flex items-center gap-3 mb-4">
+                <span class="bg-[#00d9ff]/20 text-[#00d9ff] px-3 py-1 rounded-full font-black text-sm">
+                    IA
+                </span>
+
+        <span id="aiRiskBadge"
+              class="px-3 py-1 rounded-full font-black text-sm bg-green-500/20 text-green-300">
+                    Disponible
+                </span>
+      </div>
+
+      <h3 id="aiReportTitle"
+          class="text-2xl font-black mb-3">
+        Título
+      </h3>
+
+      <p id="aiReportSummary"
+         class="text-slate-200 leading-relaxed mb-5">
+        Resumen
+      </p>
+
+      <ul id="aiRecommendations"
+          class="space-y-3 text-slate-200">
+      </ul>
     </div>
 
   </section>
@@ -196,7 +250,7 @@
       </h2>
 
       <p class="text-slate-300 text-sm mb-5">
-        Cantidad de conversaciones asignadas por usuario.
+        Cantidad de conversaciones por usuario.
       </p>
 
       <div class="h-[260px] chart-box">
@@ -232,66 +286,22 @@
       </div>
     </div>
 
-  </section>
-  <div>
+    <div class="dashboard-card rounded-3xl p-6 fade-up delay-4 lg:col-span-3">
+      <h2 class="text-2xl font-black mb-2">
+        Chats por asunto
+      </h2>
 
-  </div>
-  <section class="dashboard-card rounded-3xl p-6 mb-8 fade-up delay-2">
-
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
-      <div>
-        <h2 class="text-3xl font-black">Análisis Metricas IA</h2>
-        <p class="text-slate-300 text-sm mt-1">
-          Reporte automático basado en las métricas actuales.
-        </p>
-      </div>
-
-      <button onclick="generateAiReport()"
-              class="bg-[#FFD700] hover:bg-yellow-300 transition text-black px-5 py-3 rounded-2xl font-black">
-        Generar análisis IA
-      </button>
-    </div>
-    <a href="/supervisor/report/pdf"
-       class="bg-[#FFD700] hover:bg-yellow-300 text-black px-5 py-3 rounded-2xl font-black">
-      📄 Descargar Reporte PDF
-    </a>
-    <div id="aiReportBox"
-         class="bg-white/5 border border-white/10 rounded-3xl p-5 hidden">
-
-      <div class="flex items-center gap-3 mb-4">
-            <span class="bg-[#00d9ff]/20 text-[#00d9ff] px-3 py-1 rounded-full font-black text-sm">
-                IA
-            </span>
-
-        <span id="aiRiskBadge"
-              class="px-3 py-1 rounded-full font-black text-sm">
-                Riesgo
-            </span>
-      </div>
-
-      <h3 id="aiReportTitle"
-          class="text-2xl font-black mb-3">
-        Título
-      </h3>
-
-      <p id="aiReportSummary"
-         class="text-slate-200 leading-relaxed mb-5">
-        Resumen
+      <p class="text-slate-300 text-sm mb-5">
+        Cantidad de conversaciones agrupadas por problema registrado.
       </p>
 
-      <div>
-        <h4 class="font-black text-[#FFD700] mb-3">
-          Puntos de mejora
-        </h4>
-
-        <ul id="aiRecommendations"
-            class="space-y-3 text-slate-200">
-        </ul>
+      <div class="h-[380px] chart-box">
+        <canvas id="issueChart"></canvas>
       </div>
-
     </div>
 
   </section>
+
 </div>
 
 <script th:inline="javascript">
@@ -311,6 +321,9 @@
 
   const productividadLabels = /*[[${productividadLabels}]]*/ [];
   const productividadValues = /*[[${productividadValues}]]*/ [];
+
+  const asuntoLabels = /*[[${asuntoLabels}]]*/ [];
+  const asuntoValues = /*[[${asuntoValues}]]*/ [];
 
   function createBlueGradient(ctx) {
     const gradient = ctx.createLinearGradient(0, 0, 0, 280);
@@ -342,6 +355,7 @@
   const agentCtx = document.getElementById('agentChart').getContext('2d');
   const channelCtx = document.getElementById('channelChart').getContext('2d');
   const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+  const issueCtx = document.getElementById('issueChart').getContext('2d');
 
   const dailyChart = new Chart(dailyCtx, {
     type: 'line',
@@ -364,27 +378,13 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: {
-        duration: 900,
-        easing: 'easeOutQuart'
-      },
-      plugins: {
-        tooltip: baseTooltip()
-      },
+      plugins: { tooltip: baseTooltip() },
       scales: {
-        x: {
-          grid: {
-            color: 'rgba(255,255,255,0.06)'
-          }
-        },
+        x: { grid: { color: 'rgba(255,255,255,0.06)' } },
         y: {
           beginAtZero: true,
-          ticks: {
-            precision: 0
-          },
-          grid: {
-            color: 'rgba(255,255,255,0.06)'
-          }
+          ticks: { precision: 0 },
+          grid: { color: 'rgba(255,255,255,0.06)' }
         }
       }
     }
@@ -407,27 +407,13 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: {
-        duration: 900,
-        easing: 'easeOutQuart'
-      },
-      plugins: {
-        tooltip: baseTooltip()
-      },
+      plugins: { tooltip: baseTooltip() },
       scales: {
-        x: {
-          grid: {
-            display: false
-          }
-        },
+        x: { grid: { display: false } },
         y: {
           beginAtZero: true,
-          ticks: {
-            precision: 0
-          },
-          grid: {
-            color: 'rgba(255,255,255,0.06)'
-          }
+          ticks: { precision: 0 },
+          grid: { color: 'rgba(255,255,255,0.06)' }
         }
       }
     }
@@ -439,13 +425,7 @@
       labels: canalLabels,
       datasets: [{
         data: canalValues,
-        backgroundColor: [
-          '#1BA0C8',
-          '#22D3EE',
-          '#FFD700',
-          '#34D399',
-          '#A78BFA'
-        ],
+        backgroundColor: ['#1BA0C8', '#22D3EE', '#FFD700', '#34D399', '#A78BFA'],
         borderColor: '#1a2f3a',
         borderWidth: 4,
         hoverOffset: 16
@@ -455,13 +435,7 @@
       responsive: true,
       maintainAspectRatio: false,
       cutout: '62%',
-      animation: {
-        animateRotate: true,
-        duration: 900
-      },
-      plugins: {
-        tooltip: baseTooltip()
-      }
+      plugins: { tooltip: baseTooltip() }
     }
   });
 
@@ -471,12 +445,7 @@
       labels: prioridadLabels,
       datasets: [{
         data: prioridadValues,
-        backgroundColor: [
-          '#34D399',
-          '#FFD700',
-          '#F97316',
-          '#EF4444'
-        ],
+        backgroundColor: ['#34D399', '#FFD700', '#F97316'],
         borderColor: '#1a2f3a',
         borderWidth: 4,
         hoverOffset: 16
@@ -485,12 +454,37 @@
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: {
-        animateScale: true,
-        duration: 900
-      },
-      plugins: {
-        tooltip: baseTooltip()
+      plugins: { tooltip: baseTooltip() }
+    }
+  });
+
+  const issueChart = new Chart(issueCtx, {
+    type: 'bar',
+    data: {
+      labels: asuntoLabels,
+      datasets: [{
+        label: 'Chats',
+        data: asuntoValues,
+        backgroundColor: createGoldGradient(issueCtx),
+        borderColor: '#FFD700',
+        borderWidth: 1,
+        borderRadius: 14
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { tooltip: baseTooltip() },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: { precision: 0 },
+          grid: { color: 'rgba(255,255,255,0.06)' }
+        },
+        y: {
+          grid: { display: false }
+        }
       }
     }
   });
@@ -528,36 +522,26 @@
       dailyChart.data.datasets[0].data = data.productividadValues;
       dailyChart.update();
 
-      console.log('Dashboard actualizado');
+      issueChart.data.labels = data.asuntoLabels;
+      issueChart.data.datasets[0].data = data.asuntoValues;
+      issueChart.update();
 
     } catch (error) {
       console.error('Error actualizando dashboard', error);
     }
   }
 
-  setInterval(refreshDashboardMetrics, 10000);
-
   async function generateAiReport() {
-
     const box = document.getElementById('aiReportBox');
 
     box.classList.remove('hidden');
 
-    document.getElementById('aiReportTitle').innerText =
-            'Generando análisis IA...';
-
+    document.getElementById('aiReportTitle').innerText = 'Generando análisis IA...';
     document.getElementById('aiReportSummary').innerHTML =
-            `
-        <div class="flex items-center gap-3">
-            <div class="w-5 h-5 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-            <span>OpenAI está analizando métricas...</span>
-        </div>
-        `;
-
+            '<div class="flex items-center gap-3"><div class="w-5 h-5 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div><span>La IA está analizando métricas...</span></div>';
     document.getElementById('aiRecommendations').innerHTML = '';
 
     try {
-
       const response = await fetch('/api/dashboard/ai-report');
 
       if (!response.ok) {
@@ -566,32 +550,20 @@
 
       const data = await response.json();
 
-      document.getElementById('aiReportTitle').innerText =
-              'Análisis IA del Supervisor';
-
+      document.getElementById('aiReportTitle').innerText = 'Análisis IA del Supervisor';
       document.getElementById('aiReportSummary').innerHTML =
-              `
-            <div class="whitespace-pre-line leading-relaxed text-slate-200">
-                ${data.report}
-            </div>
-            `;
+              `<div class="whitespace-pre-line leading-relaxed text-slate-200">${data.report}</div>`;
 
     } catch (error) {
-
       console.error(error);
 
-      document.getElementById('aiReportTitle').innerText =
-              'Error';
-
+      document.getElementById('aiReportTitle').innerText = 'Error';
       document.getElementById('aiReportSummary').innerHTML =
-              `
-            <div class="text-red-300 font-bold">
-                No fue posible generar el análisis IA.
-            </div>
-            `;
+              '<div class="text-red-300 font-bold">No fue posible generar el análisis IA.</div>';
     }
   }
 
+  setInterval(refreshDashboardMetrics, 10000);
 </script>
 
 </body>

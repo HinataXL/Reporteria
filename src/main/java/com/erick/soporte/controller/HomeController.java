@@ -166,8 +166,7 @@ public class HomeController {
 
         PrintWriter writer = response.getWriter();
 
-        writer.println("Codigo,Cliente,Telefono,Correo,Canal,Estado,Prioridad,Ticket Aperturado,Numero Ticket,Transferida,Departamento,Tiempo Gestion,Fecha Inicio,Observaciones");
-
+        writer.println("Codigo,Cliente,Telefono,Correo,Asunto,Canal,Estado,Prioridad,Ticket Aperturado,Numero Ticket,Transferida,Departamento,Tiempo Gestion,Fecha Inicio,Observaciones");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
         for (Conversation c : conversationRepository.findAll()) {
@@ -176,6 +175,7 @@ public class HomeController {
                             safe(c.getClienteNombre()) + "," +
                             safe(c.getClienteTelefono()) + "," +
                             safe(c.getClienteCorreo()) + "," +
+                            safe(c.getAsunto()) + "," +
                             safe(channelName(c.getChannelId())) + "," +
                             safe(statusName(c.getStatusId())) + "," +
                             safe(priorityName(c.getPriorityId())) + "," +

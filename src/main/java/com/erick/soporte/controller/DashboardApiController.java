@@ -107,6 +107,13 @@ public class DashboardApiController {
                         Collectors.counting()
                 ));
 
+        Map<String, Long> porAsunto = conversations.stream()
+                .collect(Collectors.groupingBy(
+                        c -> c.getAsunto() != null ? c.getAsunto() : "Sin asunto",
+                        LinkedHashMap::new,
+                        Collectors.counting()
+                ));
+
         Map<String, Object> response = new LinkedHashMap<>();
 
         response.put("total", total);
@@ -126,6 +133,8 @@ public class DashboardApiController {
 
         response.put("productividadLabels", productividadDiaria.keySet());
         response.put("productividadValues", productividadDiaria.values());
+        response.put("asuntoLabels", porAsunto.keySet());
+        response.put("asuntoValues", porAsunto.values());
 
         return response;
     }
