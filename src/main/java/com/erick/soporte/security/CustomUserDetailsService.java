@@ -9,11 +9,15 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
+
+    @Value("${app.allowed-email-domain}")
+    private String allowedEmailDomain;
 
     private final UserRepository userRepository;
 
@@ -24,6 +28,9 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String correo) throws UsernameNotFoundException {
 
+        if (correo == null || !correo.toLowerCase().endsWith(allowedEmailDomain.toLowerCase())) {
+            throw new UsernameNotFoundException("Dominio de correo no permitido");
+        }
         System.out.println("Intentando login con correo: " + correo);
 
         User user = userRepository.findByCorreo(correo)
