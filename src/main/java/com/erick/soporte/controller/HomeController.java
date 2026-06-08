@@ -6,12 +6,14 @@ import com.erick.soporte.repository.DepartmentRepository;
 import com.erick.soporte.repository.IssueTypeRepository;
 import com.erick.soporte.repository.RejectionCodeRepository;
 import com.erick.soporte.security.CustomUserPrincipal;
+import com.erick.soporte.service.AuditLogService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import com.erick.soporte.entity.IssueType;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -24,17 +26,20 @@ public class HomeController {
     private final IssueTypeRepository issueTypeRepository;
     private final RejectionCodeRepository rejectionCodeRepository;
     private final DepartmentRepository departmentRepository;
+    private final AuditLogService auditLogService;
 
     public HomeController(
             ConversationRepository conversationRepository,
             IssueTypeRepository issueTypeRepository,
             RejectionCodeRepository rejectionCodeRepository,
-            DepartmentRepository departmentRepository
+            DepartmentRepository departmentRepository,
+            AuditLogService auditLogService
     ) {
         this.conversationRepository = conversationRepository;
         this.issueTypeRepository = issueTypeRepository;
         this.rejectionCodeRepository = rejectionCodeRepository;
         this.departmentRepository = departmentRepository;
+        this.auditLogService = auditLogService;
     }
 
     @GetMapping("/")
@@ -68,7 +73,8 @@ public class HomeController {
     @PostMapping("/conversations/save")
     public String saveConversation(
             @ModelAttribute Conversation conversation,
-            Authentication authentication
+            Authentication authentication,
+            HttpServletRequest request
     ) {
         CustomUserPrincipal user = (CustomUserPrincipal) authentication.getPrincipal();
 
@@ -102,6 +108,13 @@ public class HomeController {
             saved.setCodigo("CONV-" + String.format("%05d", saved.getId()));
             conversationRepository.save(saved);
         }
+        auditLogService.registrar(
+                "CREAR_CONVERSACION",
+                "CONVERSACIONES",
+                "Se creó la conversación " + saved.getCodigo(),
+                authentication,
+                request
+        );
 
         return "redirect:/conversations";
     }

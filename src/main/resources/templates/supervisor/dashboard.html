@@ -113,6 +113,38 @@
     </div>
   </header>
 
+  <section class="dashboard-card rounded-3xl p-5 mb-8 fade-up">
+
+    <div class="flex flex-col lg:flex-row lg:items-end gap-4">
+
+      <div>
+        <label class="text-sm font-black text-slate-300">Fecha inicio</label>
+        <input id="filterFrom"
+               type="date"
+               class="mt-2 px-4 py-3 rounded-2xl bg-white/10 border border-white/10 outline-none">
+      </div>
+
+      <div>
+        <label class="text-sm font-black text-slate-300">Fecha fin</label>
+        <input id="filterTo"
+               type="date"
+               class="mt-2 px-4 py-3 rounded-2xl bg-white/10 border border-white/10 outline-none">
+      </div>
+
+      <button onclick="applyDateFilter()"
+              class="bg-[#FFD700] hover:bg-yellow-300 text-black px-6 py-3 rounded-2xl font-black">
+        Aplicar filtro
+      </button>
+
+      <button onclick="clearDateFilter()"
+              class="bg-white/10 hover:bg-white/15 border border-white/10 px-6 py-3 rounded-2xl font-black">
+        Limpiar
+      </button>
+
+    </div>
+
+  </section>
+
   <section class="grid md:grid-cols-4 gap-6 mb-8">
 
     <div class="dashboard-card rounded-3xl p-6 fade-up delay-1">
@@ -161,7 +193,7 @@
 
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
       <div>
-        <h2 class="text-3xl font-black">Análisis IA del supervisor</h2>
+        <h2 class="text-3xl font-black">Análisis de Métricas IA</h2>
         <p class="text-slate-300 text-sm mt-1">
           Reporte automático basado en las métricas actuales.
         </p>
@@ -169,7 +201,7 @@
 
       <button onclick="generateAiReport()"
               class="bg-[#FFD700] hover:bg-yellow-300 transition text-black px-5 py-3 rounded-2xl font-black">
-        Generar análisis IA
+        Generar análisis
       </button>
     </div>
 
@@ -491,7 +523,21 @@
 
   async function refreshDashboardMetrics() {
     try {
-      const response = await fetch('/api/dashboard/metrics');
+      const from = document.getElementById('filterFrom').value;
+      const to = document.getElementById('filterTo').value;
+
+      let url = '/api/dashboard/metrics';
+
+      const params = new URLSearchParams();
+
+      if (from) params.append('from', from);
+      if (to) params.append('to', to);
+
+      if (params.toString()) {
+        url += '?' + params.toString();
+      }
+
+      const response = await fetch(url);
 
       if (!response.ok) {
         console.error('Error consultando métricas');
@@ -499,6 +545,8 @@
       }
 
       const data = await response.json();
+
+
 
       document.getElementById('totalMetric').innerText = data.total;
       document.getElementById('resolvedMetric').innerText = data.resueltas;
@@ -564,6 +612,17 @@
   }
 
   setInterval(refreshDashboardMetrics, 10000);
+
+  function applyDateFilter() {
+    refreshDashboardMetrics();
+  }
+
+  function clearDateFilter() {
+    document.getElementById('filterFrom').value = '';
+    document.getElementById('filterTo').value = '';
+    refreshDashboardMetrics();
+  }
+
 </script>
 
 </body>

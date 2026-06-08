@@ -1,47 +1,242 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
-  <title>Verificación 2FA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verificación 2FA - Soporte</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            qDark: '#0f2a2e',
+            qTeal: '#1a4d4f',
+            qCard: 'rgba(30, 58, 62, 0.6)',
+            qInput: 'rgba(20, 40, 42, 0.8)',
+            qInputBorder: 'rgba(26, 188, 156, 0.3)',
+            qCyan: '#1abc9c',
+            qCyanLight: '#b0d4d6',
+            qGold: '#ffd700',
+            qGoldLight: '#ffed4e',
+          },
+          animation: {
+            'spin-slow': 'spin 1s linear infinite',
+            'slide-in': 'slideIn 0.3s ease forwards',
+          },
+          keyframes: {
+            slideIn: {
+              '0%': { opacity: 0, transform: 'translateY(-4px)' },
+              '100%': { opacity: 1, transform: 'translateY(0)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Estilos base para resetear comportamientos por defecto del navegador */
+    input[type="text"], input[type="password"] {
+      font-family: 'Courier New', Courier, monospace;
+    }
+
+    /* Ocultar flechas en inputs numéricos por si acaso */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Autofill matching the dark theme */
+    input:-webkit-autofill {
+      -webkit-text-fill-color: #ffffff !important;
+      -webkit-box-shadow: 0 0 0px 1000px rgba(20, 40, 42, 0.95) inset !important;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+  </style>
 </head>
+<body class="font-sans min-h-screen flex items-center justify-center p-5 bg-gradient-to-br from-qDark via-qTeal to-qDark selection:bg-qCyan selection:text-white">
 
-<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen flex items-center justify-center">
+<div class="w-full max-w-[400px]">
+  <div class="bg-qCard backdrop-blur-[20px] border border-qCyan/20 rounded-[24px] p-10 sm:p-12 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
 
-<div class="w-full max-w-md bg-white/10 border border-white/10 rounded-3xl p-8 backdrop-blur">
-
-  <h1 class="text-3xl font-extrabold mb-2">Verificación 2FA</h1>
-  <p class="opacity-70 mb-6">Ingresa el código de tu app autenticadora.</p>
-
-  <div th:if="${error}"
-       class="mb-4 bg-red-500/20 text-red-300 border border-red-500/30 rounded-xl px-4 py-3 font-bold"
-       th:text="${error}">
-    Error
-  </div>
-
-  <form th:action="@{/2fa/verify}" method="post" class="space-y-5">
-
-    <input type="hidden"
-           th:name="${_csrf.parameterName}"
-           th:value="${_csrf.token}" />
-
-    <div>
-      <label class="font-bold">Código</label>
-      <input name="code"
-             type="number"
-             required
-             autofocus
-             class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-white mb-3 tracking-tight">Verificación 2FA</h1>
+      <p class="text-sm text-qCyanLight leading-relaxed">Ingresa el código de tu app autenticadora.</p>
     </div>
 
-    <button type="submit"
-            class="w-full bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold">
-      Verificar
-    </button>
+    <div th:if="${error}" class="mb-6 bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-3 animate-slide-in">
+      <div class="mt-0.5 text-red-400">⚠️</div>
+      <div class="text-red-400 text-sm font-bold" th:text="${error}">
+        Código incorrecto.
+      </div>
+    </div>
 
-  </form>
+    <form th:action="@{/2fa/verify}" method="post" id="form2fa" novalidate class="flex flex-col">
 
+      <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+      <div class="mb-6">
+        <div class="flex justify-between items-baseline mb-3">
+          <label for="otp-code" class="text-[13px] font-semibold text-white uppercase tracking-wide">
+            Código (6 dígitos)
+          </label>
+          <div id="timer" class="text-xs font-semibold text-qGold flex items-center gap-1.5 transition-colors">
+            <span id="timer-spinner" class="inline-block w-3 h-3 border-[1.5px] border-current border-t-transparent rounded-full animate-spin-slow"></span>
+            <span id="timer-text">30s</span>
+          </div>
+        </div>
+
+        <div class="relative flex items-center">
+          <input
+                  type="password"
+                  id="otp-code"
+                  name="code"
+                  placeholder="••••••"
+                  maxlength="6"
+                  inputmode="numeric"
+                  pattern="[0-9]{6}"
+                  autocomplete="off"
+                  required
+                  autofocus
+                  class="w-full p-4 bg-qInput border-2 border-qInputBorder rounded-2xl text-[22px] font-bold tracking-[8px] text-white text-center transition-all duration-300 outline-none focus:border-qCyan/80 focus:bg-[#14282a]/95 focus:shadow-[0_0_0_3px_rgba(26,188,156,0.1)] placeholder:text-qCyanLight/40 placeholder:tracking-[8px]"
+          >
+
+          <button
+                  type="button"
+                  id="toggle-btn"
+                  class="absolute right-4 text-qCyanLight text-lg flex items-center justify-center p-1 hover:text-qCyan transition-colors focus:outline-none focus:ring-2 focus:ring-qCyan focus:rounded-md"
+                  aria-label="Mostrar código"
+          >
+            👁️
+          </button>
+        </div>
+      </div>
+
+      <button
+              type="submit"
+              id="verify-btn"
+              class="relative w-full py-3.5 bg-gradient-to-br from-qGold to-qGoldLight border-none rounded-2xl text-[15px] font-bold text-[#1a1a1a] uppercase tracking-wide cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(255,215,0,0.3)] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed mb-4 flex justify-center items-center h-[52px]"
+      >
+        <span id="btn-text">Verificar</span>
+        <svg id="btn-spinner" class="hidden animate-spin h-5 w-5 text-[#1a1a1a]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </button>
+
+      <div class="flex items-center justify-center gap-1.5 text-xs text-[#51cf66] mt-2 pt-4 border-t border-qCyan/10 font-medium">
+        <span>🔒</span> Sesión segura y encriptada
+      </div>
+    </form>
+  </div>
 </div>
 
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('form2fa');
+    const otpInput = document.getElementById('otp-code');
+    const toggleBtn = document.getElementById('toggle-btn');
+    const verifyBtn = document.getElementById('verify-btn');
+    const btnText = document.getElementById('btn-text');
+    const btnSpinner = document.getElementById('btn-spinner');
+
+    const timerContainer = document.getElementById('timer');
+    const timerText = document.getElementById('timer-text');
+    const timerSpinner = document.getElementById('timer-spinner');
+
+    let timeLeft = 30;
+    let timerInterval;
+    let isHidden = true;
+
+    // 1. Lógica del temporizador visual (UX)
+    function startTimer() {
+      timeLeft = 30;
+      clearInterval(timerInterval);
+
+      timerContainer.classList.remove('text-[#ff6b6b]');
+      timerContainer.classList.add('text-qGold');
+      timerSpinner.style.animation = 'spin 1s linear infinite';
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerText.textContent = timeLeft + 's';
+
+        // Advertencia visual cuando quedan pocos segundos
+        if (timeLeft <= 5) {
+          timerContainer.classList.remove('text-qGold');
+          timerContainer.classList.add('text-[#ff6b6b]');
+        }
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timerSpinner.style.animation = 'none'; // Detener spinner
+          startTimer(); // Reiniciar automáticamente
+        }
+      }, 1000);
+    }
+
+
+    toggleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      isHidden = !isHidden;
+      otpInput.type = isHidden ? 'password' : 'text';
+
+
+      if (isHidden) {
+        toggleBtn.textContent = '👁️';
+        otpInput.setAttribute('placeholder', '••••••');
+      } else {
+        toggleBtn.textContent = '🙈';
+        otpInput.setAttribute('placeholder', '000000');
+      }
+    });
+
+    // 3. Filtrar solo números y validar longitud
+    otpInput.addEventListener('input', (e) => {
+      // Remover caracteres no numéricos
+      e.target.value = e.target.value.replace(/[^0-9]/g, '');
+
+      // Feedback visual de éxito cuando hay 6 dígitos
+      if (e.target.value.length === 6) {
+        otpInput.classList.remove('border-qInputBorder', 'focus:border-qCyan/80');
+        otpInput.classList.add('border-[#51cf66]', 'focus:border-[#51cf66]', 'bg-[#51cf66]/5');
+      } else {
+        otpInput.classList.add('border-qInputBorder', 'focus:border-qCyan/80');
+        otpInput.classList.remove('border-[#51cf66]', 'focus:border-[#51cf66]', 'bg-[#51cf66]/5');
+      }
+    });
+
+    // 4. Manejo del Submit real hacia Spring/Thymeleaf
+    form.addEventListener('submit', (e) => {
+      const code = otpInput.value.trim();
+
+      // Validación simple en el frontend antes de enviar
+      if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+        e.preventDefault(); // Prevenir envío si está incompleto
+        otpInput.classList.add('border-[#ff6b6b]');
+        // Shake animation effect
+        otpInput.style.transform = 'translateX(-10px)';
+        setTimeout(() => otpInput.style.transform = 'translateX(10px)', 50);
+        setTimeout(() => otpInput.style.transform = 'translateX(-10px)', 100);
+        setTimeout(() => otpInput.style.transform = 'translateX(10px)', 150);
+        setTimeout(() => otpInput.style.transform = 'translateX(0)', 200);
+        return;
+      }
+
+      // Estado de carga (Loading)
+
+      verifyBtn.disabled = true;
+      btnText.classList.add('hidden');
+      btnSpinner.classList.remove('hidden');
+    });
+
+    // Iniciar temporizador al cargar
+    startTimer();
+  });
+</script>
 </body>
 </html>

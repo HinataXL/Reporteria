@@ -215,15 +215,18 @@
                 </select>
             </div>
 
-            <div>
-                <label class="font-black text-sm text-slate-300">
-                    ⏱ Tiempo gestión (min)
-                </label>
-                <input name="tiempoGestionMinutos"
-                       type="number"
-                       min="0"
-                       value="0"
-                       class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none">
+            <input name="tiempoGestionMinutos"
+                   id="tiempoGestionMinutos"
+                   type="hidden"
+                   value="0">
+
+            <div class="form-input mt-2 w-full px-4 py-3 rounded-2xl">
+                <p id="timerDisplay" class="text-2xl font-black text-[#ffd700]">
+                    00:00
+                </p>
+                <p class="text-xs text-slate-400">
+                    El tiempo inicia al abrir esta pantalla y finaliza al guardar.
+                </p>
             </div>
 
         </section>
@@ -298,7 +301,7 @@
                       id="observaciones"
                       rows="4"
                       maxlength="500"
-                      placeholder="Notas adicionales que el cliente no verá..."
+                      placeholder="Notas adicionales que quieras dejar guardada"
                       class="form-input w-full px-4 py-3 rounded-2xl outline-none resize-y border-dashed"></textarea>
         </section>
 
@@ -375,6 +378,29 @@
     observaciones.addEventListener('input', () => {
         observationsCounter.innerText = observaciones.value.length;
     });
+
+    const startTime = Date.now();
+    const timerDisplay = document.getElementById('timerDisplay');
+    const tiempoGestionMinutos = document.getElementById('tiempoGestionMinutos');
+
+    function updateTimer() {
+        const now = Date.now();
+        const diffMs = now - startTime;
+
+        const totalSeconds = Math.floor(diffMs / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+
+        timerDisplay.innerText =
+            String(minutes).padStart(2, '0') + ':' +
+            String(seconds).padStart(2, '0');
+
+        tiempoGestionMinutos.value = Math.max(1, Math.ceil(totalSeconds / 60));
+    }
+
+    setInterval(updateTimer, 1000);
+    updateTimer();
+
 </script>
 
 </body>

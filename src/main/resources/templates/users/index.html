@@ -2,58 +2,192 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
-  <title>Usuarios</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuarios | Sistema</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            darkBg: '#10231F',
+            darkCard: '#142a25',
+            darkBorder: '#1f423b',
+            brandCyan: '#22d3ee',
+            brandGold: '#FBBF24',
+            textMain: '#F4F0E6'
+          },
+          animation: {
+            'fade-in-up': 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+          },
+          keyframes: {
+            fadeInUp: {
+              '0%': { opacity: 0, transform: 'translateY(20px)' },
+              '100%': { opacity: 1, transform: 'translateY(0)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Estilos base para scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #10231F; }
+    ::-webkit-scrollbar-thumb { background: #1f423b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #22d3ee; }
+
+    /* Ripple effect */
+    .ripple-btn { position: relative; overflow: hidden; }
+    .ripple {
+      position: absolute; border-radius: 50%; transform: scale(0);
+      animation: ripple-anim 600ms linear; background-color: rgba(255, 255, 255, 0.3);
+    }
+    @keyframes ripple-anim { to { transform: scale(4); opacity: 0; } }
+
+    /* Ocultar barra de scroll en contenedores específicos pero permitir scroll */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
 </head>
 
-<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+<body class="bg-darkBg text-textMain min-h-screen font-sans selection:bg-brandCyan selection:text-black py-12 px-4 sm:px-6">
 
-<div class="max-w-6xl mx-auto p-6">
+<div class="max-w-7xl mx-auto">
 
-  <div class="flex justify-between items-center mb-8">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-6 animate-fade-in-up" style="animation-delay: 0.1s;">
+
     <div>
-      <h1 class="text-4xl font-extrabold">Usuarios</h1>
-      <p class="opacity-70">Administración de usuarios del sistema</p>
+      <a href="/conversations" class="inline-flex items-center justify-center px-4 py-1.5 rounded-full border border-darkBorder text-gray-400 font-bold hover:bg-white/5 hover:text-white transition-all duration-300 group w-max mb-4 text-sm">
+        <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Volver al panel
+      </a>
+
+      <h1 class="text-4xl sm:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-textMain to-gray-400">
+        Usuarios
+      </h1>
+      <p class="opacity-70 mt-2 text-lg flex items-center">
+        <i class="fas fa-users-cog mr-2 text-brandCyan"></i> Administración general del sistema
+      </p>
     </div>
 
     <a href="/users/create"
-       class="bg-yellow-400 text-black px-5 py-3 rounded-2xl font-bold">
-      + Nuevo usuario
+       class="w-full md:w-auto relative overflow-hidden bg-gradient-to-r from-brandGold to-yellow-500 text-black px-6 py-3.5 rounded-2xl font-black shadow-[0_4px_15px_rgba(251,191,36,0.3)] hover:shadow-[0_6px_25px_rgba(251,191,36,0.5)] transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 ripple-btn group flex justify-center items-center">
+      <i class="fas fa-user-plus mr-2 group-hover:scale-110 transition-transform"></i> Nuevo usuario
     </a>
   </div>
 
-  <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
-    <table class="w-full text-left">
-      <thead>
-      <tr class="border-b border-white/10">
-        <th class="py-3">Nombre</th>
-        <th>Correo</th>
-        <th>Rol</th>
-        <th>Estado</th>
-      </tr>
-      </thead>
+  <div th:if="${success}" class="mb-6 bg-green-500/10 border border-green-500/30 rounded-2xl p-4 flex items-start gap-4 animate-fade-in-up" style="animation-delay: 0.15s;">
+    <div class="bg-green-500/20 p-2 rounded-full mt-0.5"><i class="fas fa-check text-green-400"></i></div>
+    <div>
+      <h4 class="text-green-400 font-bold">¡Éxito!</h4>
+      <p class="text-green-300/80 text-sm mt-1" th:text="${success}"></p>
+    </div>
+  </div>
 
-      <tbody>
-      <tr th:each="user : ${users}" class="border-b border-white/5">
-        <td class="py-4" th:text="${user.nombre + ' ' + user.apellido}">Nombre</td>
-        <td th:text="${user.correo}">correo</td>
-        <td th:text="${user.role.nombre}">Rol</td>
-        <td>
-                    <span th:if="${user.estado == 1}"
-                          class="bg-green-500/20 text-green-300 px-3 py-1 rounded-lg">
-                        Activo
-                    </span>
-          <span th:if="${user.estado == 0}"
-                class="bg-red-500/20 text-red-300 px-3 py-1 rounded-lg">
-                        Inactivo
-                    </span>
-        </td>
-      </tr>
-      </tbody>
-    </table>
+  <div class="bg-gradient-to-br from-darkCard to-[#0f1d1a] border border-darkBorder rounded-3xl p-1 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_15px_40px_rgba(0,0,0,0.6)] backdrop-blur animate-fade-in-up" style="animation-delay: 0.2s;">
+
+    <div class="overflow-x-auto w-full no-scrollbar rounded-3xl">
+      <table class="w-full text-left border-collapse whitespace-nowrap">
+
+        <thead>
+        <tr class="border-b border-darkBorder bg-darkBg/30 text-xs uppercase tracking-wider text-gray-400 font-bold">
+          <th class="py-4 px-6 rounded-tl-2xl">
+            <i class="fas fa-user mr-1 text-gray-500"></i> Nombre y Apellido
+          </th>
+          <th class="py-4 px-6">
+            <i class="fas fa-envelope mr-1 text-gray-500"></i> Correo
+          </th>
+          <th class="py-4 px-6 text-center">
+            <i class="fas fa-shield-alt mr-1 text-gray-500"></i> Rol
+          </th>
+          <th class="py-4 px-6 text-center rounded-tr-2xl">
+            <i class="fas fa-signal mr-1 text-gray-500"></i> Estado
+          </th>
+        </tr>
+        </thead>
+
+        <tbody class="text-sm font-medium">
+        <tr th:each="user : ${users}" class="border-b border-darkBorder/50 hover:bg-white/[0.02] transition-colors duration-200 group">
+
+          <td class="py-4 px-6">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-darkBg border border-darkBorder flex items-center justify-center text-gray-400 group-hover:text-brandCyan transition-colors">
+                <i class="fas fa-user-circle"></i>
+              </div>
+              <span th:text="${user.nombre + ' ' + user.apellido}" class="font-bold text-white group-hover:text-brandCyan transition-colors">Nombre Apellido</span>
+            </div>
+          </td>
+
+          <td class="py-4 px-6 text-gray-300">
+            <span th:text="${user.correo}">usuario@correo.com</span>
+          </td>
+
+          <td class="py-4 px-6 text-center">
+                            <span th:if="${user.role.nombre == 'ADMIN'}" class="inline-flex items-center gap-1.5 bg-brandGold/10 border border-brandGold/20 text-brandGold px-3 py-1 rounded-lg text-xs font-bold tracking-wide">
+                                <i class="fas fa-crown text-[10px]"></i> <span th:text="${user.role.nombre}">ADMIN</span>
+                            </span>
+
+            <span th:unless="${user.role.nombre == 'ADMIN'}" class="inline-flex items-center gap-1.5 bg-gray-500/10 border border-gray-500/20 text-gray-300 px-3 py-1 rounded-lg text-xs font-bold tracking-wide">
+                                <span th:text="${user.role.nombre}">USER</span>
+                            </span>
+          </td>
+
+          <td class="py-4 px-6 text-center">
+                            <span th:if="${user.estado == 1}" class="inline-flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 text-green-400 px-3 py-1 rounded-lg text-xs font-bold">
+                                <span class="relative flex h-2 w-2">
+                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                  <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                </span>
+                                Activo
+                            </span>
+
+            <span th:if="${user.estado == 0}" class="inline-flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-1 rounded-lg text-xs font-bold">
+                                <i class="fas fa-ban text-[10px]"></i> Inactivo
+                            </span>
+          </td>
+
+        </tr>
+
+        <tr th:if="${users == null or users.empty}">
+          <td colspan="4" class="py-12 text-center text-gray-500">
+            <div class="flex flex-col items-center justify-center">
+              <i class="fas fa-users-slash text-4xl mb-3 opacity-50"></i>
+              <p>No hay usuarios registrados en el sistema.</p>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+
+      </table>
+    </div>
+
   </div>
 
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Efecto Ripple
+    const rippleButtons = document.querySelectorAll('.ripple-btn');
+    rippleButtons.forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        const rect = this.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const ripples = document.createElement('span');
+        ripples.style.left = x + 'px';
+        ripples.style.top = y + 'px';
+        ripples.classList.add('ripple');
+        this.appendChild(ripples);
+        setTimeout(() => ripples.remove(), 600);
+      });
+    });
+  });
+</script>
 
 </body>
 </html>

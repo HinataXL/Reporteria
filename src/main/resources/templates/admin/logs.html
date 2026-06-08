@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Logs del sistema</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+
+<main class="p-8">
+    <h1 class="text-4xl font-black mb-6">Logs del sistema</h1>
+
+    <div class="bg-white/10 border border-white/10 rounded-3xl overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-white/10">
+            <tr>
+                <th class="p-4 text-left">Fecha</th>
+                <th class="p-4 text-left">Usuario</th>
+                <th class="p-4 text-left">Rol</th>
+                <th class="p-4 text-left">Acción</th>
+                <th class="p-4 text-left">Módulo</th>
+                <th class="p-4 text-left">Descripción</th>
+                <th class="p-4 text-left">IP</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="log : ${logs}" class="border-t border-white/10 hover:bg-white/5">
+                <td class="p-4" th:text="${#temporals.format(log.fecha, 'dd/MM/yyyy HH:mm:ss')}"></td>
+                <td class="p-4" th:text="${log.usuarioNombre}"></td>
+                <td class="p-4" th:text="${log.rol}"></td>
+                <td class="p-4 font-bold text-[#ffd700]" th:text="${log.accion}"></td>
+                <td class="p-4" th:text="${log.modulo}"></td>
+                <td class="p-4" th:text="${log.descripcion}"></td>
+                <td class="p-4" th:text="${log.ip}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+</body>
+</html>

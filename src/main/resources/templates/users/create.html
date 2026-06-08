@@ -1,75 +1,477 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Nuevo Usuario</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo Usuario | Sistema</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        qDark: '#0f2a2e',
+                        qTeal: '#1a4d4f',
+                        qCard: 'rgba(30, 58, 62, 0.6)',
+                        qInput: 'rgba(20, 40, 42, 0.6)',
+                        qInputBorder: 'rgba(26, 188, 156, 0.2)',
+                        qCyan: '#1abc9c',
+                        qCyanLight: '#b0d4d6',
+                        qGold: '#ffd700',
+                        qGoldLight: '#ffed4e',
+                        qDanger: '#ff6b6b',
+                        qSuccess: '#51cf66'
+                    },
+                    animation: {
+                        'slide-up': 'slideUp 0.3s ease forwards',
+                        'fade-in': 'fadeIn 0.3s ease forwards',
+                        'shake': 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both',
+                    },
+                    keyframes: {
+                        slideUp: {
+                            '0%': { opacity: 0, transform: 'translateY(20px)' },
+                            '100%': { opacity: 1, transform: 'translateY(0)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: 0 },
+                            '100%': { opacity: 1 },
+                        },
+                        shake: {
+                            '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+                            '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+                            '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+                            '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f2a2e; }
+        ::-webkit-scrollbar-thumb { background: #1a4d4f; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #1abc9c; }
+
+        /* Autofill overrides */
+        input:-webkit-autofill {
+            -webkit-text-fill-color: #ffffff !important;
+            -webkit-box-shadow: 0 0 0px 1000px rgba(20, 40, 42, 0.9) inset !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        /* Ocultar iconos nativos de contraseñas/correo en navegadores */
+        input::-ms-reveal, input::-ms-clear { display: none; }
+        input::-webkit-credentials-auto-fill-button { visibility: hidden; display: none !important; pointer-events: none; }
+
+        /* Componentes de Formulario Custom */
+        .form-input {
+            width: 100%; padding: 12px 16px; background: rgba(20, 40, 42, 0.6);
+            border: 1.5px solid rgba(26, 188, 156, 0.2); border-radius: 12px;
+            font-size: 13px; color: #ffffff; transition: all 0.3s ease;
+        }
+        .form-input:focus {
+            outline: none; border-color: rgba(26, 188, 156, 0.8);
+            background: rgba(20, 40, 42, 0.9); box-shadow: 0 0 0 3px rgba(26, 188, 156, 0.1);
+        }
+        .form-input::placeholder { color: rgba(176, 212, 214, 0.4); }
+
+        .form-input.error { border-color: #ff6b6b; background: rgba(255, 107, 107, 0.08); }
+        .form-input.error:focus { box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1); }
+        .form-input.success { border-color: #51cf66; background: rgba(81, 207, 102, 0.08); }
+        .form-input.success:focus { box-shadow: 0 0 0 3px rgba(81, 207, 102, 0.1); }
+
+        .req-icon {
+            display: inline-block; width: 14px; height: 14px;
+            border: 1.5px solid rgba(176, 212, 214, 0.3); border-radius: 3px;
+            text-align: center; line-height: 11px; font-size: 9px;
+        }
+        .requirement.met { color: #51cf66; }
+        .requirement.met .req-icon { background: #51cf66; border-color: #51cf66; color: #1a1a1a; font-weight: 700; }
+    </style>
 </head>
 
-<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+<body class="font-sans min-h-screen bg-gradient-to-br from-qDark via-qTeal to-qDark text-white p-6 sm:p-10 selection:bg-qCyan selection:text-white">
 
-<div class="max-w-3xl mx-auto p-6">
+<div class="max-w-3xl mx-auto">
 
-    <a href="/users" class="text-yellow-300 font-bold hover:underline">
-        ← Volver
+    <a href="/users" class="inline-flex items-center gap-2 text-qGold font-bold text-[13px] uppercase tracking-wide hover:gap-3 transition-all duration-300 mb-8">
+        <i class="fas fa-arrow-left"></i> Volver
     </a>
 
-    <h1 class="text-4xl font-extrabold mt-6 mb-2">Nuevo usuario</h1>
-    <p class="opacity-70 mb-8">Crear usuario para acceder al sistema</p>
+    <div class="mb-10 animate-fade-in">
+        <h1 class="text-4xl font-bold mb-2 tracking-tight">Nuevo usuario</h1>
+        <p class="text-sm text-qCyanLight">Crear usuario para acceder al sistema</p>
+    </div>
 
-    <form action="/users/save" method="post"
-          class="bg-white/10 border border-white/10 rounded-3xl p-6 grid gap-5">
+    <div class="bg-qCard backdrop-blur-[20px] border border-qCyan/20 rounded-[20px] p-6 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] animate-slide-up">
 
-        <input type="hidden"
-               th:name="${_csrf.parameterName}"
-               th:value="${_csrf.token}" />
+        <form id="form-new-user" th:action="@{/users/save}" method="post" novalidate>
 
-        <div class="grid md:grid-cols-2 gap-5">
-            <div>
-                <label class="font-bold">Nombre</label>
-                <input name="nombre" required
-                       class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+            <div class="mb-8">
+                <h3 class="text-[13px] font-bold text-qCyanLight uppercase tracking-wide border-b border-qCyan/10 pb-3 mb-5">Información básica</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                    <div class="flex flex-col">
+                        <label class="text-[12px] font-bold text-white uppercase tracking-wide mb-2 flex justify-between">
+                            <span>Nombre <span class="text-qDanger ml-1">*</span></span>
+                        </label>
+                        <input type="text" id="nombre" name="nombre" placeholder="Ej. Juan" class="form-input" required>
+                        <div class="text-[11px] text-qDanger mt-1.5 hidden" id="error-nombre">Mínimo 2 caracteres</div>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <label class="text-[12px] font-bold text-white uppercase tracking-wide mb-2 flex justify-between">
+                            <span>Apellido <span class="text-qDanger ml-1">*</span></span>
+                        </label>
+                        <input type="text" id="apellido" name="apellido" placeholder="Ej. Pérez" class="form-input" required>
+                        <div class="text-[11px] text-qDanger mt-1.5 hidden" id="error-apellido">Mínimo 2 caracteres</div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col mb-5">
+                    <label class="text-[12px] font-bold text-white uppercase tracking-wide mb-2 flex justify-between">
+                        <span>Correo electrónico <span class="text-qDanger ml-1">*</span></span>
+                    </label>
+                    <input type="email" id="correo" name="correo" placeholder="usuario@fixss.com" class="form-input" required>
+                    <div class="text-[11px] text-qDanger mt-1.5 hidden" id="error-correo">Formato de correo inválido</div>
+                    <div class="text-[11px] text-qCyanLight mt-1 leading-relaxed">Se usará como usuario para iniciar sesión.</div>
+                </div>
             </div>
 
-            <div>
-                <label class="font-bold">Apellido</label>
-                <input name="apellido" required
-                       class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+            <div class="mb-8">
+                <h3 class="text-[13px] font-bold text-qCyanLight uppercase tracking-wide border-b border-qCyan/10 pb-3 mb-5">Seguridad</h3>
+
+                <div class="flex flex-col mb-5 relative">
+                    <label class="text-[12px] font-bold text-white uppercase tracking-wide mb-2 flex justify-between">
+                        <span>Contraseña temporal <span class="text-qDanger ml-1">*</span></span>
+                    </label>
+                    <div class="relative flex items-center">
+                        <input type="password" id="password" name="password" placeholder="Asigna una clave inicial" class="form-input pr-12 font-mono" required>
+                        <button type="button" class="absolute right-3 text-qCyanLight hover:text-qCyan transition-colors p-1" onclick="togglePassword('password', this)" title="Ver/ocultar">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="h-1 bg-qCyan/10 rounded-full overflow-hidden mb-2 flex">
+                            <div class="h-full w-0 transition-all duration-300 rounded-full" id="strength-fill"></div>
+                        </div>
+                        <div class="text-[11px] text-qCyanLight font-bold" id="strength-text">Fuerza de la contraseña</div>
+                    </div>
+
+                    <div class="bg-[#14282a]/40 border border-qCyan/10 rounded-lg p-3 mt-3 text-[11px]">
+                        <div class="requirement flex items-center gap-2 mb-1.5 text-qCyanLight transition-colors" id="req-length">
+                            <span class="req-icon">✓</span> <span>Mínimo 8 caracteres</span>
+                        </div>
+                        <div class="requirement flex items-center gap-2 mb-1.5 text-qCyanLight transition-colors" id="req-upper">
+                            <span class="req-icon">✓</span> <span>Una mayúscula (A-Z)</span>
+                        </div>
+                        <div class="requirement flex items-center gap-2 mb-1.5 text-qCyanLight transition-colors" id="req-number">
+                            <span class="req-icon">✓</span> <span>Un número (0-9)</span>
+                        </div>
+                        <div class="requirement flex items-center gap-2 text-qCyanLight transition-colors" id="req-special">
+                            <span class="req-icon">✓</span> <span>Un carácter especial (!@#$%)</span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 mt-3">
+                        <button type="button" onclick="generatePassword()" class="flex-1 py-2 px-3 bg-transparent border border-qCyan/30 rounded-lg text-qCyanLight text-[11px] font-bold uppercase tracking-wide hover:bg-qCyan/10 hover:border-qCyan/80 hover:text-qCyan transition-all flex items-center justify-center gap-2">
+                            <i class="fas fa-magic"></i> Generar
+                        </button>
+                        <button type="button" onclick="copyPassword()" class="flex-1 py-2 px-3 bg-transparent border border-qCyan/30 rounded-lg text-qCyanLight text-[11px] font-bold uppercase tracking-wide hover:bg-qCyan/10 hover:border-qCyan/80 hover:text-qCyan transition-all flex items-center justify-center gap-2">
+                            <i class="far fa-copy"></i> Copiar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col mb-5">
+                    <label class="text-[12px] font-bold text-white uppercase tracking-wide mb-2 flex justify-between">
+                        <span>Confirmar contraseña <span class="text-qDanger ml-1">*</span></span>
+                    </label>
+                    <div class="relative flex items-center">
+                        <input type="password" id="password-confirm" placeholder="Repite la contraseña" class="form-input pr-12 font-mono" required>
+                        <button type="button" class="absolute right-3 text-qCyanLight hover:text-qCyan transition-colors p-1" onclick="togglePassword('password-confirm', this)" title="Ver/ocultar">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="text-[11px] text-qDanger mt-1.5 hidden" id="error-password-confirm">Las contraseñas no coinciden</div>
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-[12px] font-bold text-white uppercase tracking-wide mb-2">Entregar contraseña</label>
+                    <div class="flex gap-4 mt-1">
+                        <label class="flex items-center gap-2 text-[12px] text-qCyanLight cursor-pointer">
+                            <input type="radio" name="deliveryMethod" value="pantalla" class="w-4 h-4 accent-qCyan cursor-pointer" checked>
+                            Mostrar en pantalla
+                        </label>
+                        <label class="flex items-center gap-2 text-[12px] text-qCyanLight cursor-pointer">
+                            <input type="radio" name="deliveryMethod" value="email" class="w-4 h-4 accent-qCyan cursor-pointer">
+                            Enviar por email
+                        </label>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div>
-            <label class="font-bold">Correo</label>
-            <input name="correo" type="email" required
-                   class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
-        </div>
+            <div class="mb-8">
+                <h3 class="text-[13px] font-bold text-qCyanLight uppercase tracking-wide border-b border-qCyan/10 pb-3 mb-5">Asignación</h3>
 
-        <div>
-            <label class="font-bold">Contraseña temporal</label>
-            <input name="password" type="password" required
-                   class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
-        </div>
+                <div class="flex flex-col">
+                    <label class="text-[12px] font-bold text-white uppercase tracking-wide mb-2 flex justify-between items-center">
+                        <span>Rol en el sistema <span class="text-qDanger ml-1">*</span></span>
+                    </label>
+                    <div class="relative">
+                        <select id="rol" name="roleId" class="form-input appearance-none cursor-pointer font-bold" required>
+                            <option value="" disabled selected>Selecciona un rol...</option>
+                            <option th:each="role : ${roles}"
+                                    th:value="${role.id}"
+                                    th:text="${role.nombre}">
+                                Rol
+                            </option>
+                        </select>
+                        <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-qCyanLight">
+                            <i class="fas fa-chevron-down text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="text-[11px] text-qCyanLight mt-2 leading-relaxed">Los permisos se asignarán automáticamente según el perfil seleccionado.</div>
+                </div>
+            </div>
 
-        <div>
-            <label class="font-bold">Rol</label>
-            <select name="roleId"
-                    class="mt-2 w-full px-4 py-3 rounded-xl bg-[#17342E] border border-white/10 outline-none">
-                <option th:each="role : ${roles}"
-                        th:value="${role.id}"
-                        th:text="${role.nombre}">
-                    Rol
-                </option>
-            </select>
-        </div>
-
-        <button type="submit"
-                class="bg-yellow-400 text-black px-6 py-3 rounded-2xl font-bold">
-            Crear usuario
-        </button>
-
-    </form>
-
+            <div class="flex flex-col sm:flex-row gap-3 mt-10">
+                <a href="/users" class="flex-1 py-3.5 px-5 bg-transparent border border-qCyan/30 rounded-xl text-qCyanLight text-[13px] font-bold uppercase tracking-wide hover:bg-qCyan/10 hover:border-qCyan/80 hover:text-qCyan transition-all text-center">
+                    Cancelar
+                </a>
+                <button type="submit" id="btn-submit" disabled class="flex-1 py-3.5 px-5 bg-gradient-to-br from-qGold to-qGoldLight rounded-xl text-[#1a1a1a] text-[13px] font-bold uppercase tracking-wide transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(255,215,0,0.3)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none flex justify-center items-center gap-2">
+                    <i class="fas fa-user-check"></i> <span>Crear usuario</span>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
+
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-5" id="modal-confirm">
+    <div class="bg-[#14282a] border border-qCyan/30 rounded-2xl p-8 max-w-lg w-full shadow-2xl animate-slide-up">
+        <div class="mb-6">
+            <h2 class="text-xl font-bold text-white mb-1">Confirmar creación</h2>
+            <p class="text-sm text-qCyanLight">Revisa los datos antes de guardar en el sistema.</p>
+        </div>
+
+        <div class="space-y-3 mb-8">
+            <div class="flex justify-between border-b border-qCyan/10 pb-2 text-[13px]">
+                <span class="text-qCyanLight">Nombre completo</span>
+                <span class="text-white font-bold" id="summary-name"></span>
+            </div>
+            <div class="flex justify-between border-b border-qCyan/10 pb-2 text-[13px]">
+                <span class="text-qCyanLight">Correo electrónico</span>
+                <span class="text-white font-bold" id="summary-email"></span>
+            </div>
+            <div class="flex justify-between border-b border-qCyan/10 pb-2 text-[13px]">
+                <span class="text-qCyanLight">Rol de sistema</span>
+                <span class="text-white font-bold" id="summary-role"></span>
+            </div>
+            <div class="flex justify-between border-b border-qCyan/10 pb-2 text-[13px]">
+                <span class="text-qCyanLight">Método de entrega</span>
+                <span class="text-white font-bold" id="summary-delivery"></span>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3">
+            <button type="button" onclick="closeModal()" class="py-2.5 px-5 bg-transparent border border-qCyan/30 rounded-xl text-qCyanLight text-[12px] font-bold uppercase tracking-wide hover:bg-qCyan/10 hover:text-qCyan transition-all">
+                Volver
+            </button>
+            <button type="button" onclick="confirmCreate()" class="py-2.5 px-5 bg-gradient-to-br from-qGold to-qGoldLight rounded-xl text-[#1a1a1a] text-[12px] font-bold uppercase tracking-wide hover:-translate-y-0.5 hover:shadow-[0_8px_16px_rgba(255,215,0,0.3)] transition-all">
+                Guardar Usuario
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container" class="fixed bottom-5 right-5 z-[2000] flex flex-col gap-2 pointer-events-none"></div>
+
+<script>
+    const form = document.getElementById('form-new-user');
+    const inputs = {
+        nombre: document.getElementById('nombre'),
+        apellido: document.getElementById('apellido'),
+        correo: document.getElementById('correo'),
+        password: document.getElementById('password'),
+        confirm: document.getElementById('password-confirm'),
+        rol: document.getElementById('rol')
+    };
+    const btnSubmit = document.getElementById('btn-submit');
+    const modal = document.getElementById('modal-confirm');
+
+    // Funciones de utilidad UX
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+            icon.classList.add('text-qCyan');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+            icon.classList.remove('text-qCyan');
+        }
+    }
+
+    function showToast(message, isError = false) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `px-5 py-3 rounded-xl text-[13px] font-bold shadow-lg animate-slide-up flex items-center gap-2 ${isError ? 'bg-qDanger/20 border border-qDanger/50 text-qDanger' : 'bg-qCard border border-qSuccess/50 text-qSuccess backdrop-blur-md'}`;
+        toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> <span>${message}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
+            toast.style.transition = 'all 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    function generatePassword() {
+        const chars = {
+            upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', lower: 'abcdefghijklmnopqrstuvwxyz',
+            numbers: '0123456789', special: '!@#$%^&*()_+-=[]{}|;:,.<>?'
+        };
+        let pwd = chars.upper[Math.floor(Math.random() * chars.upper.length)] +
+            chars.numbers[Math.floor(Math.random() * chars.numbers.length)] +
+            chars.special[Math.floor(Math.random() * chars.special.length)];
+        const allChars = Object.values(chars).join('');
+        for (let i = 3; i < 12; i++) pwd += allChars[Math.floor(Math.random() * allChars.length)];
+        pwd = pwd.split('').sort(() => 0.5 - Math.random()).join('');
+
+        inputs.password.value = pwd;
+        inputs.password.type = 'text';
+
+        const btnIcon = inputs.password.nextElementSibling.querySelector('i');
+        btnIcon.classList.replace('fa-eye', 'fa-eye-slash');
+        btnIcon.classList.add('text-qCyan');
+
+        inputs.password.dispatchEvent(new Event('input'));
+        showToast('Contraseña generada exitosamente');
+    }
+
+    function copyPassword() {
+        if (!inputs.password.value) return showToast('Genera o ingresa una contraseña primero', true);
+        navigator.clipboard.writeText(inputs.password.value).then(() => showToast('Contraseña copiada al portapapeles'));
+    }
+
+    // Validaciones
+    function updateReq(id, isMet) {
+        const el = document.getElementById(id);
+        if(isMet) el.classList.add('met'); else el.classList.remove('met');
+    }
+
+    function checkPasswordStrength() {
+        const val = inputs.password.value;
+        const reqs = {
+            length: val.length >= 8, upper: /[A-Z]/.test(val),
+            number: /[0-9]/.test(val), special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(val)
+        };
+
+        updateReq('req-length', reqs.length);
+        updateReq('req-upper', reqs.upper);
+        updateReq('req-number', reqs.number);
+        updateReq('req-special', reqs.special);
+
+        const metCount = Object.values(reqs).filter(Boolean).length;
+        const fill = document.getElementById('strength-fill');
+        const text = document.getElementById('strength-text');
+
+        fill.className = 'h-full transition-all duration-300 rounded-full ' +
+            (metCount === 4 ? 'w-full bg-qSuccess' :
+                metCount === 3 ? 'w-3/4 bg-qSuccess' :
+                    metCount === 2 ? 'w-2/4 bg-qGold' :
+                        metCount === 1 ? 'w-1/4 bg-qDanger' : 'w-0');
+
+        text.className = 'text-[11px] font-bold mt-1 ' +
+            (metCount >= 3 ? 'text-qSuccess' : metCount === 2 ? 'text-qGold' : 'text-qDanger');
+        text.textContent = metCount === 4 ? 'Muy Fuerte' : metCount === 3 ? 'Fuerte' : metCount === 2 ? 'Media' : metCount === 1 ? 'Débil' : 'Fuerza de la contraseña';
+
+        return metCount >= 3; // Consideramos válida si cumple al menos 3 criterios (o ajusta según necesidad)
+    }
+
+    function toggleError(input, isValid, errorId) {
+        const errEl = document.getElementById(errorId);
+        if (input.value.trim() === '') {
+            input.classList.remove('error', 'success');
+            if(errEl) errEl.classList.add('hidden');
+            return false;
+        }
+        if (isValid) {
+            input.classList.remove('error'); input.classList.add('success');
+            if(errEl) errEl.classList.add('hidden');
+            return true;
+        } else {
+            input.classList.add('error'); input.classList.remove('success');
+            if(errEl) errEl.classList.remove('hidden');
+            return false;
+        }
+    }
+
+    function validateAll() {
+        const vNombre = toggleError(inputs.nombre, /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,}$/.test(inputs.nombre.value), 'error-nombre');
+        const vApellido = toggleError(inputs.apellido, /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{2,}$/.test(inputs.apellido.value), 'error-apellido');
+        const vCorreo = toggleError(inputs.correo, /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inputs.correo.value), 'error-correo');
+        const vPwdStr = checkPasswordStrength();
+        const vPwdMatch = toggleError(inputs.confirm, inputs.password.value === inputs.confirm.value && inputs.confirm.value !== '', 'error-password-confirm');
+        const vRol = inputs.rol.value !== '';
+
+        if(vRol) inputs.rol.classList.add('success'); else inputs.rol.classList.remove('success');
+
+        // Activación del botón final
+        btnSubmit.disabled = !(vNombre && vApellido && vCorreo && vPwdStr && vPwdMatch && vRol);
+    }
+
+    // Event Listeners
+    Object.values(inputs).forEach(input => {
+        input.addEventListener('input', validateAll);
+        input.addEventListener('blur', validateAll);
+    });
+
+    // Flujo Submit -> Modal -> Post Real
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        // Cargar Modal UI
+        document.getElementById('summary-name').textContent = `${inputs.nombre.value} ${inputs.apellido.value}`;
+        document.getElementById('summary-email').textContent = inputs.correo.value;
+        document.getElementById('summary-role').textContent = inputs.rol.options[inputs.rol.selectedIndex].text;
+        document.getElementById('summary-delivery').textContent = document.querySelector('input[name="deliveryMethod"]:checked').value === 'pantalla' ? 'Mostrar en pantalla' : 'Vía Correo / Resend';
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    });
+
+    function closeModal() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    function confirmCreate() {
+        // Bloquear UI
+        const btnConf = document.querySelector('.btn-confirm');
+        btnConf.disabled = true;
+        btnConf.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Guardando...';
+
+        const delivery = document.querySelector('input[name="deliveryMethod"]:checked').value;
+        if (delivery === 'pantalla') {
+            alert(`Asegúrate de copiar la contraseña para el usuario antes de continuar.\n\nUsuario: ${inputs.correo.value}\nContraseña: ${inputs.password.value}`);
+        }
+
+        // Enviar formulario real al Backend (Thymeleaf capturará el POST)
+        form.submit();
+    }
+</script>
 
 </body>
 </html>

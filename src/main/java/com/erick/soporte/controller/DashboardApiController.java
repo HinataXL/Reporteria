@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import com.erick.soporte.service.GeminiReportService;
+import org.springframework.web.bind.annotation.RequestParam;
+import java.time.LocalDate;
 
 @RestController
 public class DashboardApiController {
@@ -62,8 +64,29 @@ public class DashboardApiController {
         return response;
     }
     @GetMapping("/api/dashboard/metrics")
-    public Map<String, Object> metrics() {
+    public Map<String, Object> metrics(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to
+    ) {
         List<Conversation> conversations = conversationRepository.findAll();
+
+        if (from != null && !from.isBlank()) {
+            LocalDate fromDate = LocalDate.parse(from);
+
+            conversations = conversations.stream()
+                    .filter(c -> c.getFechaInicio() != null &&
+                            !c.getFechaInicio().toLocalDate().isBefore(fromDate))
+                    .toList();
+        }
+
+        if (to != null && !to.isBlank()) {
+            LocalDate toDate = LocalDate.parse(to);
+
+            conversations = conversations.stream()
+                    .filter(c -> c.getFechaInicio() != null &&
+                            !c.getFechaInicio().toLocalDate().isAfter(toDate))
+                    .toList();
+        }
 
         long total = conversations.size();
         long pendientes = conversations.stream().filter(c -> c.getStatusId() != null && c.getStatusId() == 1).count();
@@ -144,10 +167,8 @@ public class DashboardApiController {
 
         return switch (id.intValue()) {
             case 1 -> "WhatsApp";
-            case 2 -> "Facebook";
-            case 3 -> "Instagram";
-            case 4 -> "Web Chat";
-            case 5 -> "Correo";
+            case 2 -> "Instagram";
+            case 3 -> "Facebook";
             default -> "Desconocido";
         };
     }
