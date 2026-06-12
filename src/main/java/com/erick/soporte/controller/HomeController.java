@@ -256,4 +256,18 @@ public class HomeController {
             default -> "Desconocido";
         };
     }
+
+
+
+    @GetMapping("/supervisor/dashboard-v2")
+    public String dashboardSneat(Model model) {
+        model.addAttribute("pageTitle", "Dashboard Supervisor");
+        model.addAttribute("userName", "Erick Pedroza");
+        model.addAttribute("userRole", "ADMIN");
+        model.addAttribute("content", "supervisor/dashboard-content :: content");
+
+        return "layout/sneat";
+    }
+
+
 }

@@ -12,6 +12,9 @@ import java.util.stream.Collectors;
 import com.erick.soporte.service.GeminiReportService;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.time.LocalDate;
+import java.util.TreeMap;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 @RestController
 public class DashboardApiController {
@@ -125,9 +128,17 @@ public class DashboardApiController {
         Map<String, Long> productividadDiaria = conversations.stream()
                 .filter(c -> c.getFechaInicio() != null)
                 .collect(Collectors.groupingBy(
-                        c -> c.getFechaInicio().format(formatter),
-                        LinkedHashMap::new,
+                        c -> c.getFechaInicio().toLocalDate(),
+                        TreeMap::new,
                         Collectors.counting()
+                ))
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey().format(formatter),
+                        Map.Entry::getValue,
+                        (a, b) -> a,
+                        LinkedHashMap::new
                 ));
 
         Map<String, Long> porAsunto = conversations.stream()

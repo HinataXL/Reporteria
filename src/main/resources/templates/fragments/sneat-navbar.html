@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:fragment="navbar">
+
+  <nav
+          class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme">
+
+    <div class="navbar-nav-right d-flex align-items-center">
+
+      <div class="navbar-text">
+
+        <strong th:text="${userName}">
+          Erick Pedroza
+        </strong>
+
+        |
+
+        <span th:text="${userRole}">
+                    ADMIN
+                </span>
+
+      </div>
+
+    </div>
+
+  </nav>
+
+</th:block>
+
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html
+        lang="es"
+        xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title th:text="${pageTitle != null ? pageTitle : 'Skill Soporte'}">
+        Skill Soporte
+    </title>
+
+    <!-- Sneat CSS -->
+    <link rel="stylesheet" th:href="@{/sneat/assets/vendor/fonts/boxicons.css}">
+    <link rel="stylesheet" th:href="@{/sneat/assets/vendor/css/core.css}">
+    <link rel="stylesheet" th:href="@{/sneat/assets/vendor/css/theme-default.css}">
+    <link rel="stylesheet" th:href="@{/sneat/assets/css/demo.css}">
+
+    <link rel="icon" type="image/png" th:href="@{/img/logo.png}">
+</head>
+
+<body>
+
+<div class="layout-wrapper layout-content-navbar">
+
+    <div class="layout-container">
+
+        <!-- SIDEBAR -->
+        <aside th:replace="~{fragments/sneat-sidebar :: sidebar}"></aside>
+
+        <!-- CONTENIDO -->
+        <div class="layout-page">
+
+            <!-- NAVBAR -->
+            <nav th:replace="~{fragments/sneat-navbar :: navbar}"></nav>
+
+            <!-- MAIN CONTENT -->
+            <div class="content-wrapper">
+
+                <div class="container-xxl flex-grow-1 container-p-y">
+
+                    <!-- Aquí se inyectará cada vista -->
+                    <th:block th:replace="~{supervisor/dashboard-content :: content}"></th:block>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- JS -->
+<script th:src="@{/sneat/assets/vendor/libs/jquery/jquery.js}"></script>
+<script th:src="@{/sneat/assets/vendor/js/bootstrap.js}"></script>
+<script th:src="@{/sneat/assets/js/main.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</body>
+</html>
