@@ -30,10 +30,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/api/webhooks/qpaypro", "/api/webhooks/qpaypro/**")
+                )
                 .authenticationProvider(authenticationProvider())
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/css/**", "/js/**", "/img/**").permitAll()
+                        .requestMatchers("/api/webhooks/qpaypro", "/api/webhooks/qpaypro/**").permitAll()
 
                         .requestMatchers("/2fa/**").authenticated()
                         .requestMatchers("/settings/2fa/**").authenticated()
