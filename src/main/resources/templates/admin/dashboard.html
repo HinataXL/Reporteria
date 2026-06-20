@@ -6,6 +6,8 @@
     <meta charset="UTF-8">
     <title>Panel Administrador</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 </head>
 
 <body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
@@ -108,6 +110,81 @@
     </section>
 
 </div>
+<script>
+    console.log("Script WebSocket cargado en dashboard admin");
 
+    function requestNotificationPermission() {
+        console.log("Verificando permisos de notificación...");
+
+        if (!("Notification" in window)) {
+            console.warn("Este navegador no soporta notificaciones");
+            return;
+        }
+
+        console.log("Estado actual de permisos:", Notification.permission);
+
+        if (Notification.permission === "default") {
+            Notification.requestPermission().then(permission => {
+                console.log("Nuevo estado de permisos:", permission);
+            });
+        }
+    }
+
+    function showDesktopNotification(event) {
+        console.log("Intentando mostrar notificación:", event);
+
+        if (!("Notification" in window)) {
+            console.warn("Notification API no disponible");
+            return;
+        }
+
+        if (Notification.permission === "granted") {
+            new Notification("Nuevo evento Qpaypro Detectado", {
+                body: event.description || event.payload || "Se recibió un nuevo evento",
+                icon: "/img/logo.png"
+            });
+        } else {
+            console.warn("No se puede mostrar notificación. Permiso:", Notification.permission);
+        }
+    }
+
+    function connectWebSocket() {
+        console.log("Inicializando conexión WebSocket...");
+
+        const socket = new SockJS('/ws');
+        const stompClient = Stomp.over(socket);
+
+        stompClient.debug = function (str) {
+            console.log("STOMP:", str);
+        };
+
+        stompClient.connect(
+            {},
+            function () {
+                console.log("WebSocket conectado correctamente");
+
+                stompClient.subscribe('/topic/webhook-events', function (message) {
+                    console.log("Mensaje crudo recibido:", message.body);
+
+                    const event = JSON.parse(message.body);
+
+                    console.log("Nuevo evento recibido:", event);
+
+                    showDesktopNotification(event);
+
+                    if (typeof refreshDashboardMetrics === "function") {
+                        refreshDashboardMetrics();
+                    }
+                });
+            },
+            function (error) {
+                console.error("Error conectando WebSocket:", error);
+            }
+        );
+    }
+
+    requestNotificationPermission();
+    connectWebSocket();
+</script>
 </body>
 </html>

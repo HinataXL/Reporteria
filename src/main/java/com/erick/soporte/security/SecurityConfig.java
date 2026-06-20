@@ -31,7 +31,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/webhooks/qpaypro", "/api/webhooks/qpaypro/**")
+                        .ignoringRequestMatchers(
+                                "/api/webhooks/qpaypro",
+                                "/api/webhooks/qpaypro/**",
+                                "/ws/**"
+                        )
                 )
                 .authenticationProvider(authenticationProvider())
 
@@ -52,6 +56,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/dashboard/**").hasAnyRole("ADMIN", "SUPERVISOR")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/profile/**").authenticated()
+                        .requestMatchers("/ws/**").permitAll()
 
                         .anyRequest().authenticated()
                 )

@@ -33,7 +33,7 @@ public class Conversation {
     private Integer tiempoGestionMinutos = 0;
 
     @Column(name = "fecha_inicio")
-    private LocalDateTime fechaInicio = LocalDateTime.now();
+    private LocalDateTime fechaInicio;
 
     @Column(columnDefinition = "TEXT")
     private String observaciones;

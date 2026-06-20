@@ -410,7 +410,9 @@
                     <div>
                         <p class="opacity-60 text-sm uppercase font-semibold">Agente</p>
                         <p class="font-bold mt-2 info-value">
-                            <i class="fas fa-user text-cyan-400"></i> Renato Flores
+                            <i class="fas fa-user text-cyan-400"></i> <span th:text="${conversation.agenteNombre != null ? conversation.agenteNombre : 'Sin agente'}">
+                                                            Sin agente
+                        </span>
                         </p>
                     </div>
 
@@ -438,27 +440,7 @@
                 </a>
             </div>
 
-            <!-- ESTADÍSTICAS -->
-            <div class="stat-card bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur text-center mb-6">
-                <div class="stat-value">1 min</div>
-                <div class="text-xs text-cyan-300 font-semibold uppercase tracking-wide">Tiempo de gestión</div>
-            </div>
 
-            <div class="stat-card bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur text-center mb-6">
-                <div class="stat-value">4</div>
-                <div class="text-xs text-cyan-300 font-semibold uppercase tracking-wide">Mensajes</div>
-            </div>
-
-            <div class="stat-card bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur text-center">
-                <div class="stat-value text-lg">21/05 21:16</div>
-                <div class="text-xs text-cyan-300 font-semibold uppercase tracking-wide">Fecha inicio</div>
-            </div>
-
-        </aside>
-
-    </div>
-
-</div>
 
 <script>
     function copyCode() {

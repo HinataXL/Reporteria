@@ -51,7 +51,7 @@ public class HomeController {
     public String conversations(Model model, Authentication authentication) {
         CustomUserPrincipal user = (CustomUserPrincipal) authentication.getPrincipal();
 
-        model.addAttribute("conversations", conversationRepository.findAll());
+        model.addAttribute("conversations", conversationRepository.findAllByOrderByIdDesc());
         model.addAttribute("userName", user.getNombreCompleto());
         model.addAttribute("userEmail", user.getCorreo());
         model.addAttribute("userRole", user.getRol());

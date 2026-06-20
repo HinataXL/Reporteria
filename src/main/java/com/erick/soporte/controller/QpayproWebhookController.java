@@ -7,20 +7,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 @RestController
 @RequestMapping("/api/webhooks")
 public class QpayproWebhookController {
 
     private final WebhookEventRepository webhookEventRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
 
     public QpayproWebhookController(
-            WebhookEventRepository webhookEventRepository
-
+            WebhookEventRepository webhookEventRepository,
+            SimpMessagingTemplate messagingTemplate
     ) {
         this.webhookEventRepository = webhookEventRepository;
-
+        this.messagingTemplate = messagingTemplate;
     }
 
     @PostMapping("/qpaypro")
@@ -37,6 +39,7 @@ public class QpayproWebhookController {
         event.setUserAgent(request.getHeader("User-Agent"));
 
         webhookEventRepository.save(event);
+        messagingTemplate.convertAndSend("/topic/webhook-events", event);
 
         return ResponseEntity.ok("OK");
     }
