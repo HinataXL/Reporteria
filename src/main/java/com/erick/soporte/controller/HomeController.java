@@ -18,6 +18,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.format.DateTimeFormatter;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Controller
 public class HomeController {
@@ -48,13 +53,16 @@ public class HomeController {
     }
 
     @GetMapping("/conversations")
-    public String conversations(Model model, Authentication authentication) {
-        CustomUserPrincipal user = (CustomUserPrincipal) authentication.getPrincipal();
+    public String conversations(
+            @RequestParam(defaultValue = "0") int page,
+            Model model
+    ) {
 
-        model.addAttribute("conversations", conversationRepository.findAllByOrderByIdDesc());
-        model.addAttribute("userName", user.getNombreCompleto());
-        model.addAttribute("userEmail", user.getCorreo());
-        model.addAttribute("userRole", user.getRol());
+        Page<Conversation> conversations = conversationRepository.findAll(
+                PageRequest.of(page, 10, Sort.by("id").descending())
+        );
+
+        model.addAttribute("conversations", conversations);
 
         return "conversations/index";
     }
@@ -100,6 +108,11 @@ public class HomeController {
                     .orElseThrow(() -> new RuntimeException("Tipo de problema no encontrado"));
 
             conversation.setAsunto(issueType.getNombre());
+        }
+        if (conversation.getFechaInicio() == null) {
+            conversation.setFechaInicio(
+                    LocalDateTime.now(ZoneId.of("America/Guatemala"))
+            );
         }
 
         Conversation saved = conversationRepository.save(conversation);

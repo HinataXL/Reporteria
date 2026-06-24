@@ -1,531 +1,872 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title>Conversaciones</title>
-
-    <script src="https://cdn.tailwindcss.com"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversaciones - Dashboard</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background:
-                    radial-gradient(circle at top left, rgba(0, 217, 255, 0.14), transparent 35%),
-                    radial-gradient(circle at bottom right, rgba(255, 215, 0, 0.10), transparent 30%),
-                    #10231F;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
         }
 
-        .glass-card {
-            background: linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
-            border: 1px solid rgba(255,255,255,0.12);
-            box-shadow: 0 18px 40px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.10);
+        .layout {
+            display: flex;
+            min-height: 100vh;
         }
 
-        .row-card {
-            transition: all .22s ease;
-            box-shadow: 0 0 0 rgba(0,0,0,0);
+        /* SIDEBAR */
+        .sidebar {
+            width: 240px;
+            background: rgba(15, 20, 30, 0.8);
+            border-right: 1px solid rgba(100, 200, 255, 0.15);
+            padding: 20px;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
 
-        .row-card:hover {
-            transform: translateY(-3px);
-            background: rgba(255,255,255,0.12);
-            box-shadow: 0 14px 30px rgba(0,0,0,0.28);
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+            position: fixed;
+            z-index: 100;
+            height: 100vh;
         }
 
+        .toggle-sidebar {
+            display: none;
+            background: rgba(100, 150, 200, 0.2);
+            border: none;
+            color: #00d4ff;
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-sidebar.show {
+            display: flex;
+        }
+
+        .user-card {
+            background: rgba(30, 60, 90, 0.6);
+            border: 1px solid rgba(100, 200, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff 0%, #0088ff 100%);
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .user-role {
+            font-size: 11px;
+            color: #ffc700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .user-email {
+            font-size: 11px;
+            color: #888;
+            word-break: break-all;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            margin-bottom: 25px;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            background: rgba(100, 150, 200, 0.1);
+            border-radius: 8px;
+            color: #e0e0e0;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .sidebar-menu a:hover {
+            background: rgba(100, 200, 255, 0.2);
+            color: #00d4ff;
+        }
+
+        .sidebar-menu a.active {
+            background: rgba(100, 200, 255, 0.3);
+            color: #00d4ff;
+            border-left: 3px solid #00d4ff;
+            padding-left: 12px;
+        }
+
+        .sidebar-menu svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 25px;
+            border-top: 1px solid rgba(100, 200, 255, 0.15);
+        }
+
+        .btn-logout {
+            width: 100%;
+            padding: 12px;
+            background: #ff6b6b;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-logout:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: rgba(20, 30, 50, 0.6);
+            border-bottom: 1px solid rgba(100, 200, 255, 0.15);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-title {
+            flex: 1;
+        }
+
+        .header-title h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .header-title p {
+            font-size: 13px;
+            color: #888;
+        }
+
+        /* CONTENT */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* SEARCH & FILTERS */
+        .search-filters {
+            background: rgba(20, 30, 50, 0.6);
+            border: 1px solid rgba(100, 200, 255, 0.15);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-input {
+            flex: 1;
+            background: rgba(10, 20, 40, 0.8);
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            color: #e0e0e0;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+        }
+
+        .quick-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-select {
+            background: rgba(10, 20, 40, 0.8);
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            color: #e0e0e0;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .btn-clear {
+            background: rgba(255, 199, 0, 0.2);
+            border: 1px solid rgba(255, 199, 0, 0.5);
+            color: #ffc700;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-clear:hover {
+            background: #ffc700;
+            color: #000;
+        }
+
+        .result-counter {
+            font-size: 12px;
+            color: #888;
+            margin-left: auto;
+        }
+
+        /* TABLE */
+        .table-wrapper {
+            background: rgba(20, 30, 50, 0.6);
+            border: 1px solid rgba(100, 200, 255, 0.15);
+            border-radius: 10px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: rgba(10, 20, 40, 0.8);
+            border-bottom: 2px solid rgba(100, 200, 255, 0.2);
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #00d4ff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(100, 200, 255, 0.1);
+            font-size: 14px;
+        }
+
+        tbody tr {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        tbody tr:hover {
+            background: rgba(100, 200, 255, 0.05);
+            transform: translateY(-1px);
+        }
+
+        .client-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .client-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .client-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .client-name {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .client-code {
+            font-size: 11px;
+            color: #00d4ff;
+            cursor: copy;
+            transition: color 0.2s;
+        }
+
+        .client-code:hover {
+            color: #ffc700;
+        }
+
+        /* BADGES */
         .badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
             padding: 6px 12px;
-            border-radius: 999px;
-            font-weight: 900;
+            border-radius: 20px;
             font-size: 12px;
+            font-weight: 600;
             white-space: nowrap;
         }
 
-        .badge-success {
-            background: linear-gradient(135deg, rgba(0,255,136,.22), rgba(0,255,136,.08));
+        .badge-channel {
+            background: rgba(100, 200, 255, 0.15);
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            color: #00d4ff;
+        }
+
+        .badge-resolved {
+            background: rgba(0, 255, 136, 0.15);
+            border: 1px solid rgba(0, 255, 136, 0.3);
             color: #00ff88;
-            border: 1px solid rgba(0,255,136,.25);
         }
 
-        .badge-warning {
-            background: linear-gradient(135deg, rgba(255,170,0,.24), rgba(255,215,0,.08));
-            color: #ffd700;
-            border: 1px solid rgba(255,215,0,.25);
+        .badge-pending {
+            background: rgba(255, 199, 0, 0.15);
+            border: 1px solid rgba(255, 199, 0, 0.3);
+            color: #ffc700;
         }
 
-        .badge-active {
-            background: linear-gradient(135deg, rgba(0,217,255,.24), rgba(0,217,255,.08));
-            color: #00d9ff;
-            border: 1px solid rgba(0,217,255,.25);
+        .badge-process {
+            background: rgba(155, 89, 182, 0.15);
+            border: 1px solid rgba(155, 89, 182, 0.3);
+            color: #d288ff;
         }
 
-        .badge-danger {
-            background: linear-gradient(135deg, rgba(255,107,107,.24), rgba(255,107,107,.08));
-            color: #ff6b6b;
-            border: 1px solid rgba(255,107,107,.25);
-        }
-
-        .pulse-escalado {
+        .badge-escalated {
+            background: rgba(255, 68, 68, 0.15);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            color: #ff4444;
             animation: pulseEscalado 1.6s ease-in-out infinite;
         }
 
+        .badge-default {
+            background: rgba(136, 136, 136, 0.15);
+            border: 1px solid rgba(136, 136, 136, 0.3);
+            color: #ccc;
+        }
+
         @keyframes pulseEscalado {
-            0%, 100% {
-                box-shadow: 0 0 0 rgba(255,107,107,0);
-            }
-            50% {
-                box-shadow: 0 0 18px rgba(255,107,107,.45);
-            }
+            0%, 100% { box-shadow: 0 0 0 rgba(255, 68, 68, 0); }
+            50% { box-shadow: 0 0 10px rgba(255, 68, 68, 0.5); }
         }
 
-        .search-input {
-            transition: all .2s ease;
+        .badge svg {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
         }
 
-        .search-input:focus {
-            transform: translateY(-2px);
-            box-shadow: 0 0 0 3px rgba(0,217,255,.15), 0 12px 25px rgba(0,0,0,.25);
-            border-color: rgba(0,217,255,.55);
+        /* ACTIONS & MENUS */
+        .actions-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
         }
 
-        .action-menu {
-            opacity: 0;
-            transform: translateY(4px);
-            pointer-events: none;
-            transition: all .18s ease;
+        .action-btn {
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
         }
 
-        .row-card:hover .action-menu {
-            opacity: 1;
-            transform: translateY(0);
-            pointer-events: auto;
+        .action-btn:hover {
+            background: #00b8d4;
+            transform: translateY(-1px);
         }
 
-        .copy-btn {
-            transition: all .18s ease;
+        .menu-btn {
+            background: rgba(100, 150, 200, 0.2);
+            color: #fff;
+            border: 1px solid rgba(100, 200, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.3s;
         }
 
-        .copy-btn:hover {
-            color: #ffd700;
-            transform: scale(1.05);
+        .menu-btn:hover {
+            background: rgba(100, 200, 255, 0.2);
         }
 
+        .action-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 5px;
+            background: #1a2f3a;
+            border: 1px solid rgba(100, 200, 255, 0.2);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 50;
+            min-width: 160px;
+            overflow: hidden;
+        }
+
+        .action-dropdown.show {
+            display: block;
+        }
+
+        .action-dropdown a {
+            display: block;
+            padding: 10px 15px;
+            color: #e0e0e0;
+            text-decoration: none;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .action-dropdown a:hover {
+            background: rgba(100, 200, 255, 0.1);
+            color: #00d4ff;
+        }
+
+        /* RESPONSIVE */
         @media (max-width: 768px) {
-            table, thead, tbody, tr, td {
-                display: block;
-                width: 100%;
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100vh;
+                z-index: 1000;
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
             }
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+            .toggle-sidebar { display: flex; }
+            .layout { flex-direction: column; }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .quick-filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .result-counter {
+                margin-left: 0;
+                text-align: right;
+            }
+        }
+        .pagination-bar {
+            margin-top: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+        }
 
-            thead {
-                display: none;
-            }
+        .pagination-info {
+            color: #e0e0e0;
+            font-weight: 700;
+        }
 
-            tr {
-                margin-bottom: 16px;
-                border-radius: 24px;
-                padding: 16px;
-            }
+        .pagination-info span {
+            color: #ffc700;
+        }
 
-            td {
-                padding: 8px 0 !important;
-            }
+        .pagination-btn {
+            padding: 12px 18px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 800;
+            transition: all 0.25s ease;
+        }
 
-            td::before {
-                content: attr(data-label);
-                display: block;
-                color: rgba(244,240,230,.55);
-                font-size: 12px;
-                font-weight: 800;
-                margin-bottom: 4px;
-            }
+        .pagination-btn.prev {
+            background: rgba(100, 150, 200, 0.2);
+            color: #e0e0e0;
+            border: 1px solid rgba(100, 200, 255, 0.2);
+        }
+
+        .pagination-btn.next {
+            background: #00d4ff;
+            color: #000;
+        }
+
+        .pagination-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .pagination-disabled {
+            padding: 12px 18px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.05);
+            color: #64748b;
+            font-weight: 800;
         }
     </style>
 </head>
+<body>
+<div class="layout">
+    <aside class="sidebar" id="sidebar">
+        <div class="user-card">
+            <div class="user-avatar">👤</div>
+            <div class="user-name" th:text="${userName}">Usuario Actual</div>
+            <div class="user-role" th:text="${userRole}">ADMIN</div>
+            <div class="user-email" th:text="${userEmail}">usuario@soporte.com</div>
+        </div>
 
-<body class="text-[#F4F0E6] min-h-screen">
-<aside class="fixed left-0 top-0 h-screen w-72 bg-[#0B1F1B] border-r border-white/10 p-5 z-50">
+        <ul class="sidebar-menu">
+            <li sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')">
+                <a th:href="@{/supervisor/dashboard}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 17"></polyline>
+                        <polyline points="17 6 23 6 23 12"></polyline>
+                    </svg>
+                    Dashboard
+                </a>
+            </li>
+            <li sec:authorize="hasAnyRole('ADMIN')">
+                <a th:href="@{/conversations}" class="active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    Conversaciones
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/conversations/create}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14M5 12h14"></path>
+                    </svg>
+                    Nueva conversación
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/profile}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    Mi perfil
+                </a>
+            </li>
+            <li sec:authorize="hasRole('ADMIN')">
+                <a th:href="@{/users}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Usuarios
+                </a>
+            </li>
+            <li sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')">
+                <a th:href="@{/conversations/export/csv}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Exportar CSV
+                </a>
+            </li>
+        </ul>
 
-    <div class="mb-12">
+        <div class="sidebar-footer">
+            <form th:action="@{/logout}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="btn-logout">
+                    <span>🚪</span> Cerrar sesión
+                </button>
+            </form>
+        </div>
+    </aside>
 
-        <div class="bg-white/10 border border-white/10 px-5 py-3 rounded-3xl shadow-lg">
-            <div class="flex items-center gap-3">
-
-                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#00d9ff] to-[#ffd700] text-black font-black flex items-center justify-center">
-                    👤
-                </div>
-
-                <div>
-                    <p class="font-black leading-tight"
-                       th:text="${userName}">
-                        Erick Pedroza
-                    </p>
-
-                    <p class="text-xs text-[#ffd700] font-bold"
-                       th:text="${userRole}">
-                        ADMIN
-                    </p>
-
-                    <p class="text-xs opacity-50"
-                       th:text="${userEmail}">
-                        admin@soporte.com
-                    </p>
-                </div>
-
+    <div class="main-content">
+        <header class="header">
+            <button class="toggle-sidebar show" onclick="toggleSidebar()">☰</button>
+            <div class="header-title">
+                <p style="color: #00d4ff; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px;">Skill soporte</p>
+                <h1>Conversaciones</h1>
+                <p>Historial operativo de conversaciones registradas</p>
             </div>
-        </div>
+        </header>
 
-    </div>
+        <div class="content">
+            <div class="search-filters">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Buscar por código, cliente, canal, estado, prioridad o agente...">
+                </div>
+                <div class="quick-filters">
+                    <select id="filterStatus" class="filter-select">
+                        <option value="">Todos los estados</option>
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En Proceso">En Proceso</option>
+                        <option value="Resuelto">Resuelto</option>
+                        <option value="Escalado">Escalado</option>
+                        <option value="Cerrado">Cerrado</option>
+                    </select>
 
-    <div class="mb-8">
+                    <select id="filterPriority" class="filter-select">
+                        <option value="">Todas las prioridades</option>
+                        <option value="Baja">Baja</option>
+                        <option value="Media">Media</option>
+                        <option value="Alta">Alta</option>
+                        <option value="Crítica">Crítica</option>
+                    </select>
 
-        <h2 class="text-3xl font-black text-white">
-            Menú
-        </h2>
+                    <button id="clearFilters" class="btn-clear">Limpiar filtros</button>
 
-
-    </div>
-
-    <nav class="space-y-3">
-
-        <a href="/supervisor/dashboard"
-           sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"
-           class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 hover:bg-[#00d9ff] hover:text-black transition font-black">
-            <span>📊</span>
-            <span>Dashboard</span>
-        </a>
-
-        <a href="/conversations"
-           sec:authorize="hasAnyRole('ADMIN')"
-           class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 hover:bg-[#ffd700] hover:text-black transition font-black">
-            <span>💬</span>
-            <span>Conversaciones</span>
-        </a>
-
-        <a href="/conversations/create"
-           class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 hover:bg-[#ffd700] hover:text-black transition font-black">
-            <span>💬</span>
-           <span>Nueva conversación</span>
-        </a>
-
-        <a href="/profile"
-           class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/20 transition font-black">
-            <span>👤</span>
-            <span>Mi perfil</span>
-        </a>
-
-        <a href="/users"
-           sec:authorize="hasRole('ADMIN')"
-           class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 hover:bg-purple-400 hover:text-black transition font-black">
-            <span>👥</span>
-            <span>Usuarios</span>
-        </a>
-
-        <a href="/conversations/export/csv"
-           sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"
-           class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/10 hover:bg-green-400 hover:text-black transition font-black">
-            <span>📊</span>
-            <span>Exportar CSV</span>
-        </a>
-
-    </nav>
-
-    <div class="absolute bottom-5 left-5 right-5">
-
-        <form th:action="@{/logout}" method="post">
-            <input type="hidden"
-                   th:name="${_csrf.parameterName}"
-                   th:value="${_csrf.token}" />
-
-            <button type="submit"
-                    class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#ff6b6b] hover:bg-red-400 text-white transition font-black">
-                <span>🚪</span>
-                <span>Cerrar sesión</span>
-            </button>
-        </form>
-
-    </div>
-
-</aside>
-<div class="ml-72 p-6">
-
-    <header class="flex flex-col xl:flex-row xl:justify-between xl:items-start gap-6 mb-8">
-
-        <div>
-            <p class="text-[#00d9ff] text-sm font-black uppercase tracking-[0.22em] mb-2">
-                Skill soporte
-            </p>
-
-            <h1 class="text-5xl font-black tracking-tight">
-                Conversaciones
-            </h1>
-
-            <p class="text-slate-300 text-sm mt-2">
-                Historial operativo de conversaciones registradas.
-            </p>
-        </div>
-
-        <div class="flex flex-col lg:flex-row lg:items-center gap-3">
-
-
-
-        </div>
-
-    </header>
-
-    <section class="glass-card rounded-[32px] p-6 mb-6">
-
-        <div class="flex flex-col lg:flex-row gap-3">
-
-            <div class="relative flex-1">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#00d9ff]">
-                    🔎
-                </span>
-
-                <input id="searchInput"
-                       type="text"
-                       placeholder="Buscar por código, cliente, canal, estado, prioridad o agente..."
-                       class="search-input w-full pl-12 pr-4 py-4 rounded-2xl bg-white/10 border border-white/10 outline-none">
+                    <div id="resultCounter" class="result-counter">Cargando registros...</div>
+                </div>
             </div>
 
-            <button id="toggleFilters"
-                    type="button"
-                    class="bg-white/10 hover:bg-white/15 border border-white/10 transition px-5 py-4 rounded-2xl font-black">
-                Filtros avanzados
-            </button>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Cliente</th>
+                        <th>Canal</th>
+                        <th>Estado</th>
+                        <th>Prioridad</th>
+                        <th>Agente</th>
+                        <th>Fecha</th>
+                        <th>Acción</th>
+                    </tr>
+                    </thead>
+                    <tbody id="conversationTable">
+                    <tr th:each="conversation : ${conversations.content}" th:attr="data-detail-url=@{/conversations/{id}(id=${conversation.id})}">
 
-        </div>
-
-        <div id="advancedFilters"
-             class="hidden grid md:grid-cols-4 gap-3 mt-4">
-
-            <select id="filterStatus"
-                    class="bg-[#17342E] border border-white/10 rounded-2xl px-4 py-3 outline-none">
-                <option value="">Todos los estados</option>
-                <option value="Pendiente">Pendiente</option>
-                <option value="En Proceso">En Proceso</option>
-                <option value="Resuelto">Resuelto</option>
-                <option value="Escalado">Escalado</option>
-                <option value="Cerrado">Cerrado</option>
-            </select>
-
-            <select id="filterPriority"
-                    class="bg-[#17342E] border border-white/10 rounded-2xl px-4 py-3 outline-none">
-                <option value="">Todas las prioridades</option>
-                <option value="Baja">Baja</option>
-                <option value="Media">Media</option>
-                <option value="Alta">Alta</option>
-                <option value="Crítica">Crítica</option>
-            </select>
-
-            <button id="clearFilters"
-                    type="button"
-                    class="bg-[#ffd700] text-black px-5 py-3 rounded-2xl font-black">
-                Limpiar filtros
-            </button>
-
-            <p id="resultCounter"
-               class="flex items-center text-sm text-slate-300 font-bold">
-                Mostrando registros
-            </p>
-
-        </div>
-
-    </section>
-
-    <section class="glass-card rounded-[32px] p-6">
-
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-separate border-spacing-y-3">
-
-                <thead>
-                <tr class="text-slate-300 text-sm uppercase tracking-wide">
-                    <th class="py-3 px-4">Código</th>
-                    <th class="px-4">Cliente</th>
-                    <th class="px-4">Canal</th>
-                    <th class="px-4">Estado</th>
-                    <th class="px-4">Prioridad</th>
-                    <th class="px-4">Agente</th>
-                    <th class="px-4">Fecha</th>
-                    <th class="px-4">Acción</th>
-                </tr>
-                </thead>
-
-                <tbody id="conversationTable">
-
-                <tr th:each="conversation, iterStat : ${conversations}"
-                    class="row-card cursor-pointer"
-                    th:classappend="${iterStat.even} ? ' bg-white/[0.045]' : ' bg-white/[0.075]'"
-                    th:attr="data-detail-url=@{/conversations/{id}(id=${conversation.id})}">
-
-                    <td data-label="Código"
-                        class="py-4 px-4 rounded-l-3xl">
-
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#00d9ff] to-[#ffd700] text-black font-black flex items-center justify-center">
-                                💬
-                            </div>
-
-                            <div>
-                                <button type="button"
-                                        class="copy-btn font-black text-[#ffd700]"
-                                        onclick="copyCode(event, this)"
-                                        th:text="${conversation.codigo}">
-                                    CONV-00001
-                                </button>
-
-                                <p class="text-xs text-slate-400">
-                                    Click para copiar
-                                </p>
-                            </div>
-                        </div>
-
-                    </td>
-
-                    <td data-label="Cliente"
-                        class="px-4 font-bold"
-                        th:text="${conversation.clienteNombre}">
-                        Cliente
-                    </td>
-
-                    <td data-label="Canal"
-                        class="px-4">
-                        <span class="badge badge-active" th:switch="${conversation.channelId}">
-                            <span th:case="1">→ WhatsApp</span>
-                            <span th:case="2">→ Facebook</span>
-                            <span th:case="3">→ Instagram</span>
-                            <span th:case="4">→ Web Chat</span>
-                            <span th:case="5">→ Correo</span>
-                            <span th:case="*">→ Desconocido</span>
-                        </span>
-                    </td>
-
-                    <td data-label="Estado"
-                        class="px-4">
-                        <span th:if="${conversation.statusId == 1}"
-                              class="badge badge-warning"
-                              title="Pendiente de gestión">
-                            ⚠️ Pendiente
-                        </span>
-
-                        <span th:if="${conversation.statusId == 2}"
-                              class="badge badge-active"
-                              title="Atención en proceso">
-                            → En Proceso
-                        </span>
-
-                        <span th:if="${conversation.statusId == 3}"
-                              class="badge badge-success"
-                              title="Caso resuelto correctamente">
-                            ✓ Resuelto
-                        </span>
-
-                        <span th:if="${conversation.statusId == 4}"
-                              class="badge badge-danger pulse-escalado"
-                              title="Caso escalado">
-                            ✕ Escalado
-                        </span>
-
-                        <span th:if="${conversation.statusId == 5}"
-                              class="badge badge-success"
-                              title="Caso cerrado">
-                            ✓ Cerrado
-                        </span>
-                    </td>
-
-                    <td data-label="Prioridad"
-                        class="px-4">
-                        <span th:if="${conversation.priorityId == 1}"
-                              class="badge bg-slate-500/20 text-slate-300 border border-slate-400/20">
-                            Baja
-                        </span>
-
-                        <span th:if="${conversation.priorityId == 2}"
-                              class="badge badge-warning">
-                            Media
-                        </span>
-
-                        <span th:if="${conversation.priorityId == 3}"
-                              class="badge bg-orange-500/20 text-orange-300 border border-orange-400/20">
-                            Alta
-                        </span>
-
-                        <span th:if="${conversation.priorityId == 4}"
-                              class="badge badge-danger pulse-escalado">
-                            Crítica
-                        </span>
-                    </td>
-
-                    <td data-label="Agente"
-                        class="px-4">
-                        <span th:text="${conversation.agenteNombre != null ? conversation.agenteNombre : userName}">
-                            Agente
-                        </span>
-                    </td>
-
-                    <td data-label="Fecha"
-                        class="px-4"
-                        th:text="${conversation.fechaInicio != null ? #temporals.format(conversation.fechaInicio, 'dd/MM/yyyy') : 'Sin fecha'}">
-                        Fecha
-                    </td>
-
-                    <td data-label="Acción"
-                        class="px-4 rounded-r-3xl">
-
-                        <div class="flex items-center gap-2">
-
-                            <a th:href="@{/conversations/{id}(id=${conversation.id})}"
-                               onclick="event.stopPropagation()"
-                               class="bg-[#00d9ff] hover:bg-cyan-300 transition text-black px-3 py-2 rounded-xl font-black"
-                               title="Ver detalle">
-                                👁 Ver
-                            </a>
-
-                            <div class="relative action-menu">
-                                <button type="button"
-                                        onclick="toggleMenu(event, this)"
-                                        class="bg-white/10 hover:bg-white/20 transition px-3 py-2 rounded-xl font-black">
-                                    ⋯
-                                </button>
-
-                                <div class="hidden absolute right-0 mt-2 w-44 bg-[#17342E] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-20">
-                                    <a th:href="@{/conversations/{id}(id=${conversation.id})}"
-                                       class="block px-4 py-3 hover:bg-white/10">
-                                        👁 Ver detalle
-                                    </a>
-
-                                    <a th:href="@{/conversations/edit/{id}(id=${conversation.id})}"
-                                       sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"
-                                       class="block px-4 py-3 hover:bg-white/10">
-                                        ✏️ Editar
-                                    </a>
-
-                                    <a th:href="@{/conversations/export/csv}"
-                                       sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"
-                                       class="block px-4 py-3 hover:bg-white/10">
-                                        ⬇ Descargar CSV
-                                    </a>
+                        <td>
+                            <div class="client-cell">
+                                <div class="client-info">
+                                    <div class="client-name" th:text="${conversation.codigo}">CONV-00000</div>
+                                    <div class="client-code" onclick="copyCode(event, this)" title="Click para copiar">Click para copiar</div>
                                 </div>
                             </div>
+                        </td>
 
-                        </div>
+                        <td style="font-weight: 600;" th:text="${conversation.clienteNombre}">Cliente Nombre</td>
 
-                    </td>
+                        <td>
+                                    <span class="badge badge-channel" th:switch="${conversation.channelId}">
+                                        <span th:case="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>WhatsApp</span>
+                                        <span th:case="2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>Facebook</span>
+                                        <span th:case="3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>Instagram</span>
+                                        <span th:case="4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>Web Chat</span>
+                                        <span th:case="5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>Correo</span>
+                                        <span th:case="*">Canal Web</span>
+                                    </span>
+                        </td>
 
-                </tr>
+                        <td>
+                            <span th:if="${conversation.statusId == 1}" class="badge badge-pending">⚠️ Pendiente</span>
+                            <span th:if="${conversation.statusId == 2}" class="badge badge-process">⏳ En Proceso</span>
+                            <span th:if="${conversation.statusId == 3}" class="badge badge-resolved">✓ Resuelto</span>
+                            <span th:if="${conversation.statusId == 4}" class="badge badge-escalated">✕ Escalado</span>
+                            <span th:if="${conversation.statusId == 5}" class="badge badge-resolved">✓ Cerrado</span>
+                        </td>
 
-                </tbody>
+                        <td>
+                            <span th:if="${conversation.priorityId == 1}" class="badge badge-default">Baja</span>
+                            <span th:if="${conversation.priorityId == 2}" class="badge badge-pending">Media</span>
+                            <span th:if="${conversation.priorityId == 3}" class="badge badge-process">Alta</span>
+                            <span th:if="${conversation.priorityId == 4}" class="badge badge-escalated">Crítica</span>
+                        </td>
 
-            </table>
+                        <td th:text="${conversation.agenteNombre != null ? conversation.agenteNombre : userName}">Agente</td>
+
+                        <td th:text="${conversation.fechaInicio != null ? #temporals.format(conversation.fechaInicio, 'dd/MM/yyyy') : 'Sin fecha'}">00/00/0000</td>
+
+                        <td>
+                            <div class="actions-cell">
+                                <a th:href="@{/conversations/{id}(id=${conversation.id})}" onclick="event.stopPropagation()" class="action-btn">Ver</a>
+
+                                <button type="button" onclick="toggleMenu(event, this)" class="menu-btn">⋯</button>
+
+                                <div class="action-dropdown">
+                                    <a th:href="@{/conversations/{id}(id=${conversation.id})}">👁 Ver detalle</a>
+                                    <a sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')" th:href="@{/conversations/edit/{id}(id=${conversation.id})}">✏️ Editar</a>
+                                    <a sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')" th:href="@{/conversations/export/csv}">⬇ Descargar CSV</a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-
-    </section>
-
+    </div>
 </div>
 
+<div class="pagination-bar">
+
+    <a th:if="${conversations.hasPrevious()}"
+       th:href="@{/conversations(page=${conversations.number - 1})}"
+       class="pagination-btn prev">
+        ← Anterior
+    </a>
+
+    <span th:unless="${conversations.hasPrevious()}"
+          class="pagination-disabled">
+        ← Anterior
+    </span>
+
+    <div class="pagination-info">
+        Página
+        <span th:text="${conversations.number + 1}">1</span>
+        de
+        <span th:text="${conversations.totalPages}">1</span>
+    </div>
+
+    <a th:if="${conversations.hasNext()}"
+       th:href="@{/conversations(page=${conversations.number + 1})}"
+       class="pagination-btn next">
+        Siguiente →
+    </a>
+
+    <span th:unless="${conversations.hasNext()}"
+          class="pagination-disabled">
+        Siguiente →
+    </span>
+
+</div>
 <script>
+    // Lógica de UI (Sidebar)
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    // Cierre de dropdowns al dar click fuera
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.action-dropdown').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    });
+
+    function toggleMenu(event, button) {
+        event.stopPropagation();
+
+        // Cerrar todos los demás
+        document.querySelectorAll('.action-dropdown').forEach(menu => {
+            if (menu !== button.nextElementSibling) {
+                menu.classList.remove('show');
+            }
+        });
+
+        // Alternar el actual
+        button.nextElementSibling.classList.toggle('show');
+    }
+
+    // Lógica de copia al portapapeles
+    function copyCode(event, button) {
+        event.stopPropagation();
+        // Subimos al padre para obtener el código
+        const codeContainer = button.previousElementSibling;
+        const code = codeContainer.innerText.trim();
+
+        navigator.clipboard.writeText(code).then(() => {
+            const originalText = button.innerText;
+            button.innerText = 'Copiado ✓';
+            button.style.color = '#00ff88';
+
+            setTimeout(() => {
+                button.innerText = originalText;
+                button.style.color = '';
+            }, 1500);
+        });
+    }
+
+    // Lógica de click en la fila entera
+    document.querySelectorAll('#conversationTable tr').forEach(row => {
+        row.addEventListener('click', () => {
+            const url = row.getAttribute('data-detail-url');
+            if (url) window.location.href = url;
+        });
+    });
+
+    // Lógica de filtrado en tiempo real (JavaScript Frontend)
     const searchInput = document.getElementById('searchInput');
     const filterStatus = document.getElementById('filterStatus');
     const filterPriority = document.getElementById('filterPriority');
@@ -561,10 +902,6 @@
     filterStatus.addEventListener('change', filterRows);
     filterPriority.addEventListener('change', filterRows);
 
-    document.getElementById('toggleFilters').addEventListener('click', () => {
-        document.getElementById('advancedFilters').classList.toggle('hidden');
-    });
-
     document.getElementById('clearFilters').addEventListener('click', () => {
         searchInput.value = '';
         filterStatus.value = '';
@@ -572,48 +909,8 @@
         filterRows();
     });
 
-    document.querySelectorAll('#conversationTable tr').forEach(row => {
-        row.addEventListener('click', () => {
-            const url = row.getAttribute('data-detail-url');
-            if (url) window.location.href = url;
-        });
-    });
-
-    function copyCode(event, button) {
-        event.stopPropagation();
-
-        const code = button.innerText.trim();
-
-        navigator.clipboard.writeText(code).then(() => {
-            const original = button.innerText;
-            button.innerText = 'Copiado ✓';
-
-            setTimeout(() => {
-                button.innerText = original;
-            }, 1200);
-        });
-    }
-
-    function toggleMenu(event, button) {
-        event.stopPropagation();
-
-        document.querySelectorAll('.action-menu > div').forEach(menu => {
-            if (menu !== button.nextElementSibling) {
-                menu.classList.add('hidden');
-            }
-        });
-
-        button.nextElementSibling.classList.toggle('hidden');
-    }
-
-    document.addEventListener('click', () => {
-        document.querySelectorAll('.action-menu > div').forEach(menu => {
-            menu.classList.add('hidden');
-        });
-    });
-
+    // Inicializar el contador al cargar la página
     filterRows();
 </script>
-
 </body>
 </html>

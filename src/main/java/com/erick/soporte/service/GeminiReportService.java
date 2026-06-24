@@ -35,40 +35,14 @@ public class GeminiReportService {
         }
 
         String prompt = """
-        Eres un asistente de análisis operativo para un equipo de soporte.
+            Genera exactamente 3 bloques separados por el símbolo |.
 
-        Tu objetivo es explicar las métricas de forma clara, neutral y constructiva.
-        Evita un tono alarmista o agresivo. No critiques al equipo.
-        Enfócate en interpretar los datos, encontrar patrones y proponer oportunidades de mejora.
+            Bloque 1: desempeño general.
+            Bloque 2: canal dominante.
+            Bloque 3: área de mejora.
 
-        Genera un reporte en español con esta estructura:
-
-        1. Resumen general
-        Explica qué muestran las métricas principales.
-
-        2. Lectura de las métricas
-        Comenta qué significa el volumen total, pendientes, resueltas, escaladas y tiempo promedio.
-
-        3. Hallazgos relevantes
-        Identifica patrones visibles en los datos sin exagerar conclusiones.
-
-        4. Oportunidades de mejora
-        Sugiere mejoras prácticas y realistas.
-
-        5. Recomendación final
-        Da una conclusión breve y útil para el supervisor.
-
-        Métricas actuales:
-        - Total conversaciones: %d
-        - Pendientes: %d
-        - Resueltas: %d
-        - Escaladas: %d
-        - Tiempo promedio de gestión: %.1f minutos
-
-        Redacta con tono profesional, calmado, objetivo y orientado a mejora continua.
-        No uses lenguaje negativo fuerte.
-        No inventes datos que no estén presentes.
-        """.formatted(
+            No uses títulos. No uses markdown. Sé breve, profesional y claro.
+""".formatted(
                 total,
                 pendientes,
                 resueltas,

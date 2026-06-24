@@ -48,8 +48,16 @@ public class SupervisorDashboardController {
         Map<String, Long> porAgente = conversations.stream()
                 .collect(Collectors.groupingBy(
                         c -> c.getAgenteNombre() != null ? c.getAgenteNombre() : "Sin agente",
-                        LinkedHashMap::new,
                         Collectors.counting()
+                ))
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (a, b) -> a,
+                        LinkedHashMap::new
                 ));
 
         Map<String, Long> porCanal = conversations.stream()
@@ -79,8 +87,16 @@ public class SupervisorDashboardController {
         Map<String, Long> porAsunto = conversations.stream()
                 .collect(Collectors.groupingBy(
                         c -> c.getAsunto() != null ? c.getAsunto() : "Sin asunto",
-                        LinkedHashMap::new,
                         Collectors.counting()
+                ))
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (a, b) -> a,
+                        LinkedHashMap::new
                 ));
 
         model.addAttribute("total", total);

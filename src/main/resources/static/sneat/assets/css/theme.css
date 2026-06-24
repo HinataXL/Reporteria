@@ -1,0 +1,30 @@
+:root {
+    --app-bg: #10231F;
+    --app-card: rgba(255,255,255,0.10);
+    --app-text: #F4F0E6;
+    --app-muted: #94a3b8;
+    --app-border: rgba(255,255,255,0.10);
+}
+
+body.light-theme {
+    --app-bg: #f5f7fb;
+    --app-card: #ffffff;
+    --app-text: #1f2937;
+    --app-muted: #64748b;
+    --app-border: #e5e7eb;
+}
+
+body {
+    background: var(--app-bg) !important;
+    color: var(--app-text) !important;
+}
+
+.theme-card {
+    background: var(--app-card) !important;
+    border: 1px solid var(--app-border) !important;
+    color: var(--app-text) !important;
+}
+
+.theme-muted {
+    color: var(--app-muted) !important;
+}
