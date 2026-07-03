@@ -593,7 +593,6 @@
             <div class="user-role" th:text="${userRole}">ADMIN</div>
             <div class="user-email" th:text="${userEmail}">usuario@soporte.com</div>
         </div>
-
         <ul class="sidebar-menu">
             <li sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')">
                 <a th:href="@{/supervisor/dashboard}">

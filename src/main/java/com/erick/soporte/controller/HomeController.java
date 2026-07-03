@@ -115,6 +115,8 @@ public class HomeController {
             );
         }
 
+        conversation.setFechaFinalizacion(LocalDateTime.now(ZoneId.of("America/Guatemala")));
+
         Conversation saved = conversationRepository.save(conversation);
 
         if (saved.getCodigo() == null || saved.getCodigo().isBlank()) {
@@ -172,6 +174,7 @@ public class HomeController {
         conversation.setStatusId(form.getStatusId());
         conversation.setPriorityId(form.getPriorityId());
         conversation.setTiempoGestionMinutos(form.getTiempoGestionMinutos());
+        conversation.setFechaFinalizacion(LocalDateTime.now(ZoneId.of("America/Guatemala")));
         conversation.setObservaciones(form.getObservaciones());
 
         conversation.setTicketAperturado(Boolean.TRUE.equals(form.getTicketAperturado()));
@@ -192,7 +195,7 @@ public class HomeController {
 
         PrintWriter writer = response.getWriter();
 
-        writer.println("Codigo,Cliente,Telefono,Correo,Asunto,Canal,Estado,Prioridad,Ticket Aperturado,Numero Ticket,Transferida,Departamento,Tiempo Gestion,Fecha Inicio,Observaciones");
+        writer.println("Codigo,Cliente,Telefono,Correo,Asunto,Canal,Estado,Prioridad,Ticket Aperturado,Numero Ticket,Transferida,Departamento,Tiempo Gestion (minutos),Fecha Inicio,Fecha Finalizacion/Guardado,Observaciones");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
         for (Conversation c : conversationRepository.findAll()) {
@@ -209,8 +212,9 @@ public class HomeController {
                             safe(c.getNumeroTicket()) + "," +
                             safe(Boolean.TRUE.equals(c.getConversacionTransferida()) ? "Sí" : "No") + "," +
                             safe(departmentName(c.getDepartmentId())) + "," +
-                            safe(String.valueOf(c.getTiempoGestionMinutos())) + "," +
+                            safe(c.getTiempoGestionMinutos() != null ? String.valueOf(c.getTiempoGestionMinutos()) : "") + "," +
                             safe(c.getFechaInicio() != null ? c.getFechaInicio().format(formatter) : "") + "," +
+                            safe(finalizacionCsv(c, formatter)) + "," +
                             safe(c.getObservaciones())
             );
         }
@@ -221,6 +225,20 @@ public class HomeController {
     private String safe(String value) {
         if (value == null) return "";
         return "\"" + value.replace("\"", "\"\"") + "\"";
+    }
+
+    private String finalizacionCsv(Conversation conversation, DateTimeFormatter formatter) {
+        if (conversation.getFechaFinalizacion() != null) {
+            return conversation.getFechaFinalizacion().format(formatter);
+        }
+
+        if (conversation.getFechaInicio() != null && conversation.getTiempoGestionMinutos() != null) {
+            return conversation.getFechaInicio()
+                    .plusMinutes(conversation.getTiempoGestionMinutos())
+                    .format(formatter);
+        }
+
+        return "";
     }
 
     private String channelName(Long id) {

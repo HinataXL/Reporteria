@@ -35,6 +35,9 @@ public class Conversation {
     @Column(name = "fecha_inicio")
     private LocalDateTime fechaInicio;
 
+    @Column(name = "fecha_finalizacion")
+    private LocalDateTime fechaFinalizacion;
+
     @Column(columnDefinition = "TEXT")
     private String observaciones;
 
@@ -130,6 +133,14 @@ public class Conversation {
 
     public void setFechaInicio(LocalDateTime fechaInicio) {
         this.fechaInicio = fechaInicio;
+    }
+
+    public LocalDateTime getFechaFinalizacion() {
+        return fechaFinalizacion;
+    }
+
+    public void setFechaFinalizacion(LocalDateTime fechaFinalizacion) {
+        this.fechaFinalizacion = fechaFinalizacion;
     }
 
     public String getObservaciones() {
