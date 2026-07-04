@@ -70,7 +70,20 @@
         </div>
     </header>
 
-    <form th:action="@{/conversations/save}"
+    <div class="mb-6">
+        <div class="flex items-center gap-3 mb-4">
+            <button type="button"
+                    id="btnNewConversation"
+                    class="bg-[#00d9ff] text-black px-5 py-3 rounded-2xl font-black">
+                + Nueva conversación
+            </button>
+        </div>
+
+        <div id="conversationTabs" class="flex flex-wrap gap-3"></div>
+    </div>
+
+    <form id="conversationForm"
+          th:action="@{/conversations/save}"
           method="post"
           class="glass-card rounded-[32px] p-7 fade-up grid gap-7">
 
@@ -215,20 +228,35 @@
                 </select>
             </div>
 
-            <input name="tiempoGestionMinutos"
-                   id="tiempoGestionMinutos"
-                   type="hidden"
-                   value="0">
+            <div class="rounded-3xl border border-cyan-700 p-6 bg-white/5">
 
-            <div class="form-input mt-2 w-full px-4 py-3 rounded-2xl">
-                <p id="timerDisplay" class="text-2xl font-black text-[#ffd700]">
+                <p class="text-sm font-black text-slate-300 mb-2">
+                    ⏱ Tiempo de gestión
+                </p>
+
+                <p id="timerDisplay"
+                   class="text-5xl font-black text-[#ffd700]">
                     00:00
                 </p>
-                <p class="text-xs text-slate-400">
-                    El tiempo inicia al abrir esta pantalla y finaliza al guardar.
-                </p>
-            </div>
 
+                <p id="timerStatus"
+                   class="mt-2 text-sm font-black text-green-400">
+                    🟢 En gestión
+                </p>
+
+                <input type="hidden"
+                       id="tiempoGestionMinutos"
+                       name="tiempoGestionMinutos"
+                       value="0">
+
+                <button id="pauseTimerBtn"
+                        type="button"
+                        onclick="ConversationWorkspace.toggleTimer()"
+                        class="mt-5 w-full bg-[#ffd700] hover:bg-yellow-300 text-black font-black py-2 rounded-xl transition">
+                    ⏸ Pausar
+                </button>
+
+            </div>
         </section>
 
         <section class="grid md:grid-cols-2 gap-5">
@@ -324,6 +352,7 @@
 </div>
 
 <script>
+    // --- LÓGICA ORIGINAL DE UI ---
     const issueType = document.getElementById('issueTypeId');
     const rejectionBox = document.getElementById('rejectionCodeBox');
     const rejectionCode = document.getElementById('rejectionCodeId');
@@ -343,6 +372,9 @@
 
     issueType.addEventListener('change', () => {
         const selected = issueType.options[issueType.selectedIndex];
+        // En caso de que se dispare por JS y no exista selected
+        if(!selected) return;
+
         const requiresRejection = selected.dataset.requiresRejection === 'true';
 
         rejectionBox.classList.toggle('hidden', !requiresRejection);
@@ -379,29 +411,7 @@
         observationsCounter.innerText = observaciones.value.length;
     });
 
-    const startTime = Date.now();
-    const timerDisplay = document.getElementById('timerDisplay');
-    const tiempoGestionMinutos = document.getElementById('tiempoGestionMinutos');
-
-    function updateTimer() {
-        const now = Date.now();
-        const diffMs = now - startTime;
-
-        const totalSeconds = Math.floor(diffMs / 1000);
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-
-        timerDisplay.innerText =
-            String(minutes).padStart(2, '0') + ':' +
-            String(seconds).padStart(2, '0');
-
-        tiempoGestionMinutos.value = Math.max(1, Math.ceil(totalSeconds / 60));
-    }
-
-    setInterval(updateTimer, 1000);
-    updateTimer();
-
 </script>
-
+<script th:src="@{/sneat/assets/js/conversation-workspace.js}"></script>
 </body>
 </html>

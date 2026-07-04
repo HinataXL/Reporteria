@@ -23,6 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import org.springframework.security.core.Authentication;
 
 @Controller
 public class HomeController {
@@ -54,10 +55,16 @@ public class HomeController {
 
     @GetMapping("/conversations")
     public String conversations(
-            @RequestParam(defaultValue = "0") int page,
-            Model model
-    ) {
 
+            @RequestParam(defaultValue = "0") int page,
+            Model model,
+            Authentication authentication
+    ) {
+        CustomUserPrincipal user = (CustomUserPrincipal) authentication.getPrincipal();
+
+        model.addAttribute("userName", user.getNombreCompleto());
+        model.addAttribute("userRole", user.getRol());
+        model.addAttribute("userEmail", user.getCorreo());
         Page<Conversation> conversations = conversationRepository.findAll(
                 PageRequest.of(page, 10, Sort.by("id").descending())
         );
