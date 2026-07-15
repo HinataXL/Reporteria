@@ -24,6 +24,13 @@ import org.springframework.data.domain.Sort;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import org.springframework.security.core.Authentication;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Controller
 public class HomeController {
@@ -85,60 +92,91 @@ public class HomeController {
         return "conversations/create";
     }
 
-    @PostMapping("/conversations/save")
-    public String saveConversation(
+    @PostMapping("/api/conversations/save")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> saveConversationAjax(
             @ModelAttribute Conversation conversation,
             Authentication authentication,
             HttpServletRequest request
     ) {
-        CustomUserPrincipal user = (CustomUserPrincipal) authentication.getPrincipal();
+        try {
+            CustomUserPrincipal user =
+                    (CustomUserPrincipal) authentication.getPrincipal();
 
-        conversation.setUserId(user.getId());
-        conversation.setAgenteNombre(user.getNombreCompleto());
+            conversation.setUserId(user.getId());
+            conversation.setAgenteNombre(user.getNombreCompleto());
 
-        if (!Boolean.TRUE.equals(conversation.getTicketAperturado())) {
-            conversation.setTicketAperturado(false);
-            conversation.setNumeroTicket(null);
-        }
+            if (!Boolean.TRUE.equals(conversation.getTicketAperturado())) {
+                conversation.setTicketAperturado(false);
+                conversation.setNumeroTicket(null);
+            }
 
-        if (!Boolean.TRUE.equals(conversation.getConversacionTransferida())) {
-            conversation.setConversacionTransferida(false);
-            conversation.setDepartmentId(null);
-        }
+            if (!Boolean.TRUE.equals(conversation.getConversacionTransferida())) {
+                conversation.setConversacionTransferida(false);
+                conversation.setDepartmentId(null);
+            }
 
-        if (conversation.getIssueTypeId() == null) {
-            conversation.setRejectionCodeId(null);
-        }
-        if (conversation.getIssueTypeId() != null) {
-            IssueType issueType = issueTypeRepository
-                    .findById(conversation.getIssueTypeId())
-                    .orElseThrow(() -> new RuntimeException("Tipo de problema no encontrado"));
+            if (conversation.getIssueTypeId() == null) {
+                conversation.setRejectionCodeId(null);
+            }
 
-            conversation.setAsunto(issueType.getNombre());
-        }
-        if (conversation.getFechaInicio() == null) {
-            conversation.setFechaInicio(
-                    LocalDateTime.now(ZoneId.of("America/Guatemala"))
+            if (conversation.getIssueTypeId() != null) {
+                IssueType issueType = issueTypeRepository
+                        .findById(conversation.getIssueTypeId())
+                        .orElseThrow(() ->
+                                new RuntimeException("Tipo de problema no encontrado")
+                        );
+
+                conversation.setAsunto(issueType.getNombre());
+            }
+
+            if (conversation.getFechaInicio() == null) {
+                conversation.setFechaInicio(
+                        LocalDateTime.now(
+                                ZoneId.of("America/Guatemala")
+                        )
+                );
+            }
+
+            Conversation saved = conversationRepository.save(conversation);
+
+            if (saved.getCodigo() == null || saved.getCodigo().isBlank()) {
+                saved.setCodigo(
+                        "CONV-" + String.format("%05d", saved.getId())
+                );
+
+                saved = conversationRepository.save(saved);
+            }
+
+            auditLogService.registrar(
+                    "CREAR_CONVERSACION",
+                    "CONVERSACIONES",
+                    "Se creó la conversación " + saved.getCodigo(),
+                    authentication,
+                    request
             );
+
+            Map<String, Object> response = new LinkedHashMap<>();
+
+            response.put("success", true);
+            response.put("id", saved.getId());
+            response.put("codigo", saved.getCodigo());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            Map<String, Object> response = new LinkedHashMap<>();
+
+            response.put("success", false);
+            response.put("message", e.getMessage());
+
+            return ResponseEntity
+                    .internalServerError()
+                    .body(response);
         }
-
-        conversation.setFechaFinalizacion(LocalDateTime.now(ZoneId.of("America/Guatemala")));
-
-        Conversation saved = conversationRepository.save(conversation);
-
-        if (saved.getCodigo() == null || saved.getCodigo().isBlank()) {
-            saved.setCodigo("CONV-" + String.format("%05d", saved.getId()));
-            conversationRepository.save(saved);
-        }
-        auditLogService.registrar(
-                "CREAR_CONVERSACION",
-                "CONVERSACIONES",
-                "Se creó la conversación " + saved.getCodigo(),
-                authentication,
-                request
-        );
-
-        return "redirect:/conversations";
     }
 
     @GetMapping("/conversations/{id}")

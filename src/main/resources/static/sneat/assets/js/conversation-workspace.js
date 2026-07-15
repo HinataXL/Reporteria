@@ -96,7 +96,14 @@ window.ConversationWorkspace = (() => {
     }
 
     function getTabLabel(tab) {
-        const status = tab.running ? "🟢" : "⏸";
+        if (tab.saved && tab.codigo) {
+            return `✅ ${tab.codigo}`;
+        }
+
+        const status = tab.running
+            ? "🟢"
+            : "⏸";
+
         const name =
             tab.data?.clienteNombre ||
             tab.data?.cliente_nombre ||
@@ -293,18 +300,186 @@ window.ConversationWorkspace = (() => {
         startTimer();
     }
 
-    function removeActiveTabAfterSubmit() {
-        if (!activeTabId) return;
 
-        tabs = tabs.filter(t => t.id !== activeTabId);
-        sessionStorage.setItem("conversationTabs", JSON.stringify(tabs));
-        sessionStorage.removeItem("activeConversationTabId");
-    }
 
     function triggerConditionalFields() {
         document.querySelectorAll("input, select, textarea").forEach(el => {
             el.dispatchEvent(new Event("change", { bubbles: true }));
         });
+    }
+    async function saveConversationAjax() {
+        const form = getForm();
+        const tab = getActiveTab();
+
+        if (!form || !tab) {
+            return;
+        }
+
+        // Evita doble guardado
+        if (tab.saving || tab.saved) {
+            console.warn("La conversación ya se está guardando o ya fue guardada");
+            return;
+        }
+
+        const submitButton = form.querySelector(
+            'button[type="submit"]'
+        );
+
+        try {
+            tab.saving = true;
+
+            // Detener y calcular el tiempo final
+            tab.elapsedSeconds = getCurrentElapsedSeconds(tab);
+            tab.running = false;
+
+            const timerInput =
+                document.getElementById(timerInputId);
+
+            if (timerInput) {
+                timerInput.value = Math.max(
+                    1,
+                    Math.ceil(tab.elapsedSeconds / 60)
+                );
+            }
+
+            saveActiveTabData();
+            saveState();
+
+            if (submitButton) {
+                submitButton.disabled = true;
+
+                submitButton.dataset.originalText =
+                    submitButton.innerHTML;
+
+                submitButton.innerHTML = "Guardando...";
+            }
+
+            const formData = new FormData(form);
+
+            const response = await fetch(
+                "/api/conversations/save",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(
+                    data.message ||
+                    "No fue posible guardar la conversación"
+                );
+            }
+
+            tab.saved = true;
+            tab.codigo = data.codigo;
+            tab.conversationId = data.id;
+            tab.saving = false;
+
+            console.log(
+                "Conversación guardada correctamente:",
+                data
+            );
+
+            showToast(
+                `✅ ${data.codigo} guardada correctamente`
+            );
+
+            closeActiveTabAfterSave();
+
+        } catch (error) {
+            console.error(
+                "Error guardando conversación:",
+                error
+            );
+
+            tab.saving = false;
+            tab.saved = false;
+
+            // Reanudar contador si falló el guardado
+            tab.running = true;
+            tab.lastResume = Date.now();
+
+            saveState();
+
+            startTimer();
+
+            showToast(
+                "❌ Error al guardar la conversación",
+                true
+            );
+
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+
+                submitButton.innerHTML =
+                    submitButton.dataset.originalText ||
+                    "Guardar conversación";
+            }
+        }
+    }
+
+    function closeActiveTabAfterSave() {
+        if (!activeTabId) {
+            return;
+        }
+
+        stopTimer();
+
+        const savedTabId = activeTabId;
+
+        tabs = tabs.filter(tab => tab.id !== savedTabId);
+
+        console.log(
+            "Pestaña guardada eliminada del Workspace:",
+            savedTabId
+        );
+
+        // No quedan conversaciones abiertas
+        if (tabs.length === 0) {
+            activeTabId = null;
+
+            sessionStorage.removeItem(
+                "activeConversationTabId"
+            );
+
+            sessionStorage.setItem(
+                "conversationTabs",
+                JSON.stringify([])
+            );
+
+            console.log(
+                "No quedan conversaciones activas. Redirigiendo..."
+            );
+
+            setTimeout(() => {
+                window.location.href = "/conversations";
+            }, 800);
+
+            return;
+        }
+
+        // Abrir otra conversación existente
+        activeTabId = tabs[0].id;
+
+        const nextTab = getActiveTab();
+
+        if (nextTab) {
+            normalizeTab(nextTab);
+            setFormData(nextTab.data || {});
+        }
+
+        saveState();
+        renderTabs();
+        startTimer();
+
+        console.log(
+            "Conversación activa cambiada a:",
+            activeTabId
+        );
     }
 
     function bindEvents() {
@@ -326,22 +501,34 @@ window.ConversationWorkspace = (() => {
             renderTabs();
         });
 
-        form.addEventListener("submit", () => {
-            const tab = getActiveTab();
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
 
-            if (tab) {
-                tab.elapsedSeconds = getCurrentElapsedSeconds(tab);
-                tab.running = false;
-
-                const timerInput = document.getElementById(timerInputId);
-                if (timerInput) {
-                    timerInput.value = Math.max(1, Math.ceil(tab.elapsedSeconds / 60));
-                }
-            }
-
-            saveActiveTabData();
-            removeActiveTabAfterSubmit();
+            await saveConversationAjax();
         });
+    }
+    function showToast(message, isError = false) {
+        const toast =
+            document.getElementById("workspaceToast");
+
+        if (!toast) {
+            return;
+        }
+
+        toast.innerText = message;
+
+        toast.className =
+            "fixed top-6 right-6 z-[9999] " +
+            "px-6 py-4 rounded-2xl font-black shadow-2xl " +
+            (isError
+                ? "bg-red-500 text-white"
+                : "bg-green-500 text-black");
+
+        toast.classList.remove("hidden");
+
+        setTimeout(() => {
+            toast.classList.add("hidden");
+        }, 3500);
     }
 
     function init() {
