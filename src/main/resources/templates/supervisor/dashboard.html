@@ -55,11 +55,103 @@
                     <input id="filterTo" class="range-input" type="date" aria-label="Fecha final">
                     <i data-lucide="chevron-down"></i>
                 </div>
+                <label class="date-field granularity-field" title="Agrupacion de graficas">
+                    <i data-lucide="line-chart"></i>
+                    <select id="granularityFilter" class="range-input">
+                        <option value="auto" selected>Auto</option>
+                        <option value="daily">Diario</option>
+                        <option value="weekly">Semanal</option>
+                        <option value="monthly">Mensual</option>
+                    </select>
+                </label>
                 <button class="rm-btn ghost" type="button" onclick="applyDateFilter()"><i data-lucide="filter"></i>Filtrar</button>
                 <button class="rm-btn ghost" type="button" onclick="clearDateFilter()"><i data-lucide="x"></i>Limpiar</button>
                 <a class="rm-btn primary" th:href="@{/supervisor/report/pdf}"><i data-lucide="download"></i>Exportar</a>
             </div>
         </header>
+
+        <section class="card section executive-card">
+            <div class="health-main">
+                <div class="health-ring"
+                     th:classappend="${operationalHealth.status}"
+                     th:style="'--score:' + ${operationalHealth.score}">
+                    <div>
+                        <div id="healthScore" class="health-score" th:text="${operationalHealth.score}">100</div>
+                        <div class="health-scale">/100</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="kpi-label">Indice de Salud Operativa</div>
+                    <h2 id="healthLabel" class="health-title" th:text="${operationalHealth.label}">Operacion estable</h2>
+                    <p id="healthSummary" class="page-subtitle" th:text="${operationalHealth.summary}">
+                        La operacion se mantiene saludable.
+                    </p>
+                </div>
+            </div>
+            <div class="health-factors">
+                <div class="summary-item">
+                    <div class="summary-label">Pendientes</div>
+                    <div id="healthPendingRate" class="summary-value" th:text="${operationalHealth.pendingRate + '%'}">0%</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Escalaciones</div>
+                    <div id="healthEscalationRate" class="summary-value" th:text="${operationalHealth.escalationRate + '%'}">0%</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Tiempo promedio</div>
+                    <div id="healthAvgTime" class="summary-value" th:text="${operationalHealth.avgTime + ' min'}">0 min</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Tendencia</div>
+                    <div id="healthTrend" class="summary-value compact" th:text="${operationalHealth.trend}">Estable</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card section weekly-trend-card">
+            <div>
+                <div class="kpi-label">Tendencia semanal</div>
+                <h2 class="section-title" style="margin-top:8px;margin-bottom:6px;">Semana actual vs semana anterior</h2>
+                <p id="weeklyTrendSummary" class="page-subtitle" th:text="${weeklyTrend.summary}">
+                    La semana se mantiene estable frente al periodo anterior.
+                </p>
+                <span id="weeklyTrendRange" class="pill" th:text="${weeklyTrend.range}">Semana actual</span>
+            </div>
+            <div class="trend-grid">
+                <article class="trend-card">
+                    <div class="summary-label">Volumen</div>
+                    <div id="weeklyVolumeValue" class="trend-value" th:text="${weeklyTrend.volume.current}">0</div>
+                    <div id="weeklyVolumeChange"
+                         class="trend-change"
+                         th:classappend="${weeklyTrend.volume.tone}"
+                         th:text="${weeklyTrend.volume.change}">0%</div>
+                </article>
+                <article class="trend-card">
+                    <div class="summary-label">Pendientes</div>
+                    <div id="weeklyPendingValue" class="trend-value" th:text="${weeklyTrend.pending.current}">0</div>
+                    <div id="weeklyPendingChange"
+                         class="trend-change"
+                         th:classappend="${weeklyTrend.pending.tone}"
+                         th:text="${weeklyTrend.pending.change}">0%</div>
+                </article>
+                <article class="trend-card">
+                    <div class="summary-label">Escaladas</div>
+                    <div id="weeklyEscalatedValue" class="trend-value" th:text="${weeklyTrend.escalated.current}">0</div>
+                    <div id="weeklyEscalatedChange"
+                         class="trend-change"
+                         th:classappend="${weeklyTrend.escalated.tone}"
+                         th:text="${weeklyTrend.escalated.change}">0%</div>
+                </article>
+                <article class="trend-card">
+                    <div class="summary-label">Tiempo prom.</div>
+                    <div><span id="weeklyAvgTimeValue" class="trend-value" th:text="${weeklyTrend.avgTime.current}">0</span><span class="metric-caption"> min</span></div>
+                    <div id="weeklyAvgTimeChange"
+                         class="trend-change"
+                         th:classappend="${weeklyTrend.avgTime.tone}"
+                         th:text="${weeklyTrend.avgTime.change}">0%</div>
+                </article>
+            </div>
+        </section>
 
         <section class="card section state-grid state-panel">
             <div>
@@ -113,7 +205,7 @@
 
         <section class="content-grid">
             <article class="card section chart-card">
-                <h2 class="section-title">Conversaciones por dia</h2>
+                <h2 class="section-title">Conversaciones por periodo <span id="granularityBadge" class="pill" th:text="${granularity == 'weekly' ? 'Semanal' : (granularity == 'monthly' ? 'Mensual' : 'Diario')}">Diario</span></h2>
                 <div class="chart-wrap"><canvas id="dailyChart"></canvas></div>
             </article>
             <article class="card section chart-card time-card">
@@ -128,6 +220,37 @@
                 </div>
                 <div class="mini-chart-wrap"><canvas id="timeChart"></canvas></div>
             </article>
+        </section>
+
+        <section class="card section peak-hours-card">
+            <div class="peak-summary">
+                <div class="kpi-label">Horas pico de atencion</div>
+                <h2 class="section-title" style="margin-top:8px;margin-bottom:6px;">Distribucion por hora del dia</h2>
+                <p id="peakHoursSummary" class="page-subtitle" th:text="${peakHours.summary}">
+                    Mayor demanda alrededor de las 10:00.
+                </p>
+                <div class="peak-range-note">
+                    Rango analizado: <span id="peakHoursRange" th:text="${peakHours.range}">Sin fechas registradas</span>
+                </div>
+                <div class="peak-stat-row">
+                    <div class="peak-stat">
+                        <span>Hora pico</span>
+                        <strong id="peakHourValue" th:text="${peakHours.peakHour}">10:00</strong>
+                    </div>
+                    <div class="peak-stat">
+                        <span>Conversaciones</span>
+                        <strong id="peakHourCount" th:text="${peakHours.maxValue}">0</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="peak-band-wrap">
+                <div id="peakHoursGrid" class="peak-grid" aria-label="Horas pico de atencion"></div>
+                <div class="peak-scale" aria-hidden="true">
+                    <span>Menos actividad</span>
+                    <div class="peak-scale-bar"></div>
+                    <span>Mas actividad</span>
+                </div>
+            </div>
         </section>
 
         <section class="card section" style="margin-bottom:18px;">
@@ -219,6 +342,29 @@
     </div>
 </div>
 
+<div id="peakHourModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h2 id="peakHourModalTitle" class="page-title">Hora de atencion</h2>
+                <p id="peakHourModalSubtitle" class="page-subtitle">Cargando conversaciones...</p>
+            </div>
+            <button class="modal-close" type="button" onclick="closePeakHourModal()" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="summary-grid">
+                <div class="summary-item"><div class="summary-label">Conversaciones</div><div id="peakHourModalTotal" class="summary-value">0</div></div>
+                <div class="summary-item"><div class="summary-label">Tiempo gestion</div><div id="peakHourModalTime" class="summary-value">0 min</div></div>
+                <div class="summary-item"><div class="summary-label">Rango</div><div id="peakHourModalRange" class="summary-value compact">Sin fechas</div></div>
+            </div>
+            <div style="margin-top:18px;">
+                <h3 class="section-title">Conversaciones en este horario</h3>
+                <div id="peakHourConversationList" class="rank-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script th:inline="javascript">
     Chart.defaults.color = '#667085';
     Chart.defaults.font.family = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
@@ -235,6 +381,8 @@
     const clienteValues = /*[[${clienteValues}]]*/ [];
     const clienteTiempoValues = /*[[${clienteTiempoValues}]]*/ [];
     const promedioTiempoValue = Number(String(/*[[${promedioTiempo}]]*/ '0').replace(',', '.')) || 0;
+    const initialGranularity = /*[[${granularity}]]*/ 'daily';
+    const initialPeakHours = /*[[${peakHours}]]*/ {};
 
     function tooltip() {
         return {
@@ -263,6 +411,85 @@
         const remaining = total % 60;
         if (!hours) return `${remaining} min`;
         return remaining ? `${hours} h ${remaining} min` : `${hours} h`;
+    }
+
+    function granularityLabel(value) {
+        if (value === 'weekly') return 'Semanal';
+        if (value === 'monthly') return 'Mensual';
+        return 'Diario';
+    }
+
+    function setGranularityBadge(value) {
+        document.getElementById('granularityBadge').innerText = granularityLabel(value);
+    }
+
+    function updateOperationalHealth(health) {
+        if (!health) return;
+
+        const ring = document.querySelector('.health-ring');
+        ring.classList.remove('stable', 'warning', 'critical');
+        ring.classList.add(health.status || 'stable');
+        ring.style.setProperty('--score', health.score || 0);
+
+        document.getElementById('healthScore').innerText = health.score || 0;
+        document.getElementById('healthLabel').innerText = health.label || 'Operacion estable';
+        document.getElementById('healthSummary').innerText = health.summary || '';
+        document.getElementById('healthPendingRate').innerText = `${health.pendingRate || 0}%`;
+        document.getElementById('healthEscalationRate').innerText = `${health.escalationRate || 0}%`;
+        document.getElementById('healthAvgTime').innerText = `${health.avgTime || 0} min`;
+        document.getElementById('healthTrend').innerText = health.trend || 'Carga abierta estable';
+    }
+
+    function updateTrendMetric(prefix, metric) {
+        if (!metric) return;
+
+        const value = document.getElementById(`${prefix}Value`);
+        const change = document.getElementById(`${prefix}Change`);
+        value.innerText = metric.current || 0;
+        change.innerText = metric.change || '0%';
+        change.classList.remove('positive', 'negative');
+        change.classList.add(metric.tone || 'positive');
+    }
+
+    function updateWeeklyTrend(trend) {
+        if (!trend) return;
+
+        document.getElementById('weeklyTrendSummary').innerText = trend.summary || '';
+        document.getElementById('weeklyTrendRange').innerText = trend.range || 'Semana actual';
+        updateTrendMetric('weeklyVolume', trend.volume);
+        updateTrendMetric('weeklyPending', trend.pending);
+        updateTrendMetric('weeklyEscalated', trend.escalated);
+        updateTrendMetric('weeklyAvgTime', trend.avgTime);
+    }
+
+    function renderPeakHours(peakHours) {
+        if (!peakHours) return;
+
+        const container = document.getElementById('peakHoursGrid');
+        const labels = peakHours.labels || [];
+        const values = peakHours.values || [];
+        const maxValue = Number(peakHours.maxValue || 0);
+        document.getElementById('peakHoursSummary').innerText = peakHours.summary || '';
+        document.getElementById('peakHoursRange').innerText = peakHours.range || 'Sin fechas registradas';
+        document.getElementById('peakHourValue').innerText = peakHours.peakHour || '--:--';
+        document.getElementById('peakHourCount').innerText = peakHours.maxValue || 0;
+
+        if (!labels.length) {
+            container.innerHTML = '<div class="empty">Sin datos por hora para mostrar.</div>';
+            return;
+        }
+
+        container.innerHTML = labels.map((label, index) => {
+            const value = Number(values[index] || 0);
+            const intensity = maxValue > 0 ? Math.max(0.08, value / maxValue) : 0;
+            const activeClass = maxValue > 0 && value === maxValue ? ' peak-cell-hot' : '';
+            const hour = Number(label.slice(0, 2));
+            return `
+                <button class="peak-cell${activeClass}" type="button" data-peak-hour="${hour}" style="--intensity:${intensity}" title="${label} - ${value} conversaciones">
+                    <span class="peak-hour">${label}</span>
+                    <span class="peak-count">${value}</span>
+                </button>`;
+        }).join('');
     }
 
     function setStatusPercents(values) {
@@ -310,7 +537,15 @@
                 borderWidth: 3
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tooltip() }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: tooltip() },
+            scales: {
+                x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 10, maxRotation: 55 } },
+                y: { beginAtZero: true }
+            }
+        }
     });
 
     const timeChart = new Chart(document.getElementById('timeChart'), {
@@ -328,7 +563,15 @@
                 borderWidth: 3
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tooltip() }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: tooltip() },
+            scales: {
+                x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 8, maxRotation: 55 } },
+                y: { beginAtZero: true }
+            }
+        }
     });
 
     function renderIssuesTable(containerId, labels, values) {
@@ -425,6 +668,25 @@
             </div>`).join('');
     }
 
+    function renderPeakHourConversationList(items) {
+        const container = document.getElementById('peakHourConversationList');
+        if (!container) return;
+        if (!items || !items.length) {
+            container.innerHTML = '<div class="empty">Sin conversaciones registradas en este horario.</div>';
+            return;
+        }
+
+        container.innerHTML = items.map(item => `
+            <div class="activity-item">
+                <div class="activity-dot">${escapeHtml((item.canal || 'C').slice(0, 2).toUpperCase())}</div>
+                <div>
+                    <div class="activity-title">${escapeHtml(item.codigo || 'Sin codigo')} - ${escapeHtml(item.cliente || 'Sin cliente')}</div>
+                    <div class="activity-time">${escapeHtml(item.fecha || 'Sin fecha')} - ${escapeHtml(item.asunto || 'Sin asunto')} - ${escapeHtml(item.agente || 'Sin agente')} - ${escapeHtml(formatMinutes(item.tiempoGestion))}</div>
+                </div>
+                <span class="pill">${escapeHtml(item.estado || 'Sin estado')}</span>
+            </div>`).join('');
+    }
+
     async function openClient360(cliente) {
         const modal = document.getElementById('client360Modal');
         modal.classList.add('show');
@@ -461,13 +723,54 @@
         modal.setAttribute('aria-hidden', 'true');
     }
 
+    async function openPeakHourModal(hour) {
+        const modal = document.getElementById('peakHourModal');
+        const params = new URLSearchParams({ hour });
+        const from = document.getElementById('filterFrom').value;
+        const to = document.getElementById('filterTo').value;
+        if (from) params.append('from', from);
+        if (to) params.append('to', to);
+
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.getElementById('peakHourModalTitle').innerText = `Conversaciones de ${String(hour).padStart(2, '0')}:00`;
+        document.getElementById('peakHourModalSubtitle').innerText = 'Cargando conversaciones del horario seleccionado...';
+        document.getElementById('peakHourModalTotal').innerText = '0';
+        document.getElementById('peakHourModalTime').innerText = '0 min';
+        document.getElementById('peakHourModalRange').innerText = 'Cargando';
+        document.getElementById('peakHourConversationList').innerHTML = '<div class="empty">Cargando conversaciones...</div>';
+
+        try {
+            const response = await fetch('/api/dashboard/peak-hour?' + params.toString());
+            if (!response.ok) throw new Error('No fue posible consultar la hora');
+            const data = await response.json();
+            document.getElementById('peakHourModalTitle').innerText = `${data.hour || '--:--'} - ${data.nextHour || '--:--'}`;
+            document.getElementById('peakHourModalSubtitle').innerText = `Listado de conversaciones registradas en este horario.`;
+            document.getElementById('peakHourModalTotal').innerText = data.totalConversaciones || 0;
+            document.getElementById('peakHourModalTime').innerText = formatMinutes(data.tiempoTotalGestion);
+            document.getElementById('peakHourModalRange').innerText = data.range || 'Sin fechas';
+            renderPeakHourConversationList(data.items);
+        } catch (error) {
+            document.getElementById('peakHourModalSubtitle').innerText = 'No fue posible cargar las conversaciones de esta hora.';
+            document.getElementById('peakHourConversationList').innerHTML = '<div class="empty">Intenta nuevamente con otro horario o rango de fechas.</div>';
+        }
+    }
+
+    function closePeakHourModal() {
+        const modal = document.getElementById('peakHourModal');
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
     async function refreshDashboardMetrics() {
         try {
             const params = new URLSearchParams();
             const from = document.getElementById('filterFrom').value;
             const to = document.getElementById('filterTo').value;
+            const granularity = document.getElementById('granularityFilter').value;
             if (from) params.append('from', from);
             if (to) params.append('to', to);
+            if (granularity) params.append('granularity', granularity);
             const response = await fetch('/api/dashboard/metrics' + (params.toString() ? '?' + params.toString() : ''));
             if (!response.ok) return;
             const data = await response.json();
@@ -477,6 +780,9 @@
             document.getElementById('escalatedMetric').innerText = data.escaladas;
             document.getElementById('closedMetric').innerText = data.cerradas || 0;
             document.getElementById('avgMetric').innerText = `${data.promedioTiempo} min`;
+            updateOperationalHealth(data.operationalHealth);
+            updateWeeklyTrend(data.weeklyTrend);
+            renderPeakHours(data.peakHours);
             dailyChart.data.labels = data.productividadLabels || [];
             dailyChart.data.datasets[0].data = data.productividadValues || [];
             dailyChart.update();
@@ -488,6 +794,7 @@
             statusChart.data.datasets[0].data = statusValues;
             statusChart.update();
             setStatusPercents(statusValues);
+            setGranularityBadge(data.granularity || 'daily');
             renderIssuesTable('topIssuesList', data.asuntoLabels || [], data.asuntoValues || []);
             renderClientList('topClientsList', data.clienteLabels || [], data.clienteValues || [], data.clienteTiempoValues || [], true);
         } catch (error) {
@@ -515,6 +822,7 @@
     function clearDateFilter() {
         document.getElementById('filterFrom').value = '';
         document.getElementById('filterTo').value = '';
+        document.getElementById('granularityFilter').value = 'auto';
         refreshDashboardMetrics();
     }
 
@@ -522,13 +830,25 @@
         if (event.target.id === 'client360Modal') closeClient360();
     });
 
+    document.getElementById('peakHourModal')?.addEventListener('click', (event) => {
+        if (event.target.id === 'peakHourModal') closePeakHourModal();
+    });
+
     document.getElementById('topClientsList')?.addEventListener('click', (event) => {
         const row = event.target.closest('[data-client]');
         if (row) openClient360(row.dataset.client);
     });
 
+    document.getElementById('peakHoursGrid')?.addEventListener('click', (event) => {
+        const cell = event.target.closest('[data-peak-hour]');
+        if (cell) openPeakHourModal(cell.dataset.peakHour);
+    });
+
     renderIssuesTable('topIssuesList', asuntoLabels, asuntoValues);
     renderClientList('topClientsList', clienteLabels, clienteValues, clienteTiempoValues, true);
+    renderPeakHours(initialPeakHours);
+    document.getElementById('granularityFilter').value = 'auto';
+    setGranularityBadge(initialGranularity);
     setInterval(refreshDashboardMetrics, 10000);
     lucide.createIcons();
 </script>

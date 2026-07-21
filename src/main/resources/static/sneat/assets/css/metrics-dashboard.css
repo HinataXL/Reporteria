@@ -240,6 +240,122 @@ body.metrics-body {
     margin-bottom: 18px;
 }
 
+.executive-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: 22px;
+    align-items: center;
+    margin-bottom: 18px;
+    background:
+            linear-gradient(135deg, rgba(98, 54, 255, 0.08), transparent 42%),
+            #fff;
+}
+
+.health-main {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 20px;
+    align-items: center;
+}
+
+.health-ring {
+    --score: 100;
+    --health-color: var(--rm-green);
+    width: 126px;
+    height: 126px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background:
+            radial-gradient(circle at center, #fff 0 58%, transparent 59%),
+            conic-gradient(var(--health-color) calc(var(--score) * 1%), #eef0f8 0);
+    box-shadow: inset 0 0 0 1px #edf0f7;
+}
+
+.health-ring.warning {
+    --health-color: var(--rm-orange);
+}
+
+.health-ring.critical {
+    --health-color: var(--rm-red);
+}
+
+.health-score {
+    font-size: 34px;
+    font-weight: 950;
+    letter-spacing: -0.04em;
+    text-align: center;
+}
+
+.health-scale {
+    color: var(--rm-muted);
+    font-size: 12px;
+    font-weight: 900;
+    text-align: center;
+    margin-top: -4px;
+}
+
+.health-title {
+    font-size: 28px;
+    font-weight: 950;
+    letter-spacing: -0.03em;
+    margin-top: 8px;
+}
+
+.health-factors {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.weekly-trend-card {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr);
+    gap: 22px;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.trend-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.trend-card {
+    border: 1px solid var(--rm-line);
+    border-radius: 12px;
+    padding: 14px;
+    background: #fbfcff;
+}
+
+.trend-value {
+    display: inline-block;
+    font-size: 26px;
+    font-weight: 950;
+    letter-spacing: -0.03em;
+    margin-top: 8px;
+}
+
+.trend-change {
+    width: fit-content;
+    margin-top: 8px;
+    border-radius: 7px;
+    padding: 5px 8px;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.trend-change.positive {
+    background: #eaf8f1;
+    color: var(--rm-green);
+}
+
+.trend-change.negative {
+    background: #fff0f3;
+    color: var(--rm-red);
+}
+
 .kpi-row {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -299,6 +415,135 @@ body.metrics-body {
     margin-bottom: 18px;
 }
 
+.peak-hours-card {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 18px;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.peak-summary {
+    min-width: 0;
+}
+
+.peak-range-note {
+    color: var(--rm-muted);
+    font-size: 12px;
+    font-weight: 800;
+    margin-top: 10px;
+}
+
+.peak-stat-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.peak-stat {
+    border: 1px solid var(--rm-line);
+    border-radius: 8px;
+    min-width: 0;
+    padding: 10px;
+    background: #fff;
+}
+
+.peak-stat span {
+    color: var(--rm-muted);
+    display: block;
+    font-size: 10px;
+    font-weight: 950;
+    line-height: 1.15;
+    text-transform: uppercase;
+}
+
+.peak-stat strong {
+    color: var(--rm-ink);
+    display: block;
+    font-size: clamp(22px, 2vw, 30px);
+    font-weight: 950;
+    line-height: 1;
+    margin-top: 8px;
+    overflow-wrap: anywhere;
+}
+
+.peak-band-wrap {
+    min-width: 0;
+}
+
+.peak-grid {
+    display: grid;
+    grid-template-columns: repeat(14, minmax(42px, 1fr));
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.peak-cell {
+    min-height: 112px;
+    border: 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.42);
+    border-radius: 0;
+    color: var(--rm-ink);
+    cursor: pointer;
+    font: inherit;
+    padding: 8px 6px;
+    display: grid;
+    align-content: space-between;
+    justify-items: center;
+    background: rgba(98, 54, 255, calc(0.08 + (var(--intensity, 0) * 0.62)));
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    width: 100%;
+}
+
+.peak-cell:hover {
+    box-shadow: inset 0 0 0 2px rgba(9, 8, 63, 0.14);
+    transform: translateY(-2px);
+}
+
+.peak-cell:focus-visible {
+    outline: 3px solid rgba(98, 54, 255, 0.28);
+    outline-offset: 2px;
+}
+
+.peak-cell-hot {
+    background: linear-gradient(180deg, #09083f, var(--rm-purple));
+    box-shadow: 0 14px 28px rgba(98, 54, 255, 0.22);
+    color: #fff;
+}
+
+.peak-hour {
+    color: currentColor;
+    font-size: 11px;
+    font-weight: 900;
+    opacity: 0.9;
+}
+
+.peak-count {
+    color: currentColor;
+    font-size: 18px;
+    font-weight: 950;
+    opacity: 0.86;
+}
+
+.peak-scale {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--rm-muted);
+    font-size: 11px;
+    font-weight: 800;
+    margin-top: 8px;
+}
+
+.peak-scale-bar {
+    width: min(180px, 42vw);
+    height: 10px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ece9f8, #bdaaf5, var(--rm-purple), #09083f);
+}
+
 .three-grid {
     display: grid;
     grid-template-columns: 1.28fr 0.9fr 0.9fr;
@@ -347,6 +592,15 @@ body.metrics-body {
 .range-separator {
     color: var(--rm-muted);
     font-weight: 900;
+}
+
+.granularity-field {
+    min-width: 142px;
+}
+
+.granularity-field select {
+    cursor: pointer;
+    appearance: none;
 }
 
 .state-panel {
@@ -781,6 +1035,11 @@ body.metrics-body {
     margin-top: 8px;
 }
 
+.summary-value.compact {
+    font-size: 15px;
+    line-height: 1.25;
+}
+
 .detail-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -818,6 +1077,9 @@ body.metrics-body {
     }
 
     .state-grid,
+    .executive-card,
+    .weekly-trend-card,
+    .peak-hours-card,
     .content-grid,
     .three-grid,
     .bottom-grid,
@@ -826,6 +1088,8 @@ body.metrics-body {
     }
 
     .kpi-row,
+    .health-factors,
+    .trend-grid,
     .summary-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -853,7 +1117,10 @@ body.metrics-body {
     }
 
     .side-nav,
+    .health-main,
     .kpi-row,
+    .health-factors,
+    .trend-grid,
     .summary-grid,
     .detail-grid {
         grid-template-columns: 1fr;

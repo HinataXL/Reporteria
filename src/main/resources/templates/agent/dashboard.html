@@ -106,7 +106,7 @@
 
         <section class="content-grid">
             <article class="card section chart-card">
-                <h2 class="section-title">Conversaciones por dia</h2>
+                <h2 class="section-title">Conversaciones por periodo <span class="pill" th:text="${granularity == 'weekly' ? 'Semanal' : (granularity == 'monthly' ? 'Mensual' : 'Diario')}">Diario</span></h2>
                 <div class="chart-wrap"><canvas id="dailyChart"></canvas></div>
             </article>
             <article class="card section chart-card time-card">
@@ -333,7 +333,15 @@
                 borderWidth: 3
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tooltip() }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: tooltip() },
+            scales: {
+                x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 10, maxRotation: 55 } },
+                y: { beginAtZero: true }
+            }
+        }
     });
 
     new Chart(document.getElementById('timeChart'), {
@@ -351,7 +359,15 @@
                 borderWidth: 3
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tooltip() }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: tooltip() },
+            scales: {
+                x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 8, maxRotation: 55 } },
+                y: { beginAtZero: true }
+            }
+        }
     });
 
     renderIssuesTable('topIssuesList', asuntoLabels, asuntoValues);

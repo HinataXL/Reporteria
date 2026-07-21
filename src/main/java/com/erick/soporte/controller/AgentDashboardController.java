@@ -8,11 +8,17 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.WeekFields;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @Controller
@@ -50,23 +56,8 @@ public class AgentDashboardController {
                 .average()
                 .orElse(0);
 
-        DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("dd/MM");
-
-        Map<String, Long> productividadDiaria = conversations.stream()
-                .filter(c -> c.getFechaInicio() != null)
-                .collect(Collectors.groupingBy(
-                        c -> c.getFechaInicio().toLocalDate(),
-                        java.util.TreeMap::new,
-                        Collectors.counting()
-                ))
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap(
-                        e -> e.getKey().format(dayFormatter),
-                        Map.Entry::getValue,
-                        (a, b) -> a,
-                        LinkedHashMap::new
-                ));
+        String effectiveGranularity = resolveGranularity("auto", conversations);
+        Map<String, Long> productividadAgrupada = groupProductivity(conversations, effectiveGranularity);
 
         Map<String, Long> porEstado = conversations.stream()
                 .collect(Collectors.groupingBy(
@@ -154,8 +145,9 @@ public class AgentDashboardController {
         model.addAttribute("cerradas", cerradas);
         model.addAttribute("tiempoTotal", tiempoTotal);
         model.addAttribute("promedioTiempo", String.format("%.1f", promedioTiempo));
-        model.addAttribute("productividadLabels", productividadDiaria.keySet());
-        model.addAttribute("productividadValues", productividadDiaria.values());
+        model.addAttribute("productividadLabels", productividadAgrupada.keySet());
+        model.addAttribute("productividadValues", productividadAgrupada.values());
+        model.addAttribute("granularity", effectiveGranularity);
         model.addAttribute("estadoLabels", porEstado.keySet());
         model.addAttribute("estadoValues", porEstado.values());
         model.addAttribute("prioridadLabels", porPrioridad.keySet());
@@ -222,5 +214,77 @@ public class AgentDashboardController {
             case 5 -> "Correo";
             default -> "Desconocido";
         };
+    }
+
+    private Map<String, Long> groupProductivity(List<Conversation> conversations, String granularity) {
+        DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("dd/MM");
+        DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMM yyyy", Locale.forLanguageTag("es"));
+
+        Map<LocalDate, Long> grouped = conversations.stream()
+                .filter(c -> c.getFechaInicio() != null)
+                .collect(Collectors.groupingBy(
+                        c -> bucketStart(c.getFechaInicio().toLocalDate(), granularity),
+                        TreeMap::new,
+                        Collectors.counting()
+                ));
+
+        return grouped.entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        e -> formatBucket(e.getKey(), granularity, dayFormatter, monthFormatter),
+                        Map.Entry::getValue,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
+    }
+
+    private LocalDate bucketStart(LocalDate date, String granularity) {
+        return switch (granularity) {
+            case "weekly" -> date.with(WeekFields.ISO.dayOfWeek(), 1);
+            case "monthly" -> YearMonth.from(date).atDay(1);
+            default -> date;
+        };
+    }
+
+    private String formatBucket(
+            LocalDate date,
+            String granularity,
+            DateTimeFormatter dayFormatter,
+            DateTimeFormatter monthFormatter
+    ) {
+        return switch (granularity) {
+            case "weekly" -> "Sem " + date.format(dayFormatter);
+            case "monthly" -> monthFormatter.format(date);
+            default -> date.format(dayFormatter);
+        };
+    }
+
+    private String resolveGranularity(String requested, List<Conversation> conversations) {
+        if ("daily".equals(requested) || "weekly".equals(requested) || "monthly".equals(requested)) {
+            return requested;
+        }
+
+        List<LocalDate> dates = conversations.stream()
+                .filter(c -> c.getFechaInicio() != null)
+                .map(c -> c.getFechaInicio().toLocalDate())
+                .toList();
+
+        if (dates.isEmpty()) {
+            return "daily";
+        }
+
+        LocalDate min = dates.stream().min(LocalDate::compareTo).orElse(LocalDate.now());
+        LocalDate max = dates.stream().max(LocalDate::compareTo).orElse(LocalDate.now());
+        long days = ChronoUnit.DAYS.between(min, max) + 1;
+
+        if (days > 120) {
+            return "monthly";
+        }
+
+        if (days > 31) {
+            return "weekly";
+        }
+
+        return "daily";
     }
 }
