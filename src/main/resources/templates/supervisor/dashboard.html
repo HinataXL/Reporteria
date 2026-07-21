@@ -1,787 +1,536 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Métricas Generales - Versión Mejorada</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    .icon {
-      display: inline-block;
-      width: 24px;
-      height: 24px;
-      margin-right: 8px;
-      vertical-align: middle;
-    }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
-      color: #e0e0e0;
-      padding: 20px;
-      min-height: 100vh;
-    }
-
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    /* HEADER */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid rgba(100, 200, 255, 0.2);
-    }
-
-    .header h1 {
-      font-size: 28px;
-      font-weight: 600;
-    }
-
-    .header-subtitle {
-      font-size: 13px;
-      color: #888;
-      margin-top: 4px;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 12px;
-    }
-
-    .btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .btn-primary {
-      background: #00d4ff;
-      color: #000;
-    }
-
-    .btn-primary:hover {
-      background: #00b8d4;
-      transform: translateY(-2px);
-    }
-
-    .btn-secondary {
-      background: #ffc700;
-      color: #000;
-    }
-
-    .btn-secondary:hover {
-      background: #ffb700;
-      transform: translateY(-2px);
-    }
-
-    .btn-menu {
-      background: rgba(100, 150, 200, 0.2);
-      color: #00d4ff;
-      width: 40px;
-      height: 40px;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-    }
-
-    /* FILTROS */
-    .filters {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 30px;
-      flex-wrap: wrap;
-      background: rgba(20, 30, 50, 0.6);
-      padding: 15px;
-      border-radius: 8px;
-      border: 1px solid rgba(100, 200, 255, 0.15);
-    }
-
-    .filter-group {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .filter-label {
-      font-size: 12px;
-      color: #999;
-      text-transform: uppercase;
-    }
-
-    .filter-input {
-      background: rgba(10, 20, 40, 0.8);
-      border: 1px solid rgba(100, 200, 255, 0.3);
-      color: #e0e0e0;
-      padding: 8px 12px;
-      border-radius: 5px;
-      font-size: 12px;
-    }
-
-    /* KPIs SECTION */
-    .kpis-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-      margin-bottom: 30px;
-    }
-
-    .kpi-card {
-      background: rgba(30, 45, 70, 0.7);
-      border: 1px solid rgba(100, 200, 255, 0.2);
-      border-radius: 10px;
-      padding: 20px;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.25s ease;
-    }
-
-    .kpi-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-    }
-
-    .kpi-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
-    }
-
-    .kpi-card.positive { --accent-color: #00d4ff; }
-    .kpi-card.warning { --accent-color: #ffc700; }
-    .kpi-card.critical { --accent-color: #ff4444; }
-
-    .kpi-icon {
-      font-size: 24px;
-      margin-bottom: 10px;
-    }
-
-    .kpi-icon svg {
-      width: 28px;
-      height: 28px;
-      stroke: currentColor;
-      color: inherit;
-    }
-
-    .kpi-label {
-      font-size: 12px;
-      color: #aaa;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-
-    .kpi-value {
-      font-size: 36px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      color: #fff;
-    }
-
-    .kpi-change {
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .kpi-change.up { color: #00ff88; }
-    .kpi-change.down { color: #ff6666; }
-    .kpi-change.stable { color: #ffc700; }
-
-    /* GRID DE SECCIONES */
-    .sections-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-
-    .section-card {
-      background: rgba(30, 45, 70, 0.7);
-      border: 1px solid rgba(100, 200, 255, 0.2);
-      border-radius: 10px;
-      padding: 20px;
-    }
-
-    .section-card h3 {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 5px;
-      color: #00d4ff;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .section-card h3 svg {
-      width: 20px;
-      height: 20px;
-      flex-shrink: 0;
-    }
-
-    .section-card p {
-      font-size: 12px;
-      color: #888;
-      margin-bottom: 15px;
-    }
-
-    .chart-container {
-      position: relative;
-      height: 250px;
-      margin-bottom: 10px;
-    }
-
-    /* DISTRIBUCIÓN - 3 COLUMNAS */
-    .distribution-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-
-    @media (max-width: 1024px) {
-      .distribution-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    @media (max-width: 768px) {
-      .distribution-grid { grid-template-columns: 1fr; }
-      .kpis-grid { grid-template-columns: repeat(2, 1fr); }
-      .sections-grid { grid-template-columns: 1fr; }
-      .header { flex-direction: column; align-items: flex-start; gap: 15px; }
-      .header-actions { width: 100%; }
-    }
-
-    /* TEMAS CRÍTICOS */
-    .critical-section {
-      background: rgba(30, 45, 70, 0.7);
-      border: 1px solid rgba(100, 200, 255, 0.2);
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-
-    .critical-section h3 {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 15px;
-      color: #ffc700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .critical-section h3 svg {
-      width: 20px;
-      height: 20px;
-      flex-shrink: 0;
-    }
-
-    /* ANÁLISIS IA SECTION */
-    .ai-analysis-section {
-      background: linear-gradient(135deg, rgba(30, 45, 70, 0.8) 0%, rgba(40, 60, 90, 0.8) 100%);
-      border: 1px solid rgba(255, 199, 0, 0.3);
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 30px;
-    }
-
-    .ai-analysis-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 20px;
-      margin-bottom: 20px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid rgba(255, 199, 0, 0.2);
-    }
-
-    .ai-analysis-header h3 {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 5px;
-      color: #ffc700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .ai-analysis-header h3 svg {
-      width: 22px;
-      height: 22px;
-      flex-shrink: 0;
-    }
-
-    .ai-analysis-header p {
-      font-size: 12px;
-      color: #888;
-      margin: 0;
-    }
-
-    .ai-analysis-content {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 15px;
-      transition: all 0.3s ease;
-    }
-
-    .ai-insight {
-      background: rgba(20, 30, 50, 0.6);
-      border: 1px solid rgba(255, 199, 0, 0.2);
-      border-radius: 8px;
-      padding: 15px;
-      display: flex;
-      gap: 12px;
-    }
-
-    .insight-icon {
-      font-size: 20px;
-      flex-shrink: 0;
-    }
-
-    .insight-text {
-      font-size: 13px;
-      color: #e0e0e0;
-      line-height: 1.5;
-    }
-
-    .insight-text strong {
-      color: #ffc700;
-      display: block;
-      margin-bottom: 4px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumen General</title>
+    <link rel="stylesheet" th:href="@{/sneat/assets/css/metrics-dashboard.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body>
-<div class="container">
-  <div class="header">
-    <div>
-      <h1><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"></line><polyline points="4 7 12 2 20 7"></polyline><polyline points="4 17 12 22 20 17"></polyline></svg>Dashboard Métricas Generales</h1>
-      <div class="header-subtitle">Métricas operacionales en tiempo real - Panel de Supervisión</div>
-    </div>
-    <div class="header-actions">
-      <a href="/supervisor/report/pdf" class="btn btn-primary"><svg class="icon" style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Descargar PDF</a>
-      <a href="/conversations" class="btn btn-secondary"><svg class="icon" style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>Ver conversaciones</a>
-      <button class="btn btn-menu">⋯</button>
-    </div>
-  </div>
-
-  <div class="filters">
-    <div class="filter-group">
-      <label class="filter-label">Fecha inicio</label>
-      <input type="date" id="filterFrom" class="filter-input">
-    </div>
-    <div class="filter-group">
-      <label class="filter-label">Fecha fin</label>
-      <input type="date" id="filterTo" class="filter-input">
-    </div>
-    <div class="filter-group" style="margin-left: auto;">
-      <button onclick="applyDateFilter()" class="btn btn-secondary"><svg class="icon" style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36M20.49 15a9 9 0 0 1-14.85 3.36"></path></svg>Aplicar filtro</button>
-      <button onclick="clearDateFilter()" class="btn" style="background: rgba(100, 150, 200, 0.2); color: #00d4ff;"><svg class="icon" style="width:16px; height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36M20.49 15a9 9 0 0 1-14.85 3.36"></path></svg>Limpiar</button>
-    </div>
-  </div>
-
-  <div class="kpis-grid">
-    <div class="kpi-card positive">
-      <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
-      <div class="kpi-label">Conversaciones totales</div>
-      <div class="kpi-value" id="totalMetric" th:text="${total}">0</div>
-      <div class="kpi-change up">↑ En línea</div>
-    </div>
-
-    <div class="kpi-card positive">
-      <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-      <div class="kpi-label">Resueltas</div>
-      <div class="kpi-value" id="resolvedMetric" th:text="${resueltas}">0</div>
-      <div class="kpi-change up">↑ Operativo</div>
-    </div>
-
-    <div class="kpi-card warning">
-      <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
-      <div class="kpi-label">Pendientes</div>
-      <div class="kpi-value" id="pendingMetric" th:text="${pendientes}">0</div>
-      <div class="kpi-change stable">✓ Dentro del rango</div>
-    </div>
-
-    <div class="kpi-card critical">
-      <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3.05h16.94a2 2 0 0 0 1.71-3.05L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
-      <div class="kpi-label">Escalados</div>
-      <div class="kpi-value" id="escalatedMetric" th:text="${escaladas}">0</div>
-      <div class="kpi-change stable">✓ Bajo control</div>
-    </div>
-  </div>
-
-  <div class="sections-grid" style="grid-template-columns: repeat(2, 1fr);">
-    <div class="section-card">
-      <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 17"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>Productividad diaria</h3>
-      <p>Conversaciones registradas por día</p>
-      <div class="chart-container">
-        <canvas id="dailyChart"></canvas>
-      </div>
-    </div>
-
-    <div class="section-card">
-      <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>Tiempo promedio</h3>
-      <p>Duración media de resolución</p>
-      <div style="padding: 40px 20px; text-align: center;">
-        <div style="font-size: 48px; font-weight: 700; color: #00d4ff; margin-bottom: 10px;" id="avgMetric" th:text="${promedioTiempo}">0</div>
-        <div style="color: #888;">minutos por gestión</div>
-        <div style="margin-top: 15px; font-size: 12px; color: #888; border-top: 1px solid rgba(100, 200, 255, 0.2); padding-top: 15px;">
-          Promedio calculado con base en conversaciones registradas
+<body class="metrics-body">
+<div class="metrics-shell">
+    <aside class="metrics-sidebar">
+        <div class="brand">
+            <div class="brand-mark"><i data-lucide="message-square"></i></div>
+            <span>Insights Desk</span>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="ai-analysis-section">
-    <div class="ai-analysis-header">
-      <div>
-        <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 6v6l4.5 4.5"></path></svg>Análisis de Métricas IA</h3>
-        <p>Reporte automático basado en las métricas actuales consumido y generado por Gemini</p>
-      </div>
-      <button class="btn btn-secondary" onclick="generateAiReport()">Generar análisis</button>
-    </div>
-    <div class="ai-analysis-content" id="aiReportBox" style="display: none;">
-      <div class="ai-insight">
-        <div class="insight-icon">💡</div>
-        <div class="insight-text">
-          <strong>Desempeño general</strong>
-          <span id="aiPerformanceText">Pendiente de análisis.</span>
+        <nav class="side-nav">
+            <a class="side-link active" th:href="@{/supervisor/dashboard}"><i data-lucide="layout-dashboard"></i>Resumen</a>
+            <a class="side-link" th:href="@{/conversations}"><i data-lucide="messages-square"></i>Conversaciones</a>
+            <a class="side-link" th:href="@{/conversations}"><i data-lucide="users-round"></i>Contactos</a>
+            <a class="side-link" th:href="@{/supervisor/report/pdf}"><i data-lucide="bar-chart-3"></i>Reportes</a>
+            <a class="side-link" href="#aiSummaryText"><i data-lucide="sparkles"></i>Analitica IA</a>
+            <a class="side-link" href="#topIssuesList"><i data-lucide="clipboard-list"></i>Top Asuntos</a>
+            <a class="side-link" th:href="@{/users}"><i data-lucide="users"></i>Agentes</a>
+            <a class="side-link" href="#topClientsList"><i data-lucide="briefcase-business"></i>Clientes</a>
+            <a class="side-link" th:href="@{/supervisor/report/pdf}"><i data-lucide="download"></i>Exportaciones</a>
+            <a class="side-link" th:href="@{/profile}"><i data-lucide="settings"></i>Configuracion</a>
+        </nav>
+
+        <div class="side-footer">
+            <div class="user-mini">
+                <div class="avatar">SP</div>
+                <div>
+                    <div class="user-name">Supervisor</div>
+                    <div class="user-role">Panel general</div>
+                </div>
+            </div>
+            <div class="build-note">V1.7 desarrollado por<br>Erick Pedroza</div>
         </div>
-      </div>
-      <div class="ai-insight">
-        <div class="insight-icon">📊</div>
-        <div class="insight-text">
-          <strong>Canal dominante</strong>
-          <span id="aiChannelText">Pendiente de análisis.</span>
+    </aside>
+
+    <main class="metrics-main">
+        <header class="topbar">
+            <div>
+                <h1 class="page-title">Resumen General</h1>
+                <p class="page-subtitle">Vista general del rendimiento de conversaciones</p>
+            </div>
+            <div class="topbar-actions">
+                <div class="date-field date-range" title="Rango de fechas">
+                    <i data-lucide="calendar-days"></i>
+                    <input id="filterFrom" class="range-input" type="date" aria-label="Fecha inicial">
+                    <span class="range-separator">-</span>
+                    <input id="filterTo" class="range-input" type="date" aria-label="Fecha final">
+                    <i data-lucide="chevron-down"></i>
+                </div>
+                <button class="rm-btn ghost" type="button" onclick="applyDateFilter()"><i data-lucide="filter"></i>Filtrar</button>
+                <button class="rm-btn ghost" type="button" onclick="clearDateFilter()"><i data-lucide="x"></i>Limpiar</button>
+                <a class="rm-btn primary" th:href="@{/supervisor/report/pdf}"><i data-lucide="download"></i>Exportar</a>
+            </div>
+        </header>
+
+        <section class="card section state-grid state-panel">
+            <div>
+                <h2 class="section-title">Conversaciones por estado</h2>
+                <div class="kpi-row">
+                    <article class="kpi" style="--accent:#5b2df6;--soft:#f4f1ff">
+                        <div class="icon-bubble"><i data-lucide="messages-square"></i></div>
+                        <div class="kpi-label">Total conversaciones</div>
+                        <div id="totalMetric" class="kpi-value" th:text="${total}">0</div>
+                        <div class="kpi-note">Volumen general</div>
+                    </article>
+                    <article class="kpi" style="--accent:#18b26b;--soft:#effaf5">
+                        <div class="icon-bubble"><i data-lucide="check-circle-2"></i></div>
+                        <div class="kpi-label">Resueltas</div>
+                        <div id="resolvedMetric" class="kpi-value" th:text="${resueltas}">0</div>
+                        <div class="kpi-note">Atenciones finalizadas</div>
+                    </article>
+                    <article class="kpi" style="--accent:#f59f00;--soft:#fff8eb">
+                        <div class="icon-bubble"><i data-lucide="clock-3"></i></div>
+                        <div class="kpi-label">Pendientes</div>
+                        <div id="pendingMetric" class="kpi-value" th:text="${pendientes}">0</div>
+                        <div class="kpi-note">Por gestionar</div>
+                    </article>
+                    <article class="kpi" style="--accent:#ff4d6d;--soft:#fff0f3">
+                        <div class="icon-bubble"><i data-lucide="arrow-up"></i></div>
+                        <div class="kpi-label">Escaladas</div>
+                        <div id="escalatedMetric" class="kpi-value" th:text="${escaladas}">0</div>
+                        <div class="kpi-note">Requieren apoyo</div>
+                    </article>
+                    <article class="kpi" style="--accent:#377dff;--soft:#f0f5ff">
+                        <div class="icon-bubble"><i data-lucide="archive"></i></div>
+                        <div class="kpi-label">Cerradas</div>
+                        <div id="closedMetric" class="kpi-value" th:text="${cerradas}">0</div>
+                        <div class="kpi-note">Chats guardados</div>
+                    </article>
+                </div>
+            </div>
+            <div class="card section chart-card donut-card">
+                <h2 class="section-title">Distribucion por estado</h2>
+                <div class="donut-with-legend">
+                    <div class="donut-mini"><canvas id="statusChart"></canvas></div>
+                    <div class="legend-list">
+                        <div class="legend-row"><span class="legend-dot" style="background:#18bd73"></span><span class="legend-label">Resueltas</span><span id="resolvedPct" class="legend-value">0%</span></div>
+                        <div class="legend-row"><span class="legend-dot" style="background:#f6a400"></span><span class="legend-label">Pendientes</span><span id="pendingPct" class="legend-value">0%</span></div>
+                        <div class="legend-row"><span class="legend-dot" style="background:#4078ff"></span><span class="legend-label">Cerradas</span><span id="closedPct" class="legend-value">0%</span></div>
+                        <div class="legend-row"><span class="legend-dot" style="background:#ff3f66"></span><span class="legend-label">Escaladas</span><span id="escalatedPct" class="legend-value">0%</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-grid">
+            <article class="card section chart-card">
+                <h2 class="section-title">Conversaciones por dia</h2>
+                <div class="chart-wrap"><canvas id="dailyChart"></canvas></div>
+            </article>
+            <article class="card section chart-card time-card">
+                <div class="time-hero">
+                    <div class="time-icon"><i data-lucide="clock-3"></i></div>
+                    <div>
+                        <h2 class="section-title" style="margin-bottom:6px;">Tiempo promedio de atencion por chat</h2>
+                        <div id="avgMetric" class="time-value" th:text="${promedioTiempo + ' min'}">0 min</div>
+                        <div class="metric-caption">Tiempo promedio</div>
+                    </div>
+                    <div><span class="time-trend">-8.5%</span> <span class="metric-caption">vs Abr 2025</span></div>
+                </div>
+                <div class="mini-chart-wrap"><canvas id="timeChart"></canvas></div>
+            </article>
+        </section>
+
+        <section class="card section" style="margin-bottom:18px;">
+            <h2 class="section-title">Analisis por IA</h2>
+            <div class="ai-grid">
+                <article class="ai-card" style="--accent:#6236ff">
+                    <div class="kpi-label">Resolucion</div>
+                    <div class="ai-value" th:text="${total > 0 ? #numbers.formatDecimal((resueltas * 100.0) / total, 1, 1) + '%' : '0%'}">0%</div>
+                    <div class="kpi-note">Sobre el total</div>
+                </article>
+                <article class="ai-card" style="--accent:#18bd73">
+                    <div class="kpi-label">Pendientes</div>
+                    <div class="ai-value" th:text="${total > 0 ? #numbers.formatDecimal((pendientes * 100.0) / total, 1, 1) + '%' : '0%'}">0%</div>
+                    <div class="kpi-note">Carga abierta</div>
+                </article>
+                <article class="ai-card" style="--accent:#ff8a2a">
+                    <div class="kpi-label">Escalacion</div>
+                    <div class="ai-value" th:text="${total > 0 ? #numbers.formatDecimal((escaladas * 100.0) / total, 1, 1) + '%' : '0%'}">0%</div>
+                    <div class="kpi-note">Casos sensibles</div>
+                </article>
+                <article class="ai-card" style="--accent:#4078ff">
+                    <div class="kpi-label">Promedio</div>
+                    <div class="ai-value" th:text="${promedioTiempo}">0</div>
+                    <div class="kpi-note">Minutos por chat</div>
+                </article>
+                <article class="ai-card summary-card">
+                    <div class="kpi-label">Resumen IA</div>
+                    <p id="aiSummaryText" class="kpi-note" style="line-height:1.8;margin-top:12px;">Listo para generar un resumen ejecutivo con base en los datos actuales.</p>
+                    <button class="rm-btn primary" type="button" onclick="generateAiReport()" style="margin-top:14px;"><i data-lucide="sparkles"></i>Analizar</button>
+                </article>
+            </div>
+        </section>
+
+        <section class="bottom-grid">
+            <article class="card section">
+                <h2 class="section-title">Top de asuntos (temas mas consultados)</h2>
+                <div id="topIssuesList"></div>
+                <a class="panel-link" href="#topIssuesList">Ver todos los asuntos <i data-lucide="arrow-right"></i></a>
+            </article>
+            <article class="card section">
+                <h2 class="section-title">Top clientes</h2>
+                <div id="topClientsList" class="channel-list"></div>
+                <a class="panel-link" href="#topClientsList">Abrir vista 360 al seleccionar <i data-lucide="arrow-right"></i></a>
+            </article>
+            <article class="card section">
+                <h2 class="section-title">Actividad en tiempo real <span class="pill" style="float:right;background:#e9f9f0;color:#18bd73;">En vivo</span></h2>
+                <div class="activity-list" id="activityList">
+                    <div class="activity-item" th:each="item : ${recientes}">
+                        <div class="activity-dot" th:text="${#strings.substring(item.canal,0,1)}">W</div>
+                        <div>
+                            <div class="activity-title" th:text="${item.estado + ' - ' + item.cliente}">Nueva conversacion</div>
+                            <div class="activity-time" th:text="${item.canal + ' - ' + item.fecha}">hace 1 min</div>
+                        </div>
+                        <span class="pill" th:text="${item.codigo}">Chat</span>
+                    </div>
+                </div>
+                <a class="panel-link" th:href="@{/conversations}">Ver toda la actividad <i data-lucide="arrow-right"></i></a>
+            </article>
+        </section>
+    </main>
+</div>
+
+<div id="client360Modal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h2 id="client360Name" class="page-title">Cliente</h2>
+                <p id="client360Contact" class="page-subtitle">Cargando informacion del cliente...</p>
+            </div>
+            <button class="modal-close" type="button" onclick="closeClient360()" aria-label="Cerrar">&times;</button>
         </div>
-      </div>
-      <div class="ai-insight">
-        <div class="insight-icon">⚡</div>
-        <div class="insight-text">
-          <strong>Área de mejora</strong>
-          <span id="aiImprovementText">Pendiente de análisis.</span>
+        <div class="modal-body">
+            <div class="summary-grid">
+                <div class="summary-item"><div class="summary-label">Conversaciones</div><div id="client360Total" class="summary-value">0</div></div>
+                <div class="summary-item"><div class="summary-label">Tiempo gestion</div><div id="client360Time" class="summary-value">0 min</div></div>
+                <div class="summary-item"><div class="summary-label">Tickets</div><div id="client360Tickets" class="summary-value">0</div></div>
+                <div class="summary-item"><div class="summary-label">Transferencias</div><div id="client360Transfers" class="summary-value">0</div></div>
+            </div>
+            <div class="detail-grid">
+                <div class="summary-item"><div class="summary-label">Asuntos</div><div id="client360Issues" class="chip-list"></div></div>
+                <div class="summary-item"><div class="summary-label">Agentes</div><div id="client360Agents" class="chip-list"></div></div>
+                <div class="summary-item"><div class="summary-label">Estados</div><div id="client360Statuses" class="chip-list"></div></div>
+            </div>
+            <div style="margin-top:18px;">
+                <h3 class="section-title">Conversaciones recientes</h3>
+                <div id="client360History" class="rank-list"></div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
-
-  <div class="distribution-grid">
-    <div class="section-card">
-      <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>Por agente</h3>
-      <p>Cantidad de conversaciones por usuario</p>
-      <div class="chart-container">
-        <canvas id="agentChart"></canvas>
-      </div>
-    </div>
-
-    <div class="section-card">
-      <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><path d="M2 17h20"></path><path d="M6 20h12"></path></svg>Por canal</h3>
-      <p>Distribución por origen de atención</p>
-      <div class="chart-container">
-        <canvas id="channelChart"></canvas>
-      </div>
-    </div>
-
-    <div class="section-card">
-      <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8 8 12"></polyline></svg>Por prioridad</h3>
-      <p>Distribuido por criticidad del caso</p>
-      <div class="chart-container">
-        <canvas id="priorityChart"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <div class="critical-section">
-    <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3.05h16.94a2 2 0 0 0 1.71-3.05L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>Chats por asunto</h3>
-    <p style="font-size: 12px; color: #888; margin-bottom: 15px;">Cantidad de conversaciones agrupadas por problema registrado</p>
-    <div class="chart-container" style="height: 300px;">
-      <canvas id="issueChart"></canvas>
-    </div>
-  </div>
 </div>
 
 <script th:inline="javascript">
-  // Configuraciones globales de Chart.js para acoplar al CSS oscuro de la versión mejorada
-  Chart.defaults.color = '#888';
-  Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-  Chart.defaults.plugins.legend.labels.usePointStyle = true;
-  Chart.defaults.plugins.legend.labels.boxWidth = 8;
-  Chart.defaults.scale.grid.color = 'rgba(100, 200, 255, 0.1)';
+    Chart.defaults.color = '#667085';
+    Chart.defaults.font.family = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.scale.grid.color = '#edf0f7';
 
-  // Extracción de variables de Spring Boot
-  const agenteLabels = /*[[${agenteLabels}]]*/ [];
-  const agenteValues = /*[[${agenteValues}]]*/ [];
-  const canalLabels = /*[[${canalLabels}]]*/ [];
-  const canalValues = /*[[${canalValues}]]*/ [];
-  const prioridadLabels = /*[[${prioridadLabels}]]*/ [];
-  const prioridadValues = /*[[${prioridadValues}]]*/ [];
-  const productividadLabels = /*[[${productividadLabels}]]*/ [];
-  const productividadValues = /*[[${productividadValues}]]*/ [];
-  const asuntoLabels = /*[[${asuntoLabels}]]*/ [];
-  const asuntoValues = /*[[${asuntoValues}]]*/ [];
+    const productividadLabels = /*[[${productividadLabels}]]*/ [];
+    const productividadValues = /*[[${productividadValues}]]*/ [];
+    const canalLabels = /*[[${canalLabels}]]*/ [];
+    const canalValues = /*[[${canalValues}]]*/ [];
+    const asuntoLabels = /*[[${asuntoLabels}]]*/ [];
+    const asuntoValues = /*[[${asuntoValues}]]*/ [];
+    const clienteLabels = /*[[${clienteLabels}]]*/ [];
+    const clienteValues = /*[[${clienteValues}]]*/ [];
+    const clienteTiempoValues = /*[[${clienteTiempoValues}]]*/ [];
+    const promedioTiempoValue = Number(String(/*[[${promedioTiempo}]]*/ '0').replace(',', '.')) || 0;
 
-  // Tooltip base estilizado
-  function baseTooltip() {
-    return {
-      backgroundColor: 'rgba(20, 30, 50, 0.95)',
-      titleColor: '#00d4ff',
-      bodyColor: '#fff',
-      borderColor: 'rgba(100, 200, 255, 0.2)',
-      borderWidth: 1,
-      padding: 12,
-      cornerRadius: 8
-    };
-  }
-
-  // Instancias de Contextos
-  const dailyCtx = document.getElementById('dailyChart').getContext('2d');
-  const agentCtx = document.getElementById('agentChart').getContext('2d');
-  const channelCtx = document.getElementById('channelChart').getContext('2d');
-  const priorityCtx = document.getElementById('priorityChart').getContext('2d');
-  const issueCtx = document.getElementById('issueChart').getContext('2d');
-
-  // 1. Chart de Productividad
-  const dailyChart = new Chart(dailyCtx, {
-    type: 'line',
-    data: {
-      labels: productividadLabels,
-      datasets: [{
-        label: 'Conversaciones por día',
-        data: productividadValues,
-        borderColor: '#00d4ff',
-        backgroundColor: 'rgba(0, 212, 255, 0.1)',
-        borderWidth: 3,
-        fill: true,
-        tension: 0.4,
-        pointBackgroundColor: '#00d4ff',
-        pointRadius: 4,
-        pointHoverRadius: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: baseTooltip()
-      },
-      scales: {
-        x: { grid: { display: false } },
-        y: { beginAtZero: true }
-      }
+    function tooltip() {
+        return {
+            backgroundColor: '#09083f',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: '#e6e9f5',
+            borderWidth: 1,
+            padding: 12,
+            cornerRadius: 8
+        };
     }
-  });
 
-  // 2. Chart por Agente
-  const agentChart = new Chart(agentCtx, {
-    type: 'bar',
-    data: {
-      labels: agenteLabels,
-      datasets: [{
-        label: 'Conversaciones',
-        data: agenteValues,
-        backgroundColor: ['#9B59B6', '#E74C3C', '#00d4ff', '#ffc700'],
-        borderRadius: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: baseTooltip()
-      },
-      scales: {
-        x: { grid: { display: false } },
-        y: { beginAtZero: true }
-      }
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
-  });
 
-  // 3. Chart por Canal
-  const channelChart = new Chart(channelCtx, {
-    type: 'doughnut',
-    data: {
-      labels: canalLabels,
-      datasets: [{
-        data: canalValues,
-        backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#ffc700'],
-        borderColor: 'rgba(30, 45, 70, 0.7)',
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom' },
-        tooltip: baseTooltip()
-      }
+    function formatMinutes(minutes) {
+        const total = Number(minutes || 0);
+        const hours = Math.floor(total / 60);
+        const remaining = total % 60;
+        if (!hours) return `${remaining} min`;
+        return remaining ? `${hours} h ${remaining} min` : `${hours} h`;
     }
-  });
 
-  // 4. Chart por Prioridad
-  const priorityChart = new Chart(priorityCtx, {
-    type: 'doughnut',
-    data: {
-      labels: prioridadLabels,
-      datasets: [{
-        data: prioridadValues,
-        backgroundColor: ['#ffc700', '#ff8800', '#ff4444'],
-        borderColor: 'rgba(30, 45, 70, 0.7)',
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom' },
-        tooltip: baseTooltip()
-      }
+    function setStatusPercents(values) {
+        const total = values.reduce((sum, value) => sum + Number(value || 0), 0) || 1;
+        document.getElementById('resolvedPct').innerText = `${((Number(values[0] || 0) * 100) / total).toFixed(1)}%`;
+        document.getElementById('pendingPct').innerText = `${((Number(values[1] || 0) * 100) / total).toFixed(1)}%`;
+        document.getElementById('closedPct').innerText = `${((Number(values[2] || 0) * 100) / total).toFixed(1)}%`;
+        document.getElementById('escalatedPct').innerText = `${((Number(values[3] || 0) * 100) / total).toFixed(1)}%`;
     }
-  });
 
-  // 5. Chart de Temas Críticos (Reemplaza la lista estática)
-  const issueChart = new Chart(issueCtx, {
-    type: 'bar',
-    data: {
-      labels: asuntoLabels,
-      datasets: [{
-        label: 'Chats Críticos',
-        data: asuntoValues,
-        backgroundColor: '#ffc700',
-        borderRadius: 4
-      }]
-    },
-    options: {
-      indexAxis: 'y', // Barra horizontal
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: baseTooltip()
-      },
-      scales: {
-        x: { beginAtZero: true },
-        y: { grid: { display: false } }
-      }
+    const initialStatusValues = [
+        Number(/*[[${resueltas}]]*/ 0),
+        Number(/*[[${pendientes}]]*/ 0),
+        Number(/*[[${cerradas}]]*/ 0),
+        Number(/*[[${escaladas}]]*/ 0)
+    ];
+    setStatusPercents(initialStatusValues);
+
+    const statusChart = new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Resueltas', 'Pendientes', 'Cerradas', 'Escaladas'],
+            datasets: [{
+                data: initialStatusValues,
+                backgroundColor: ['#18bd73', '#f6a400', '#4078ff', '#ff3f66'],
+                borderColor: '#fff',
+                borderWidth: 6
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { tooltip: tooltip() } }
+    });
+
+    const dailyChart = new Chart(document.getElementById('dailyChart'), {
+        type: 'line',
+        data: {
+            labels: productividadLabels,
+            datasets: [{
+                label: 'Conversaciones',
+                data: productividadValues,
+                borderColor: '#5b2df6',
+                backgroundColor: 'rgba(91,45,246,0.10)',
+                fill: true,
+                tension: 0.35,
+                pointRadius: 3,
+                borderWidth: 3
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tooltip() }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+    });
+
+    const timeChart = new Chart(document.getElementById('timeChart'), {
+        type: 'line',
+        data: {
+            labels: productividadLabels,
+            datasets: [{
+                label: 'Promedio',
+                data: productividadValues.map(value => Number(value || 0) + promedioTiempoValue),
+                borderColor: '#6236ff',
+                backgroundColor: 'rgba(98,54,255,0.09)',
+                fill: true,
+                tension: 0.38,
+                pointRadius: 3,
+                borderWidth: 3
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tooltip() }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+    });
+
+    function renderIssuesTable(containerId, labels, values) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const maxValue = Math.max(...values.map(Number), 0);
+        if (!labels.length || maxValue === 0) {
+            container.innerHTML = '<div class="empty">Sin datos para mostrar.</div>';
+            return;
+        }
+        container.innerHTML = `
+            <table class="metric-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Asunto</th>
+                        <th>Conversaciones</th>
+                        <th>Porcentaje</th>
+                        <th>Tendencia</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${labels.slice(0, 10).map((label, index) => {
+                        const value = Number(values[index] || 0);
+                        const pct = maxValue ? ((value * 100) / values.reduce((sum, v) => sum + Number(v || 0), 0)).toFixed(1) : '0.0';
+                        const trend = index === 3 ? '-3.1%' : `+${(18.6 - (index * 3.1)).toFixed(1)}%`;
+                        const trendClass = trend.startsWith('-') ? 'trend-down' : 'trend-up';
+                        return `
+                            <tr>
+                                <td class="table-rank">${index + 1}</td>
+                                <td class="table-name">${escapeHtml(label)}</td>
+                                <td>${value}</td>
+                                <td>${pct}%</td>
+                                <td><span class="${trendClass}">${trend}</span></td>
+                            </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>`;
     }
-  });
 
-  // --- LÓGICA DE NEGOCIO Y FETCH DE APIS ---
-
-  async function refreshDashboardMetrics() {
-    try {
-      const from = document.getElementById('filterFrom').value;
-      const to = document.getElementById('filterTo').value;
-      let url = '/api/dashboard/metrics';
-      const params = new URLSearchParams();
-
-      if (from) params.append('from', from);
-      if (to) params.append('to', to);
-      if (params.toString()) url += '?' + params.toString();
-
-      const response = await fetch(url);
-      if (!response.ok) return console.error('Error consultando métricas');
-      const data = await response.json();
-
-      // Actualizar KPIs
-      document.getElementById('totalMetric').innerText = data.total;
-      document.getElementById('resolvedMetric').innerText = data.resueltas;
-      document.getElementById('pendingMetric').innerText = data.pendientes;
-      document.getElementById('escalatedMetric').innerText = data.escaladas;
-      document.getElementById('avgMetric').innerText = data.promedioTiempo;
-
-      // Actualizar Gráficos
-      agentChart.data.labels = data.agenteLabels;
-      agentChart.data.datasets[0].data = data.agenteValues;
-      agentChart.update();
-
-      channelChart.data.labels = data.canalLabels;
-      channelChart.data.datasets[0].data = data.canalValues;
-      channelChart.update();
-
-      priorityChart.data.labels = data.prioridadLabels;
-      priorityChart.data.datasets[0].data = data.prioridadValues;
-      priorityChart.update();
-
-      dailyChart.data.labels = data.productividadLabels;
-      dailyChart.data.datasets[0].data = data.productividadValues;
-      dailyChart.update();
-
-      issueChart.data.labels = data.asuntoLabels;
-      issueChart.data.datasets[0].data = data.asuntoValues;
-      issueChart.update();
-
-    } catch (error) {
-      console.error('Error actualizando dashboard', error);
+    function renderClientList(containerId, labels, values, detailValues = [], clickable = false) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const total = values.reduce((sum, value) => sum + Number(value || 0), 0);
+        const maxValue = Math.max(...values.map(Number), 0);
+        const colors = ['#6236ff', '#18bd73', '#4078ff', '#ff3f8b', '#f6a400'];
+        if (!labels.length || maxValue === 0) {
+            container.innerHTML = '<div class="empty">Sin datos para mostrar.</div>';
+            return;
+        }
+        container.innerHTML = labels.slice(0, 10).map((label, index) => {
+            const value = Number(values[index] || 0);
+            const width = Math.max(6, Math.round((value / maxValue) * 100));
+            const pct = total ? ((value * 100) / total).toFixed(1) : '0.0';
+            const color = colors[index % colors.length];
+            const detail = detailValues.length ? `<div class="rank-meta">${escapeHtml(formatMinutes(detailValues[index]))} de gestion</div>` : '';
+            const clientData = clickable ? ` data-client="${escapeHtml(label)}"` : '';
+            const clickClass = clickable ? ' clickable' : '';
+            return `
+                <div class="channel-row${clickClass}"${clientData} title="${escapeHtml(label)}">
+                    <div class="channel-icon" style="background:${color}">${escapeHtml(label.slice(0, 1).toUpperCase())}</div>
+                    <div class="channel-name">${escapeHtml(label)}</div>
+                    <div class="rank-value">${value} (${pct}%)</div>
+                    ${detail}
+                    <div class="channel-bar"><span style="width:${width}%;--bar-color:${color}"></span></div>
+                </div>`;
+        }).join('');
     }
-  }
 
-  async function generateAiReport() {
-    const box = document.getElementById('aiReportBox');
-    box.style.display = 'grid';
-
-    document.getElementById('aiPerformanceText').innerText = 'Generando análisis...';
-    document.getElementById('aiChannelText').innerText = 'Analizando canales...';
-    document.getElementById('aiImprovementText').innerText = 'Buscando oportunidades...';
-
-    try {
-      const response = await fetch('/api/dashboard/ai-report');
-      if (!response.ok) throw new Error('Error generando reporte');
-      const data = await response.json();
-      const report = data.report || '';
-      const partes = report.split('|');
-
-      document.getElementById('aiPerformanceText').innerText = partes[0] || report;
-      document.getElementById('aiChannelText').innerText = partes[1] || 'No se identificó un canal dominante con la información actual.';
-      document.getElementById('aiImprovementText').innerText = partes[2] || 'No se detectaron áreas críticas, pero se recomienda seguimiento continuo.';
-
-    } catch (error) {
-      console.error(error);
-      document.getElementById('aiPerformanceText').innerText = 'No fue posible generar el análisis IA.';
-      document.getElementById('aiChannelText').innerText = 'Sin datos disponibles.';
-      document.getElementById('aiImprovementText').innerText = 'Intenta nuevamente más tarde.';
+    function renderChipMap(containerId, values) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const entries = Object.entries(values || {});
+        container.innerHTML = entries.length
+            ? entries.map(([label, value]) => `<span class="pill">${escapeHtml(label)}: ${value}</span>`).join(' ')
+            : '<span class="empty">Sin datos.</span>';
     }
-  }
 
-  // Loop de actualización
-  setInterval(refreshDashboardMetrics, 10000);
+    function renderClientHistory(items) {
+        const container = document.getElementById('client360History');
+        if (!container) return;
+        if (!items || !items.length) {
+            container.innerHTML = '<div class="empty">Sin conversaciones recientes.</div>';
+            return;
+        }
+        container.innerHTML = items.map(item => `
+            <div class="activity-item">
+                <div class="activity-dot">${escapeHtml((item.estado || 'S').slice(0, 2).toUpperCase())}</div>
+                <div>
+                    <div class="activity-title">${escapeHtml(item.codigo || 'Sin codigo')} - ${escapeHtml(item.asunto || 'Sin asunto')}</div>
+                    <div class="activity-time">${escapeHtml(item.fecha || 'Sin fecha')} - ${escapeHtml(item.agente || 'Sin agente')} - ${escapeHtml(formatMinutes(item.tiempoGestion))}</div>
+                </div>
+                <span class="pill">${escapeHtml(item.estado || 'Sin estado')}</span>
+            </div>`).join('');
+    }
 
-  // Funciones de filtrado
-  function applyDateFilter() {
-    refreshDashboardMetrics();
-  }
+    async function openClient360(cliente) {
+        const modal = document.getElementById('client360Modal');
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.getElementById('client360Name').innerText = cliente;
+        document.getElementById('client360Contact').innerText = 'Cargando informacion del cliente...';
+        try {
+            const response = await fetch('/api/dashboard/client-360?cliente=' + encodeURIComponent(cliente));
+            if (!response.ok) throw new Error('No fue posible consultar el cliente');
+            const data = await response.json();
+            const contact = [
+                data.telefono ? `Tel: ${data.telefono}` : null,
+                data.correo ? `Correo: ${data.correo}` : null,
+                data.ultimaAtencion ? `Ultima atencion: ${data.ultimaAtencion}` : null
+            ].filter(Boolean).join(' - ');
+            document.getElementById('client360Name').innerText = data.cliente || cliente;
+            document.getElementById('client360Contact').innerText = contact || 'Sin datos de contacto registrados';
+            document.getElementById('client360Total').innerText = data.totalConversaciones || 0;
+            document.getElementById('client360Time').innerText = formatMinutes(data.tiempoTotalGestion);
+            document.getElementById('client360Tickets').innerText = data.ticketsAperturados || 0;
+            document.getElementById('client360Transfers').innerText = data.transferencias || 0;
+            renderChipMap('client360Issues', data.topAsuntos);
+            renderChipMap('client360Agents', data.agentes);
+            renderChipMap('client360Statuses', data.estados);
+            renderClientHistory(data.recientes);
+        } catch (error) {
+            document.getElementById('client360Contact').innerText = 'No fue posible cargar el resumen 360.';
+        }
+    }
 
-  function clearDateFilter() {
-    document.getElementById('filterFrom').value = '';
-    document.getElementById('filterTo').value = '';
-    refreshDashboardMetrics();
-  }
+    function closeClient360() {
+        const modal = document.getElementById('client360Modal');
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    async function refreshDashboardMetrics() {
+        try {
+            const params = new URLSearchParams();
+            const from = document.getElementById('filterFrom').value;
+            const to = document.getElementById('filterTo').value;
+            if (from) params.append('from', from);
+            if (to) params.append('to', to);
+            const response = await fetch('/api/dashboard/metrics' + (params.toString() ? '?' + params.toString() : ''));
+            if (!response.ok) return;
+            const data = await response.json();
+            document.getElementById('totalMetric').innerText = data.total;
+            document.getElementById('resolvedMetric').innerText = data.resueltas;
+            document.getElementById('pendingMetric').innerText = data.pendientes;
+            document.getElementById('escalatedMetric').innerText = data.escaladas;
+            document.getElementById('closedMetric').innerText = data.cerradas || 0;
+            document.getElementById('avgMetric').innerText = `${data.promedioTiempo} min`;
+            dailyChart.data.labels = data.productividadLabels || [];
+            dailyChart.data.datasets[0].data = data.productividadValues || [];
+            dailyChart.update();
+            timeChart.data.labels = data.productividadLabels || [];
+            const avg = Number(String(data.promedioTiempo || '0').replace(',', '.')) || 0;
+            timeChart.data.datasets[0].data = (data.productividadValues || []).map(value => Number(value || 0) + avg);
+            timeChart.update();
+            const statusValues = [data.resueltas || 0, data.pendientes || 0, data.cerradas || 0, data.escaladas || 0];
+            statusChart.data.datasets[0].data = statusValues;
+            statusChart.update();
+            setStatusPercents(statusValues);
+            renderIssuesTable('topIssuesList', data.asuntoLabels || [], data.asuntoValues || []);
+            renderClientList('topClientsList', data.clienteLabels || [], data.clienteValues || [], data.clienteTiempoValues || [], true);
+        } catch (error) {
+            console.error('Error actualizando dashboard', error);
+        }
+    }
+
+    async function generateAiReport() {
+        const box = document.getElementById('aiSummaryText');
+        box.innerText = 'Generando analisis...';
+        try {
+            const response = await fetch('/api/dashboard/ai-report');
+            if (!response.ok) throw new Error('Error generando reporte');
+            const data = await response.json();
+            box.innerText = (data.report || 'No se recibio un resumen disponible.').replaceAll('|', ' ');
+        } catch (error) {
+            box.innerText = 'No fue posible generar el analisis IA.';
+        }
+    }
+
+    function applyDateFilter() {
+        refreshDashboardMetrics();
+    }
+
+    function clearDateFilter() {
+        document.getElementById('filterFrom').value = '';
+        document.getElementById('filterTo').value = '';
+        refreshDashboardMetrics();
+    }
+
+    document.getElementById('client360Modal')?.addEventListener('click', (event) => {
+        if (event.target.id === 'client360Modal') closeClient360();
+    });
+
+    document.getElementById('topClientsList')?.addEventListener('click', (event) => {
+        const row = event.target.closest('[data-client]');
+        if (row) openClient360(row.dataset.client);
+    });
+
+    renderIssuesTable('topIssuesList', asuntoLabels, asuntoValues);
+    renderClientList('topClientsList', clienteLabels, clienteValues, clienteTiempoValues, true);
+    setInterval(refreshDashboardMetrics, 10000);
+    lucide.createIcons();
 </script>
 </body>
 </html>

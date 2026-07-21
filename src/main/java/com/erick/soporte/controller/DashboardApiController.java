@@ -2,19 +2,20 @@ package com.erick.soporte.controller;
 
 import com.erick.soporte.entity.Conversation;
 import com.erick.soporte.repository.ConversationRepository;
+import com.erick.soporte.service.GeminiReportService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.LinkedHashMap;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import com.erick.soporte.service.GeminiReportService;
-import org.springframework.web.bind.annotation.RequestParam;
-import java.time.LocalDate;
 import java.util.TreeMap;
-import java.util.Map;
-import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
 
 @RestController
 public class DashboardApiController {
@@ -95,6 +96,7 @@ public class DashboardApiController {
         long pendientes = conversations.stream().filter(c -> c.getStatusId() != null && c.getStatusId() == 1).count();
         long resueltas = conversations.stream().filter(c -> c.getStatusId() != null && c.getStatusId() == 3).count();
         long escaladas = conversations.stream().filter(c -> c.getStatusId() != null && c.getStatusId() == 4).count();
+        long cerradas = conversations.stream().filter(c -> c.getStatusId() != null && c.getStatusId() == 5).count();
 
         double promedioTiempo = conversations.stream()
                 .filter(c -> c.getTiempoGestionMinutos() != null)
@@ -157,12 +159,39 @@ public class DashboardApiController {
                         LinkedHashMap::new
                 ));
 
+        Map<String, Long> porCliente = conversations.stream()
+                .collect(Collectors.groupingBy(
+                        c -> c.getClienteNombre() != null && !c.getClienteNombre().isBlank()
+                                ? c.getClienteNombre()
+                                : "Sin cliente",
+                        Collectors.counting()
+                ))
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(10)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
+
+        Map<String, Integer> tiempoGestionPorCliente = conversations.stream()
+                .collect(Collectors.groupingBy(
+                        c -> c.getClienteNombre() != null && !c.getClienteNombre().isBlank()
+                                ? c.getClienteNombre()
+                                : "Sin cliente",
+                        Collectors.summingInt(c -> c.getTiempoGestionMinutos() != null ? c.getTiempoGestionMinutos() : 0)
+                ));
+
         Map<String, Object> response = new LinkedHashMap<>();
 
         response.put("total", total);
         response.put("pendientes", pendientes);
         response.put("resueltas", resueltas);
         response.put("escaladas", escaladas);
+        response.put("cerradas", cerradas);
         response.put("promedioTiempo", String.format("%.1f", promedioTiempo));
 
         response.put("agenteLabels", porAgente.keySet());
@@ -178,6 +207,103 @@ public class DashboardApiController {
         response.put("productividadValues", productividadDiaria.values());
         response.put("asuntoLabels", porAsunto.keySet());
         response.put("asuntoValues", porAsunto.values());
+        response.put("clienteLabels", porCliente.keySet());
+        response.put("clienteValues", porCliente.values());
+        response.put("clienteTiempoValues", porCliente.keySet().stream()
+                .map(cliente -> tiempoGestionPorCliente.getOrDefault(cliente, 0))
+                .toList());
+
+        return response;
+    }
+
+    @GetMapping("/api/dashboard/client-360")
+    public Map<String, Object> client360(@RequestParam String cliente) {
+        List<Conversation> conversations = conversationRepository.findAll()
+                .stream()
+                .filter(c -> c.getClienteNombre() != null && c.getClienteNombre().equals(cliente))
+                .toList();
+
+        int tiempoTotal = conversations.stream()
+                .mapToInt(c -> c.getTiempoGestionMinutos() != null ? c.getTiempoGestionMinutos() : 0)
+                .sum();
+
+        Map<String, Long> porEstado = conversations.stream()
+                .collect(Collectors.groupingBy(
+                        c -> statusName(c.getStatusId()),
+                        Collectors.counting()
+                ));
+
+        Map<String, Long> topAsuntos = conversations.stream()
+                .collect(Collectors.groupingBy(
+                        c -> c.getAsunto() != null ? c.getAsunto() : "Sin asunto",
+                        Collectors.counting()
+                ))
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(5)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
+
+        Map<String, Long> agentes = conversations.stream()
+                .collect(Collectors.groupingBy(
+                        c -> c.getAgenteNombre() != null ? c.getAgenteNombre() : "Sin agente",
+                        Collectors.counting()
+                ))
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        List<Map<String, Object>> recientes = conversations.stream()
+                .sorted(Comparator.comparing(
+                        c -> c.getFechaInicio() != null ? c.getFechaInicio() : LocalDateTime.MIN,
+                        Comparator.reverseOrder()
+                ))
+                .limit(5)
+                .map(c -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("codigo", c.getCodigo());
+                    item.put("asunto", c.getAsunto());
+                    item.put("estado", statusName(c.getStatusId()));
+                    item.put("agente", c.getAgenteNombre());
+                    item.put("tiempoGestion", c.getTiempoGestionMinutos() != null ? c.getTiempoGestionMinutos() : 0);
+                    item.put("fecha", c.getFechaInicio() != null ? c.getFechaInicio().format(formatter) : "");
+                    item.put("observaciones", c.getObservaciones());
+                    return item;
+                })
+                .toList();
+
+        Conversation latest = conversations.stream()
+                .max(Comparator.comparing(
+                        c -> c.getFechaInicio() != null ? c.getFechaInicio() : LocalDateTime.MIN
+                ))
+                .orElse(null);
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("cliente", cliente);
+        response.put("telefono", latest != null ? latest.getClienteTelefono() : "");
+        response.put("correo", latest != null ? latest.getClienteCorreo() : "");
+        response.put("totalConversaciones", conversations.size());
+        response.put("tiempoTotalGestion", tiempoTotal);
+        response.put("ultimaAtencion", latest != null && latest.getFechaInicio() != null ? latest.getFechaInicio().format(formatter) : "");
+        response.put("ticketsAperturados", conversations.stream().filter(c -> Boolean.TRUE.equals(c.getTicketAperturado())).count());
+        response.put("transferencias", conversations.stream().filter(c -> Boolean.TRUE.equals(c.getConversacionTransferida())).count());
+        response.put("estados", porEstado);
+        response.put("topAsuntos", topAsuntos);
+        response.put("agentes", agentes);
+        response.put("recientes", recientes);
 
         return response;
     }
@@ -202,6 +328,19 @@ public class DashboardApiController {
             case 3 -> "Alta";
             case 4 -> "Crítica";
             default -> "Desconocida";
+        };
+    }
+
+    private String statusName(Long id) {
+        if (id == null) return "Desconocido";
+
+        return switch (id.intValue()) {
+            case 1 -> "Pendiente";
+            case 2 -> "En Proceso";
+            case 3 -> "Resuelto";
+            case 4 -> "Escalado";
+            case 5 -> "Cerrado";
+            default -> "Desconocido";
         };
     }
 }

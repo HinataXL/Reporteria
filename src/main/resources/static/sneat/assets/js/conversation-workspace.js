@@ -4,12 +4,14 @@ window.ConversationWorkspace = (() => {
     let tabs = JSON.parse(sessionStorage.getItem("conversationTabs") || "[]");
     let activeTabId = sessionStorage.getItem("activeConversationTabId");
     let timerInterval = null;
+    let sessionPromptTimeout = null;
 
     const formId = "conversationForm";
     const tabsContainerId = "conversationTabs";
     const timerDisplayId = "timerDisplay";
     const timerInputId = "tiempoGestionMinutos";
     const pauseBtnId = "pauseTimerBtn";
+    const sessionPromptDelayMs = 8 * 60 * 1000;
 
     function saveState() {
         sessionStorage.setItem("conversationTabs", JSON.stringify(tabs));
@@ -24,6 +26,104 @@ window.ConversationWorkspace = (() => {
 
     function getActiveTab() {
         return tabs.find(t => t.id === activeTabId);
+    }
+
+    function getCsrfToken() {
+        const form = getForm();
+        if (!form) return null;
+
+        const csrfInput = form.querySelector('input[name="_csrf"]');
+        return csrfInput ? csrfInput.value : null;
+    }
+
+    async function keepSessionAlive(showError = false) {
+        const csrfToken = getCsrfToken();
+
+        if (!csrfToken) {
+            return false;
+        }
+
+        try {
+            const response = await fetch("/api/session/keep-alive", {
+                method: "POST",
+                headers: {
+                    "X-CSRF-TOKEN": csrfToken
+                }
+            });
+
+            if (response.redirected || response.status === 401 || response.status === 403) {
+                if (showError) {
+                    showToast("Sesion expirada. Vuelve a iniciar sesion.", true);
+                }
+
+                setTimeout(() => {
+                    window.location.href = "/login";
+                }, 1200);
+
+                return false;
+            }
+
+            return response.ok;
+        } catch (error) {
+            console.warn("No fue posible renovar la sesion", error);
+
+            if (showError) {
+                showToast("No fue posible renovar la sesion", true);
+            }
+
+            return false;
+        }
+    }
+
+    function hideSessionPrompt() {
+        const prompt = document.getElementById("sessionContinuePrompt");
+
+        if (prompt) {
+            prompt.classList.add("hidden");
+        }
+    }
+
+    function showSessionPrompt() {
+        const prompt = document.getElementById("sessionContinuePrompt");
+
+        if (!prompt) {
+            return;
+        }
+
+        prompt.classList.remove("hidden");
+    }
+
+    function scheduleSessionPrompt() {
+        if (sessionPromptTimeout) {
+            clearTimeout(sessionPromptTimeout);
+        }
+
+        sessionPromptTimeout = setTimeout(() => {
+            showSessionPrompt();
+        }, sessionPromptDelayMs);
+    }
+
+    async function continueWorking() {
+        const button = document.getElementById("sessionContinueButton");
+        const originalText = button ? button.innerText : "";
+
+        if (button) {
+            button.disabled = true;
+            button.innerText = "Renovando...";
+        }
+
+        const renewed = await keepSessionAlive(true);
+
+        if (button) {
+            button.disabled = false;
+            button.innerText = originalText || "Continuar trabajando";
+        }
+
+        if (renewed) {
+            hideSessionPrompt();
+            scheduleSessionPrompt();
+            showToast("Sesion renovada correctamente");
+        }
     }
 
     function normalizeTab(tab) {
@@ -354,6 +454,12 @@ window.ConversationWorkspace = (() => {
                 submitButton.innerHTML = "Guardando...";
             }
 
+            const sessionReady = await keepSessionAlive(true);
+
+            if (!sessionReady) {
+                throw new Error("Sesion expirada");
+            }
+
             const formData = new FormData(form);
 
             const response = await fetch(
@@ -491,6 +597,11 @@ window.ConversationWorkspace = (() => {
             btnNew.addEventListener("click", addTab);
         }
 
+        const sessionContinueButton = document.getElementById("sessionContinueButton");
+        if (sessionContinueButton) {
+            sessionContinueButton.addEventListener("click", continueWorking);
+        }
+
         form.addEventListener("input", () => {
             saveActiveTabData();
             renderTabs();
@@ -551,6 +662,7 @@ window.ConversationWorkspace = (() => {
         }
 
         bindEvents();
+        scheduleSessionPrompt();
 
         console.log("Conversation Workspace v2 inicializado");
     }
@@ -560,7 +672,8 @@ window.ConversationWorkspace = (() => {
         addTab,
         switchTab,
         closeTab,
-        toggleTimer
+        toggleTimer,
+        continueWorking
     };
 })();
 

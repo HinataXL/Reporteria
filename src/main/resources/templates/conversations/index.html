@@ -603,6 +603,15 @@
                     Dashboard
                 </a>
             </li>
+            <li sec:authorize="hasRole('AGENTE')">
+                <a th:href="@{/agent/dashboard}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3v18h18"></path>
+                        <path d="M7 14l3-3 3 2 5-6"></path>
+                    </svg>
+                    Mi dashboard
+                </a>
+            </li>
             <li sec:authorize="hasAnyRole('ADMIN')">
                 <a th:href="@{/conversations}" class="active">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

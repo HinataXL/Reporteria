@@ -7,28 +7,23 @@ import com.erick.soporte.repository.IssueTypeRepository;
 import com.erick.soporte.repository.RejectionCodeRepository;
 import com.erick.soporte.security.CustomUserPrincipal;
 import com.erick.soporte.service.AuditLogService;
+import com.erick.soporte.entity.IssueType;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import com.erick.soporte.entity.IssueType;
-import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import org.springframework.security.core.Authentication;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ResponseBody;
-
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -137,6 +132,11 @@ public class HomeController {
                         )
                 );
             }
+            conversation.setFechaFinalizacion(
+                    LocalDateTime.now(
+                            ZoneId.of("America/Guatemala")
+                    )
+            );
 
             Conversation saved = conversationRepository.save(conversation);
 

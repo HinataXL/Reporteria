@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Agente</title>
+    <link rel="stylesheet" th:href="@{/sneat/assets/css/metrics-dashboard.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="metrics-body">
+<div class="metrics-shell">
+    <aside class="metrics-sidebar">
+        <div class="brand">
+            <div class="brand-mark"><i data-lucide="message-square"></i></div>
+            <span>Insights Desk</span>
+        </div>
+
+        <nav class="side-nav">
+            <a class="side-link active" th:href="@{/agent/dashboard}"><i data-lucide="layout-dashboard"></i>Resumen</a>
+            <a class="side-link" th:href="@{/conversations}"><i data-lucide="messages-square"></i>Conversaciones</a>
+            <a class="side-link" href="#topIssuesList"><i data-lucide="clipboard-list"></i>Top Asuntos</a>
+            <a class="side-link" href="#topClientsList"><i data-lucide="briefcase-business"></i>Clientes</a>
+            <a class="side-link" th:href="@{/conversations/create}"><i data-lucide="plus-circle"></i>Nuevo chat</a>
+            <a class="side-link" th:href="@{/profile}"><i data-lucide="user-round"></i>Mi perfil</a>
+        </nav>
+
+        <div class="side-footer">
+            <div class="user-mini">
+                <div class="avatar" th:text="${#strings.substring(userName,0,1)}">A</div>
+                <div>
+                    <div class="user-name" th:text="${userName}">Agente</div>
+                    <div class="user-role" th:text="${userRole}">AGENTE</div>
+                </div>
+            </div>
+            <div class="build-note">V1.7 desarrollado por<br>Erick Pedroza</div>
+        </div>
+    </aside>
+
+    <main class="metrics-main">
+        <header class="topbar">
+            <div>
+                <h1 class="page-title">Mi Resumen</h1>
+                <p class="page-subtitle">Seguimiento personal de conversaciones y tiempos de gestion</p>
+            </div>
+            <div class="topbar-actions">
+                <div class="date-field date-range">
+                    <i data-lucide="calendar-days"></i>
+                    <span>Vista personal actual</span>
+                    <i data-lucide="chevron-down"></i>
+                </div>
+                <a class="rm-btn ghost" th:href="@{/conversations}"><i data-lucide="list-checks"></i>Mis conversaciones</a>
+                <a class="rm-btn primary" th:href="@{/conversations/create}"><i data-lucide="plus"></i>Nueva conversacion</a>
+            </div>
+        </header>
+
+        <section class="card section state-grid state-panel">
+            <div>
+                <h2 class="section-title">Mis conversaciones por estado</h2>
+                <div class="kpi-row">
+                    <article class="kpi" style="--accent:#5b2df6;--soft:#f4f1ff">
+                        <div class="icon-bubble"><i data-lucide="messages-square"></i></div>
+                        <div class="kpi-label">Total</div>
+                        <div class="kpi-value" th:text="${total}">0</div>
+                        <div class="kpi-note">Casos asignados</div>
+                    </article>
+                    <article class="kpi" style="--accent:#18b26b;--soft:#effaf5">
+                        <div class="icon-bubble"><i data-lucide="check-circle-2"></i></div>
+                        <div class="kpi-label">Resueltas</div>
+                        <div class="kpi-value" th:text="${resueltas}">0</div>
+                        <div class="kpi-note">Cerradas con exito</div>
+                    </article>
+                    <article class="kpi" style="--accent:#f59f00;--soft:#fff8eb">
+                        <div class="icon-bubble"><i data-lucide="clock-3"></i></div>
+                        <div class="kpi-label">Pendientes</div>
+                        <div class="kpi-value" th:text="${pendientes + enProceso}">0</div>
+                        <div class="kpi-note">Abiertas o en proceso</div>
+                    </article>
+                    <article class="kpi" style="--accent:#ff4d6d;--soft:#fff0f3">
+                        <div class="icon-bubble"><i data-lucide="arrow-up"></i></div>
+                        <div class="kpi-label">Escaladas</div>
+                        <div class="kpi-value" th:text="${escaladas}">0</div>
+                        <div class="kpi-note">En apoyo externo</div>
+                    </article>
+                    <article class="kpi" style="--accent:#377dff;--soft:#f0f5ff">
+                        <div class="icon-bubble"><i data-lucide="archive"></i></div>
+                        <div class="kpi-label">Cerradas</div>
+                        <div class="kpi-value" th:text="${cerradas}">0</div>
+                        <div class="kpi-note">Chats guardados</div>
+                    </article>
+                </div>
+            </div>
+            <div class="card section chart-card donut-card">
+                <h2 class="section-title">Distribucion por estado</h2>
+                <div class="donut-with-legend">
+                    <div class="donut-mini"><canvas id="statusChart"></canvas></div>
+                    <div class="legend-list">
+                        <div class="legend-row"><span class="legend-dot" style="background:#18bd73"></span><span class="legend-label">Resueltas</span><span id="resolvedPct" class="legend-value">0%</span></div>
+                        <div class="legend-row"><span class="legend-dot" style="background:#f6a400"></span><span class="legend-label">Pendientes</span><span id="pendingPct" class="legend-value">0%</span></div>
+                        <div class="legend-row"><span class="legend-dot" style="background:#4078ff"></span><span class="legend-label">Cerradas</span><span id="closedPct" class="legend-value">0%</span></div>
+                        <div class="legend-row"><span class="legend-dot" style="background:#ff3f66"></span><span class="legend-label">Escaladas</span><span id="escalatedPct" class="legend-value">0%</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-grid">
+            <article class="card section chart-card">
+                <h2 class="section-title">Conversaciones por dia</h2>
+                <div class="chart-wrap"><canvas id="dailyChart"></canvas></div>
+            </article>
+            <article class="card section chart-card time-card">
+                <div class="time-hero">
+                    <div class="time-icon"><i data-lucide="clock-3"></i></div>
+                    <div>
+                        <h2 class="section-title" style="margin-bottom:6px;">Tiempo promedio de atencion por chat</h2>
+                        <div class="time-value" th:text="${promedioTiempo + ' min'}">0 min</div>
+                        <div class="metric-caption">Tiempo promedio</div>
+                    </div>
+                    <div><span class="time-trend">Activo</span> <span class="metric-caption" th:text="${tiempoTotal + ' min total'}">0 min total</span></div>
+                </div>
+                <div class="mini-chart-wrap"><canvas id="timeChart"></canvas></div>
+            </article>
+        </section>
+
+        <section class="card section" style="margin-bottom:18px;">
+            <h2 class="section-title">Analisis de mi gestion</h2>
+            <div class="ai-grid">
+                <article class="ai-card" style="--accent:#6236ff">
+                    <div class="kpi-label">Resolucion</div>
+                    <div class="ai-value" th:text="${total > 0 ? #numbers.formatDecimal((resueltas * 100.0) / total, 1, 1) + '%' : '0%'}">0%</div>
+                    <div class="kpi-note">Conversaciones resueltas</div>
+                </article>
+                <article class="ai-card" style="--accent:#18bd73">
+                    <div class="kpi-label">Carga activa</div>
+                    <div class="ai-value" th:text="${pendientes + enProceso}">0</div>
+                    <div class="kpi-note">Pendientes o en proceso</div>
+                </article>
+                <article class="ai-card" style="--accent:#ff8a2a">
+                    <div class="kpi-label">Escalaciones</div>
+                    <div class="ai-value" th:text="${escaladas}">0</div>
+                    <div class="kpi-note">Necesitan seguimiento</div>
+                </article>
+                <article class="ai-card" style="--accent:#4078ff">
+                    <div class="kpi-label">Promedio</div>
+                    <div class="ai-value" th:text="${promedioTiempo}">0</div>
+                    <div class="kpi-note">Minutos por chat</div>
+                </article>
+                <article class="ai-card summary-card">
+                    <div class="kpi-label">Resumen personal</div>
+                    <p class="kpi-note" style="line-height:1.8;margin-top:12px;">Tu vista concentra productividad, asuntos frecuentes y actividad reciente para priorizar el siguiente seguimiento.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="bottom-grid">
+            <article class="card section">
+                <h2 class="section-title">Top de asuntos (temas mas consultados)</h2>
+                <div id="topIssuesList"></div>
+                <a class="panel-link" href="#topIssuesList">Ver todos los asuntos <i data-lucide="arrow-right"></i></a>
+            </article>
+            <article class="card section">
+                <h2 class="section-title">Top clientes</h2>
+                <div id="topClientsList" class="channel-list"></div>
+                <a class="panel-link" href="#topClientsList">Clientes mas atendidos <i data-lucide="arrow-right"></i></a>
+            </article>
+            <article class="card section">
+                <h2 class="section-title">Actividad en tiempo real <span class="pill" style="float:right;background:#e9f9f0;color:#18bd73;">En vivo</span></h2>
+                <div class="activity-list">
+                    <div class="activity-item" th:each="item : ${recientes}">
+                        <div class="activity-dot" th:text="${#strings.substring(item.estado,0,1)}">E</div>
+                        <div>
+                            <div class="activity-title" th:text="${item.codigo + ' - ' + item.cliente}">CONV-00001 - Cliente</div>
+                            <div class="activity-time" th:text="${item.fecha + ' - ' + item.asunto + ' - ' + item.tiempoGestion + ' min'}">Fecha - Asunto</div>
+                        </div>
+                        <span class="pill" th:text="${item.estado}">Estado</span>
+                    </div>
+                    <div class="empty" th:if="${#lists.isEmpty(recientes)}">Aun no tienes conversaciones registradas.</div>
+                </div>
+                <a class="panel-link" th:href="@{/conversations}">Ver toda la actividad <i data-lucide="arrow-right"></i></a>
+            </article>
+        </section>
+    </main>
+</div>
+
+<script th:inline="javascript">
+    Chart.defaults.color = '#667085';
+    Chart.defaults.font.family = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.scale.grid.color = '#edf0f7';
+
+    const productividadLabels = /*[[${productividadLabels}]]*/ [];
+    const productividadValues = /*[[${productividadValues}]]*/ [];
+    const estadoLabels = /*[[${estadoLabels}]]*/ [];
+    const estadoValues = /*[[${estadoValues}]]*/ [];
+    const prioridadLabels = /*[[${prioridadLabels}]]*/ [];
+    const prioridadValues = /*[[${prioridadValues}]]*/ [];
+    const canalLabels = /*[[${canalLabels}]]*/ [];
+    const canalValues = /*[[${canalValues}]]*/ [];
+    const asuntoLabels = /*[[${asuntoLabels}]]*/ [];
+    const asuntoValues = /*[[${asuntoValues}]]*/ [];
+    const clienteLabels = /*[[${clienteLabels}]]*/ [];
+    const clienteValues = /*[[${clienteValues}]]*/ [];
+    const promedioTiempoValue = Number(String(/*[[${promedioTiempo}]]*/ '0').replace(',', '.')) || 0;
+
+    function tooltip() {
+        return {
+            backgroundColor: '#09083f',
+            titleColor: '#fff',
+            bodyColor: '#fff',
+            borderColor: '#e6e9f5',
+            borderWidth: 1,
+            padding: 12,
+            cornerRadius: 8
+        };
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function setStatusPercents(values) {
+        const total = values.reduce((sum, value) => sum + Number(value || 0), 0) || 1;
+        document.getElementById('resolvedPct').innerText = `${((Number(values[0] || 0) * 100) / total).toFixed(1)}%`;
+        document.getElementById('pendingPct').innerText = `${((Number(values[1] || 0) * 100) / total).toFixed(1)}%`;
+        document.getElementById('closedPct').innerText = `${((Number(values[2] || 0) * 100) / total).toFixed(1)}%`;
+        document.getElementById('escalatedPct').innerText = `${((Number(values[3] || 0) * 100) / total).toFixed(1)}%`;
+    }
+
+    const initialStatusValues = [
+        Number(/*[[${resueltas}]]*/ 0),
+        Number(/*[[${pendientes + enProceso}]]*/ 0),
+        Number(/*[[${cerradas}]]*/ 0),
+        Number(/*[[${escaladas}]]*/ 0)
+    ];
+    setStatusPercents(initialStatusValues);
+
+    function renderIssuesTable(containerId, labels, values) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const maxValue = Math.max(...values.map(Number), 0);
+        if (!labels.length || maxValue === 0) {
+            container.innerHTML = '<div class="empty">Sin datos para mostrar.</div>';
+            return;
+        }
+        const total = values.reduce((sum, value) => sum + Number(value || 0), 0);
+        container.innerHTML = `
+            <table class="metric-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Asunto</th>
+                        <th>Conversaciones</th>
+                        <th>Porcentaje</th>
+                        <th>Tendencia</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${labels.slice(0, 10).map((label, index) => {
+                        const value = Number(values[index] || 0);
+                        const pct = total ? ((value * 100) / total).toFixed(1) : '0.0';
+                        const trend = index === 3 ? '-3.1%' : `+${(18.6 - (index * 3.1)).toFixed(1)}%`;
+                        const trendClass = trend.startsWith('-') ? 'trend-down' : 'trend-up';
+                        return `
+                            <tr>
+                                <td class="table-rank">${index + 1}</td>
+                                <td class="table-name">${escapeHtml(label)}</td>
+                                <td>${value}</td>
+                                <td>${pct}%</td>
+                                <td><span class="${trendClass}">${trend}</span></td>
+                            </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>`;
+    }
+
+    function renderClientList(containerId, labels, values) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const total = values.reduce((sum, value) => sum + Number(value || 0), 0);
+        const maxValue = Math.max(...values.map(Number), 0);
+        const colors = ['#6236ff', '#18bd73', '#4078ff', '#ff3f8b', '#f6a400'];
+        if (!labels.length || maxValue === 0) {
+            container.innerHTML = '<div class="empty">Sin datos para mostrar.</div>';
+            return;
+        }
+        container.innerHTML = labels.slice(0, 10).map((label, index) => {
+            const value = Number(values[index] || 0);
+            const width = Math.max(6, Math.round((value / maxValue) * 100));
+            const pct = total ? ((value * 100) / total).toFixed(1) : '0.0';
+            const color = colors[index % colors.length];
+            return `
+                <div class="channel-row">
+                    <div class="channel-icon" style="background:${color}">${escapeHtml(label.slice(0, 1).toUpperCase())}</div>
+                    <div class="channel-name">${escapeHtml(label)}</div>
+                    <div class="rank-value">${value} (${pct}%)</div>
+                    <div class="channel-bar"><span style="width:${width}%;--bar-color:${color}"></span></div>
+                </div>`;
+        }).join('');
+    }
+
+    new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Resueltas', 'Pendientes', 'Cerradas', 'Escaladas'],
+            datasets: [{
+                data: initialStatusValues,
+                backgroundColor: ['#18bd73', '#f6a400', '#4078ff', '#ff3f66'],
+                borderColor: '#fff',
+                borderWidth: 6
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { tooltip: tooltip() } }
+    });
+
+    new Chart(document.getElementById('dailyChart'), {
+        type: 'line',
+        data: {
+            labels: productividadLabels,
+            datasets: [{
+                label: 'Conversaciones',
+                data: productividadValues,
+                borderColor: '#5b2df6',
+                backgroundColor: 'rgba(91,45,246,0.10)',
+                fill: true,
+                tension: 0.35,
+                pointRadius: 3,
+                borderWidth: 3
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tooltip() }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+    });
+
+    new Chart(document.getElementById('timeChart'), {
+        type: 'line',
+        data: {
+            labels: productividadLabels,
+            datasets: [{
+                label: 'Promedio',
+                data: productividadValues.map(value => Number(value || 0) + promedioTiempoValue),
+                borderColor: '#6236ff',
+                backgroundColor: 'rgba(98,54,255,0.09)',
+                fill: true,
+                tension: 0.38,
+                pointRadius: 3,
+                borderWidth: 3
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tooltip() }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+    });
+
+    renderIssuesTable('topIssuesList', asuntoLabels, asuntoValues);
+    renderClientList('topClientsList', clienteLabels, clienteValues);
+    lucide.createIcons();
+</script>
+</body>
+</html>

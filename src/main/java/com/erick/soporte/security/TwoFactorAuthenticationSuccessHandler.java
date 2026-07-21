@@ -41,6 +41,8 @@ public class TwoFactorAuthenticationSuccessHandler implements AuthenticationSucc
         request.getSession().setAttribute("2FA_VERIFIED", true);
         if (principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_SUPERVISOR"))) {
             response.sendRedirect("/supervisor/dashboard");
+        } else if (principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_AGENTE"))) {
+            response.sendRedirect("/agent/dashboard");
         } else {
             response.sendRedirect("/conversations");
         }
