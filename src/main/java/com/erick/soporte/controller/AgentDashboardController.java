@@ -7,8 +7,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -163,6 +166,52 @@ public class AgentDashboardController {
         return "agent/dashboard";
     }
 
+    @GetMapping("/api/agent-dashboard/status-conversations")
+    @ResponseBody
+    public Map<String, Object> statusConversations(@RequestParam String status, Authentication authentication) {
+        CustomUserPrincipal user = (CustomUserPrincipal) authentication.getPrincipal();
+        List<Long> statusIds = agentDashboardStatusIds(status);
+        String label = agentDashboardStatusLabel(status);
+
+        List<Conversation> conversations = conversationRepository.findAll()
+                .stream()
+                .filter(c -> belongsToAgent(c, user))
+                .filter(c -> c.getStatusId() != null && statusIds.contains(c.getStatusId()))
+                .toList();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        int totalManagementTime = conversations.stream()
+                .mapToInt(c -> c.getTiempoGestionMinutos() != null ? c.getTiempoGestionMinutos() : 0)
+                .sum();
+
+        List<Map<String, Object>> items = conversations.stream()
+                .sorted(Comparator.comparing(
+                        c -> c.getFechaInicio() != null ? c.getFechaInicio() : LocalDateTime.MIN,
+                        Comparator.reverseOrder()
+                ))
+                .map(c -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("codigo", c.getCodigo());
+                    item.put("cliente", c.getClienteNombre() != null && !c.getClienteNombre().isBlank() ? c.getClienteNombre() : "Sin cliente");
+                    item.put("asunto", c.getAsunto() != null && !c.getAsunto().isBlank() ? c.getAsunto() : "Sin asunto");
+                    item.put("estado", statusName(c.getStatusId()));
+                    item.put("canal", channelName(c.getChannelId()));
+                    item.put("tiempoGestion", c.getTiempoGestionMinutos() != null ? c.getTiempoGestionMinutos() : 0);
+                    item.put("fecha", c.getFechaInicio() != null ? c.getFechaInicio().format(formatter) : "Sin fecha");
+                    return item;
+                })
+                .toList();
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("status", status);
+        response.put("label", label);
+        response.put("range", dateRange(conversations));
+        response.put("totalConversaciones", conversations.size());
+        response.put("tiempoTotalGestion", totalManagementTime);
+        response.put("items", items);
+        return response;
+    }
+
     private boolean belongsToAgent(Conversation conversation, CustomUserPrincipal user) {
         if (conversation.getUserId() != null && conversation.getUserId().equals(user.getId())) {
             return true;
@@ -189,6 +238,44 @@ public class AgentDashboardController {
             case 5 -> "Cerrado";
             default -> "Desconocido";
         };
+    }
+
+    private List<Long> agentDashboardStatusIds(String status) {
+        return switch (status) {
+            case "pending" -> List.of(1L, 2L);
+            case "escalated" -> List.of(4L);
+            case "closed" -> List.of(5L);
+            default -> List.of();
+        };
+    }
+
+    private String agentDashboardStatusLabel(String status) {
+        return switch (status) {
+            case "pending" -> "Pendientes";
+            case "escalated" -> "Escaladas";
+            case "closed" -> "Cerradas";
+            default -> "Conversaciones";
+        };
+    }
+
+    private String dateRange(List<Conversation> conversations) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        List<LocalDate> dates = conversations.stream()
+                .map(Conversation::getFechaInicio)
+                .filter(date -> date != null)
+                .map(LocalDateTime::toLocalDate)
+                .sorted()
+                .toList();
+
+        if (dates.isEmpty()) {
+            return "Sin fechas registradas";
+        }
+
+        LocalDate start = dates.get(0);
+        LocalDate end = dates.get(dates.size() - 1);
+        return start.equals(end)
+                ? start.format(formatter)
+                : start.format(formatter) + " - " + end.format(formatter);
     }
 
     private String priorityName(Long id) {

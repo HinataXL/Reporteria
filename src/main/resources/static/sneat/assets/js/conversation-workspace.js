@@ -5,6 +5,8 @@ window.ConversationWorkspace = (() => {
     let activeTabId = sessionStorage.getItem("activeConversationTabId");
     let timerInterval = null;
     let sessionPromptTimeout = null;
+    let sessionExpired = false;
+    let redirectingToLogin = false;
 
     const formId = "conversationForm";
     const tabsContainerId = "conversationTabs";
@@ -36,10 +38,45 @@ window.ConversationWorkspace = (() => {
         return csrfInput ? csrfInput.value : null;
     }
 
+    function handleExpiredSession() {
+        if (redirectingToLogin) {
+            return;
+        }
+
+        sessionExpired = true;
+        redirectingToLogin = true;
+
+        if (sessionPromptTimeout) {
+            clearTimeout(sessionPromptTimeout);
+        }
+
+        stopTimer();
+        hideSessionPrompt();
+        showToast("Sesion expirada. Vuelve a iniciar sesion para guardar.", true);
+
+        const tab = getActiveTab();
+        if (tab) {
+            tab.saving = false;
+            tab.saved = false;
+            saveState();
+        }
+
+        setTimeout(() => {
+            window.location.href = "/login?expired=true";
+        }, 1200);
+    }
+
     async function keepSessionAlive(showError = false) {
+        if (sessionExpired) {
+            return false;
+        }
         const csrfToken = getCsrfToken();
 
         if (!csrfToken) {
+            if (showError) {
+                handleExpiredSession();
+            }
+
             return false;
         }
 
@@ -53,12 +90,8 @@ window.ConversationWorkspace = (() => {
 
             if (response.redirected || response.status === 401 || response.status === 403) {
                 if (showError) {
-                    showToast("Sesion expirada. Vuelve a iniciar sesion.", true);
+                    handleExpiredSession();
                 }
-
-                setTimeout(() => {
-                    window.location.href = "/login";
-                }, 1200);
 
                 return false;
             }
@@ -104,6 +137,11 @@ window.ConversationWorkspace = (() => {
     }
 
     async function continueWorking() {
+        if (sessionExpired) {
+            handleExpiredSession();
+            return;
+        }
+
         const button = document.getElementById("sessionContinueButton");
         const originalText = button ? button.innerText : "";
 
@@ -407,7 +445,19 @@ window.ConversationWorkspace = (() => {
             el.dispatchEvent(new Event("change", { bubbles: true }));
         });
     }
+
+    function formatLocalDateTime(timestamp) {
+        const date = new Date(timestamp);
+        const pad = value => String(value).padStart(2, "0");
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    }
+
     async function saveConversationAjax() {
+        if (sessionExpired) {
+            handleExpiredSession();
+            return;
+        }
+
         const form = getForm();
         const tab = getActiveTab();
 
@@ -442,6 +492,11 @@ window.ConversationWorkspace = (() => {
                 );
             }
 
+            const startInput = document.getElementById("fechaInicio");
+            if (startInput && tab.createdAt) {
+                startInput.value = formatLocalDateTime(tab.createdAt);
+            }
+
             saveActiveTabData();
             saveState();
 
@@ -457,7 +512,11 @@ window.ConversationWorkspace = (() => {
             const sessionReady = await keepSessionAlive(true);
 
             if (!sessionReady) {
-                throw new Error("Sesion expirada");
+                if (sessionExpired) {
+                    return;
+                }
+
+                throw new Error("No fue posible validar la sesion");
             }
 
             const formData = new FormData(form);
@@ -469,6 +528,11 @@ window.ConversationWorkspace = (() => {
                     body: formData
                 }
             );
+
+            if (response.redirected || response.status === 401 || response.status === 403) {
+                handleExpiredSession();
+                return;
+            }
 
             const data = await response.json();
 
@@ -496,6 +560,10 @@ window.ConversationWorkspace = (() => {
             closeActiveTabAfterSave();
 
         } catch (error) {
+            if (sessionExpired) {
+                return;
+            }
+
             console.error(
                 "Error guardando conversación:",
                 error

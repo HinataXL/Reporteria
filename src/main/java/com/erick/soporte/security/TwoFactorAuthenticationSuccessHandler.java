@@ -2,6 +2,7 @@ package com.erick.soporte.security;
 
 import com.erick.soporte.entity.User;
 import com.erick.soporte.repository.UserRepository;
+import com.erick.soporte.service.ActiveSessionService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,9 +16,14 @@ import java.io.IOException;
 public class TwoFactorAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
     private final UserRepository userRepository;
+    private final ActiveSessionService activeSessionService;
 
-    public TwoFactorAuthenticationSuccessHandler(UserRepository userRepository) {
+    public TwoFactorAuthenticationSuccessHandler(
+            UserRepository userRepository,
+            ActiveSessionService activeSessionService
+    ) {
         this.userRepository = userRepository;
+        this.activeSessionService = activeSessionService;
     }
 
     @Override
@@ -39,6 +45,7 @@ public class TwoFactorAuthenticationSuccessHandler implements AuthenticationSucc
         }
 
         request.getSession().setAttribute("2FA_VERIFIED", true);
+        activeSessionService.register(request.getSession().getId(), principal);
         if (principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_SUPERVISOR"))) {
             response.sendRedirect("/supervisor/dashboard");
         } else if (principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_AGENTE"))) {

@@ -6,6 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conversaciones - Dashboard</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         * {
             margin: 0;
@@ -582,13 +583,806 @@
             color: #64748b;
             font-weight: 800;
         }
+
+        /* Insights Desk visual refresh */
+        :root {
+            --rm-bg: #f5f7fb;
+            --rm-panel: #ffffff;
+            --rm-ink: #08093f;
+            --rm-muted: #667085;
+            --rm-line: #dfe5f2;
+            --rm-purple: #6236ff;
+            --rm-purple-dark: #09083f;
+            --rm-blue: #377dff;
+            --rm-cyan: #07c8f9;
+            --rm-green: #18bd73;
+            --rm-yellow: #f6a400;
+            --rm-red: #ff3f66;
+        }
+
+        body {
+            background: var(--rm-bg);
+            color: var(--rm-ink);
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .layout {
+            min-height: calc(100vh - 78px);
+        }
+
+        .sidebar {
+            width: 258px;
+            background: radial-gradient(circle at top left, rgba(98, 54, 255, .28), transparent 34%), linear-gradient(180deg, #08093f 0%, #030725 100%);
+            border-right: 1px solid rgba(255, 255, 255, .08);
+            padding: 22px 16px;
+        }
+
+        .side-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+            font-weight: 900;
+            font-size: 18px;
+            margin-bottom: 22px;
+        }
+
+        .side-brand-mark {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #7b4dff, #4b20dc);
+            color: #fff;
+            box-shadow: 0 12px 28px rgba(98, 54, 255, .35);
+        }
+
+        .user-card {
+            background: rgba(255, 255, 255, .07);
+            border: 1px solid rgba(255, 255, 255, .10);
+            border-radius: 10px;
+            padding: 18px 14px;
+        }
+
+        .user-avatar {
+            background: linear-gradient(135deg, var(--rm-purple), var(--rm-cyan));
+            box-shadow: 0 16px 30px rgba(7, 200, 249, .18);
+        }
+
+        .user-name {
+            color: #fff;
+            font-weight: 850;
+        }
+
+        .user-role {
+            color: #a9f6ff;
+            letter-spacing: .08em;
+        }
+
+        .user-email {
+            color: rgba(255, 255, 255, .62);
+        }
+
+        .sidebar-menu a {
+            background: transparent;
+            color: rgba(255, 255, 255, .82);
+            border-radius: 8px;
+            font-weight: 760;
+        }
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background: linear-gradient(135deg, rgba(98, 54, 255, .92), rgba(98, 54, 255, .62));
+            color: #fff;
+            border-left: 0;
+            padding-left: 15px;
+            box-shadow: 0 14px 36px rgba(52, 33, 160, .28);
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid rgba(255, 255, 255, .10);
+        }
+
+        .btn-logout {
+            background: rgba(255, 63, 102, .12);
+            color: #ffdbe4;
+            border: 1px solid rgba(255, 63, 102, .28);
+            border-radius: 8px;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 63, 102, .22);
+            color: #fff;
+        }
+
+        .main-content {
+            background: var(--rm-bg);
+            overflow: visible;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, .84);
+            border-bottom: 1px solid var(--rm-line);
+            padding: 24px 28px 20px;
+            backdrop-filter: blur(12px);
+        }
+
+        .toggle-sidebar {
+            background: #eef2ff;
+            color: var(--rm-purple);
+            border: 1px solid #dbe3ff;
+            border-radius: 8px;
+        }
+
+        .header-title h1 {
+            color: var(--rm-ink);
+            font-size: 28px;
+            font-weight: 950;
+            letter-spacing: 0;
+        }
+
+        .header-title p {
+            color: var(--rm-muted);
+        }
+
+        .header-kicker {
+            color: var(--rm-cyan);
+            font-weight: 900;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .rm-btn {
+            min-height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 0 16px;
+            border-radius: 8px;
+            border: 1px solid var(--rm-line);
+            background: #fff;
+            color: var(--rm-ink);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 850;
+            transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        }
+
+        .rm-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 26px rgba(17, 24, 39, .08);
+        }
+
+        .rm-btn.primary {
+            background: linear-gradient(135deg, #7448ff, var(--rm-purple));
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 14px 32px rgba(98, 54, 255, .24);
+        }
+
+        .content {
+            padding: 20px 28px 0;
+            overflow: visible;
+        }
+
+        .search-filters,
+        .table-wrapper {
+            background: var(--rm-panel);
+            border: 1px solid var(--rm-line);
+            border-radius: 10px;
+            box-shadow: 0 12px 30px rgba(17, 24, 39, .04);
+        }
+
+        .search-filters {
+            padding: 16px;
+            margin-bottom: 18px;
+        }
+
+        .search-input,
+        .filter-select {
+            background: #fff;
+            border: 1px solid #dbe3f1;
+            color: var(--rm-ink);
+            border-radius: 8px;
+            font-weight: 700;
+        }
+
+        .search-input {
+            min-height: 44px;
+            padding: 12px 16px;
+        }
+
+        .search-input::placeholder {
+            color: #8a95a8;
+        }
+
+        .search-input:focus,
+        .filter-select:focus {
+            border-color: var(--rm-purple);
+            box-shadow: 0 0 0 4px rgba(98, 54, 255, .10);
+        }
+
+        .filter-select {
+            min-height: 36px;
+            border-radius: 999px;
+            padding: 0 18px;
+        }
+
+        .btn-clear {
+            min-height: 36px;
+            background: #fff8eb;
+            border: 1px solid #ffd98a;
+            color: #9d6500;
+            border-radius: 999px;
+            font-weight: 850;
+        }
+
+        .btn-clear:hover {
+            background: var(--rm-yellow);
+            color: #fff;
+        }
+
+        .result-counter {
+            color: var(--rm-muted);
+            font-weight: 800;
+        }
+
+        .table-wrapper {
+            overflow: visible;
+        }
+
+        table {
+            background: #fff;
+        }
+
+        thead {
+            background: #f8faff;
+            border-bottom: 1px solid var(--rm-line);
+        }
+
+        th {
+            color: var(--rm-ink);
+            font-size: 11px;
+            font-weight: 950;
+            letter-spacing: .04em;
+            padding: 15px 16px;
+        }
+
+        td {
+            color: var(--rm-ink);
+            border-bottom: 1px solid #eef2f8;
+            padding: 16px;
+        }
+
+        tbody tr:hover {
+            background: #fafbff;
+            transform: none;
+            box-shadow: inset 3px 0 0 var(--rm-purple);
+        }
+
+        .client-name {
+            color: var(--rm-ink);
+            font-weight: 900;
+        }
+
+        .client-code {
+            color: var(--rm-cyan);
+            font-weight: 800;
+        }
+
+        .client-code:hover {
+            color: var(--rm-purple);
+        }
+
+        .badge {
+            border-radius: 999px;
+            font-weight: 850;
+            border-width: 1px;
+        }
+
+        .badge-channel {
+            background: #eff8ff;
+            border-color: #cfe7ff;
+            color: #0077b6;
+        }
+
+        .badge-resolved {
+            background: #e9f9f0;
+            border-color: #bdebd2;
+            color: #07864a;
+        }
+
+        .badge-pending {
+            background: #fff8eb;
+            border-color: #ffdfa3;
+            color: #9d6500;
+        }
+
+        .badge-process {
+            background: #f4f1ff;
+            border-color: #ded5ff;
+            color: var(--rm-purple);
+        }
+
+        .badge-escalated {
+            background: #fff0f3;
+            border-color: #ffc7d1;
+            color: #d92145;
+            animation: none;
+        }
+
+        .badge-default {
+            background: #f3f5f9;
+            border-color: #dfe5f2;
+            color: #475467;
+        }
+
+        .action-btn,
+        .menu-btn {
+            min-height: 34px;
+            border-radius: 8px;
+            font-weight: 900;
+        }
+
+        .action-btn {
+            background: var(--rm-cyan);
+            color: #06101a;
+            padding: 9px 14px;
+        }
+
+        .action-btn:hover {
+            background: #10bfe9;
+        }
+
+        .menu-btn {
+            background: #f3f6fb;
+            color: var(--rm-ink);
+            border: 1px solid var(--rm-line);
+        }
+
+        .menu-btn:hover {
+            background: #eef2ff;
+            color: var(--rm-purple);
+        }
+
+        .action-dropdown {
+            background: #fff;
+            border: 1px solid var(--rm-line);
+            box-shadow: 0 18px 42px rgba(17, 24, 39, .12);
+        }
+
+        .action-dropdown a {
+            color: var(--rm-ink);
+            font-weight: 780;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .action-dropdown a:hover {
+            background: #f4f1ff;
+            color: var(--rm-purple);
+        }
+
+        .action-dropdown a svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        .pagination-bar {
+            margin: 18px 28px 26px 286px;
+            padding: 14px;
+            border: 1px solid var(--rm-line);
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 12px 30px rgba(17, 24, 39, .04);
+        }
+
+        .pagination-info {
+            color: var(--rm-muted);
+        }
+
+        .pagination-info span {
+            color: var(--rm-purple);
+        }
+
+        .pagination-btn,
+        .pagination-disabled {
+            border-radius: 8px;
+        }
+
+        .pagination-btn.prev,
+        .pagination-disabled {
+            background: #fff;
+            color: var(--rm-ink);
+            border: 1px solid var(--rm-line);
+        }
+
+        .pagination-btn.next {
+            background: var(--rm-purple);
+            color: #fff;
+        }
+
+        @media (max-width: 768px) {
+            .header-actions {
+                width: 100%;
+                margin-left: 0;
+                flex-wrap: wrap;
+            }
+
+            .rm-btn {
+                flex: 1;
+            }
+
+            .pagination-bar {
+                margin: 18px 20px 26px;
+            }
+        }
+
+        .quick-filters {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(150px, 1fr)) auto;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .filter-toolbar {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .filter-toggle {
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 1px solid var(--rm-line);
+            border-radius: 999px;
+            padding: 0 16px;
+            background: #fff;
+            color: var(--rm-ink);
+            font-weight: 850;
+            cursor: pointer;
+            transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+
+        .filter-toggle:hover {
+            transform: translateY(-1px);
+            background: #f8faff;
+            box-shadow: 0 10px 22px rgba(17, 24, 39, .06);
+        }
+
+        .filter-toggle.active {
+            background: #f4f1ff;
+            color: var(--rm-purple);
+            border-color: #ded5ff;
+        }
+
+        .filter-toggle svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .advanced-filters {
+            display: none;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #eef2f8;
+        }
+
+        .advanced-filters.show {
+            display: grid;
+        }
+
+        .filter-summary {
+            margin-top: 12px;
+            text-align: right;
+        }
+
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .filter-label {
+            color: var(--rm-muted);
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .filter-input {
+            min-height: 36px;
+            border-radius: 999px;
+            padding: 0 16px;
+            background: #fff;
+            border: 1px solid #dbe3f1;
+            color: var(--rm-ink);
+            font-weight: 700;
+            outline: none;
+        }
+
+        .filter-input:focus {
+            border-color: var(--rm-purple);
+            box-shadow: 0 0 0 4px rgba(98, 54, 255, .10);
+        }
+
+        .badge-closed {
+            background: #f0f5ff;
+            border-color: #cfe0ff;
+            color: #235fd9;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            display: inline-grid;
+            place-items: center;
+            border-radius: 8px;
+            border: 1px solid var(--rm-line);
+            background: #fff;
+            color: var(--rm-ink);
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease;
+        }
+
+        .icon-btn:hover {
+            transform: translateY(-1px);
+            background: #f4f1ff;
+            color: var(--rm-purple);
+            box-shadow: 0 10px 22px rgba(17, 24, 39, .08);
+        }
+
+        .icon-btn.primary {
+            background: var(--rm-cyan);
+            color: #06101a;
+            border-color: transparent;
+        }
+
+        .icon-btn svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        .date-cell {
+            white-space: nowrap;
+            font-weight: 750;
+            color: #344054;
+        }
+
+        .conversation-kpis {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .conversation-kpi {
+            min-height: 104px;
+            padding: 16px;
+            border: 1px solid var(--rm-line);
+            border-radius: 10px;
+            background: linear-gradient(135deg, #fff 0%, var(--soft, #f6f8ff) 100%);
+        }
+
+        .conversation-kpi span {
+            display: block;
+            color: var(--rm-muted);
+            font-size: 12px;
+            font-weight: 900;
+            margin-bottom: 12px;
+        }
+
+        .conversation-kpi strong {
+            color: var(--rm-ink);
+            font-size: 28px;
+            font-weight: 950;
+        }
+
+        .bulk-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--rm-line);
+            background: #fbfcff;
+        }
+
+        .bulk-bar select,
+        .bulk-bar input {
+            min-height: 34px;
+            border: 1px solid var(--rm-line);
+            border-radius: 8px;
+            padding: 0 10px;
+            background: #fff;
+            color: var(--rm-ink);
+            font-weight: 750;
+        }
+
+        .bulk-bar button {
+            min-height: 34px;
+            border: 1px solid var(--rm-line);
+            border-radius: 8px;
+            padding: 0 12px;
+            background: #fff;
+            color: var(--rm-ink);
+            font-weight: 850;
+            cursor: pointer;
+        }
+
+        .bulk-bar button.primary {
+            background: var(--rm-purple);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .select-cell {
+            width: 42px;
+        }
+
+        .copy-code {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--rm-line);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--rm-purple);
+            cursor: pointer;
+            display: inline-grid;
+            place-items: center;
+            margin-top: 5px;
+        }
+
+        .copy-code svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .sort-link {
+            color: var(--rm-ink);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .sort-link:hover {
+            color: var(--rm-purple);
+        }
+
+        .quick-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1200;
+            display: none;
+            justify-content: flex-end;
+            background: rgba(8, 10, 32, .48);
+            backdrop-filter: blur(6px);
+        }
+
+        .quick-modal.show {
+            display: flex;
+        }
+
+        .quick-panel {
+            width: min(460px, 100%);
+            height: 100%;
+            background: #fff;
+            border-left: 1px solid var(--rm-line);
+            box-shadow: -24px 0 60px rgba(17, 24, 39, .18);
+            padding: 24px;
+            overflow: auto;
+        }
+
+        .quick-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+            margin-bottom: 18px;
+        }
+
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .quick-item {
+            border: 1px solid var(--rm-line);
+            border-radius: 8px;
+            padding: 12px;
+            background: #fbfcff;
+        }
+
+        .quick-item span {
+            display: block;
+            color: var(--rm-muted);
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .quick-item strong,
+        .quick-note {
+            color: var(--rm-ink);
+            font-weight: 850;
+        }
+
+        .refresh-btn {
+            cursor: pointer;
+        }
+
+        .quick-filters .btn-clear {
+            align-self: end;
+        }
+
+        .quick-filters .result-counter {
+            grid-column: 1 / -1;
+            justify-self: end;
+            margin-left: 0;
+        }
+
+        @media (max-width: 1100px) {
+            .conversation-kpis {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .quick-filters {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .btn-clear,
+            .result-counter {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .conversation-kpis {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-toolbar {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-filters {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
 <div class="layout">
     <aside class="sidebar" id="sidebar">
+        <div class="side-brand">
+            <div class="side-brand-mark">ID</div>
+            <span>Insights Desk</span>
+        </div>
         <div class="user-card">
-            <div class="user-avatar">👤</div>
+            <div class="user-avatar" th:text="${#strings.substring(userName,0,1)}">U</div>
             <div class="user-name" th:text="${userName}">Usuario Actual</div>
             <div class="user-role" th:text="${userRole}">ADMIN</div>
             <div class="user-email" th:text="${userEmail}">usuario@soporte.com</div>
@@ -612,7 +1406,7 @@
                     Mi dashboard
                 </a>
             </li>
-            <li sec:authorize="hasAnyRole('ADMIN')">
+            <li sec:authorize="hasAnyRole('ADMIN','SUPERVISOR','AGENTE')">
                 <a th:href="@{/conversations}" class="active">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -625,7 +1419,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 5v14M5 12h14"></path>
                     </svg>
-                    Nueva conversación
+                    Nueva conversacion
                 </a>
             </li>
             <li>
@@ -664,7 +1458,7 @@
             <form th:action="@{/logout}" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <button type="submit" class="btn-logout">
-                    <span>🚪</span> Cerrar sesión
+                    Cerrar sesion
                 </button>
             </form>
         </div>
@@ -672,65 +1466,173 @@
 
     <div class="main-content">
         <header class="header">
-            <button class="toggle-sidebar show" onclick="toggleSidebar()">☰</button>
+            <button class="toggle-sidebar show" onclick="toggleSidebar()" aria-label="Abrir menu"><i data-lucide="menu"></i></button>
             <div class="header-title">
-                <p style="color: #00d4ff; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px;">Skill soporte</p>
+                <p class="header-kicker">Insights Desk</p>
                 <h1>Conversaciones</h1>
                 <p>Historial operativo de conversaciones registradas</p>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="rm-btn refresh-btn" onclick="window.location.reload()"><i data-lucide="refresh-cw"></i>Actualizar</button>
+                <a class="rm-btn" sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')" th:href="@{/conversations/export/csv}"><i data-lucide="download"></i>Exportar</a>
+                <a class="rm-btn primary" th:href="@{/conversations/create}"><i data-lucide="plus"></i>Nueva conversacion</a>
             </div>
         </header>
 
         <div class="content">
-            <div class="search-filters">
-                <div class="search-bar">
-                    <input type="text" id="searchInput" class="search-input" placeholder="Buscar por código, cliente, canal, estado, prioridad o agente...">
+            <section class="conversation-kpis">
+                <article class="conversation-kpi" style="--soft:#f4f1ff"><span>Total</span><strong th:text="${totalMetric}">0</strong></article>
+                <article class="conversation-kpi" style="--soft:#fff8eb"><span>Pendientes</span><strong th:text="${pendingMetric}">0</strong></article>
+                <article class="conversation-kpi" style="--soft:#fff0f3"><span>Escaladas</span><strong th:text="${escalatedMetric}">0</strong></article>
+                <article class="conversation-kpi" style="--soft:#f0f5ff"><span>Cerradas</span><strong th:text="${closedMetric}">0</strong></article>
+                <article class="conversation-kpi" style="--soft:#effaf5"><span>Tiempo promedio</span><strong th:text="${#numbers.formatDecimal(avgTimeMetric, 1, 1) + ' min'}">0 min</strong></article>
+            </section>
+
+            <form class="search-filters" method="get" th:action="@{/conversations}">
+                <div class="filter-toolbar">
+                    <input type="text" id="searchInput" name="q" class="search-input" th:value="${q}" placeholder="Buscar por codigo, cliente, canal, estado, prioridad o agente...">
+                    <button type="button" id="advancedFilterToggle" class="filter-toggle" aria-expanded="false" aria-controls="advancedFilters">
+                        <i data-lucide="sliders-horizontal"></i>
+                        Filtros
+                    </button>
                 </div>
-                <div class="quick-filters">
-                    <select id="filterStatus" class="filter-select">
-                        <option value="">Todos los estados</option>
-                        <option value="Pendiente">Pendiente</option>
-                        <option value="En Proceso">En Proceso</option>
-                        <option value="Resuelto">Resuelto</option>
-                        <option value="Escalado">Escalado</option>
-                        <option value="Cerrado">Cerrado</option>
-                    </select>
+                <div id="advancedFilters"
+                     class="quick-filters advanced-filters"
+                     th:classappend="${status != null || priority != null || channel != null || (agent != null && !agent.isBlank()) || (asunto != null && !asunto.isBlank()) || (cliente != null && !cliente.isBlank()) || (from != null && !from.isBlank()) || (to != null && !to.isBlank()) || pageSize != 10} ? ' show' : ''">
+                    <label class="filter-field">
+                        <span class="filter-label">Estado</span>
+                        <select id="filterStatus" name="status" class="filter-select">
+                            <option value="">Todos</option>
+                            <option value="1" th:selected="${status == 1}">Pendiente</option>
+                            <option value="2" th:selected="${status == 2}">En Proceso</option>
+                            <option value="3" th:selected="${status == 3}">Resuelto</option>
+                            <option value="4" th:selected="${status == 4}">Escalado</option>
+                            <option value="5" th:selected="${status == 5}">Cerrado</option>
+                        </select>
+                    </label>
 
-                    <select id="filterPriority" class="filter-select">
-                        <option value="">Todas las prioridades</option>
-                        <option value="Baja">Baja</option>
-                        <option value="Media">Media</option>
-                        <option value="Alta">Alta</option>
-                        <option value="Crítica">Crítica</option>
-                    </select>
+                    <label class="filter-field">
+                        <span class="filter-label">Prioridad</span>
+                        <select id="filterPriority" name="priority" class="filter-select">
+                            <option value="">Todas</option>
+                            <option value="1" th:selected="${priority == 1}">Baja</option>
+                            <option value="2" th:selected="${priority == 2}">Media</option>
+                            <option value="3" th:selected="${priority == 3}">Alta</option>
+                            <option value="4" th:selected="${priority == 4}">Critica</option>
+                        </select>
+                    </label>
 
-                    <button id="clearFilters" class="btn-clear">Limpiar filtros</button>
+                    <label class="filter-field">
+                        <span class="filter-label">Canal</span>
+                        <select id="filterChannel" name="channel" class="filter-select">
+                            <option value="">Todos</option>
+                            <option value="1" th:selected="${channel == 1}">WhatsApp</option>
+                            <option value="2" th:selected="${channel == 2}">Facebook</option>
+                            <option value="3" th:selected="${channel == 3}">Instagram</option>
+                            <option value="4" th:selected="${channel == 4}">Web Chat</option>
+                            <option value="5" th:selected="${channel == 5}">Correo</option>
+                        </select>
+                    </label>
 
-                    <div id="resultCounter" class="result-counter">Cargando registros...</div>
+                    <label class="filter-field">
+                        <span class="filter-label">Agente</span>
+                        <input type="text" id="filterAgent" name="agent" class="filter-input" th:value="${agent}" placeholder="Nombre">
+                    </label>
+
+                    <label class="filter-field">
+                        <span class="filter-label">Cliente</span>
+                        <input type="text" id="filterClient" name="cliente" class="filter-input" th:value="${cliente}" placeholder="Cliente">
+                    </label>
+
+                    <label class="filter-field">
+                        <span class="filter-label">Asunto</span>
+                        <input type="text" id="filterIssue" name="asunto" class="filter-input" th:value="${asunto}" placeholder="Asunto">
+                    </label>
+
+                    <label class="filter-field">
+                        <span class="filter-label">Desde</span>
+                        <input type="date" id="filterFrom" name="from" class="filter-input" th:value="${from}">
+                    </label>
+
+                    <label class="filter-field">
+                        <span class="filter-label">Hasta</span>
+                        <input type="date" id="filterTo" name="to" class="filter-input" th:value="${to}">
+                    </label>
+
+                    <label class="filter-field">
+                        <span class="filter-label">Mostrar</span>
+                        <select name="size" class="filter-select" onchange="this.form.submit()">
+                            <option value="10" th:selected="${pageSize == 10}">10</option>
+                            <option value="25" th:selected="${pageSize == 25}">25</option>
+                            <option value="50" th:selected="${pageSize == 50}">50</option>
+                        </select>
+                    </label>
+
+                    <input type="hidden" name="sort" th:value="${sort}">
+                    <input type="hidden" name="dir" th:value="${dir}">
+                    <button type="submit" class="btn-clear primary">Filtrar</button>
+                    <a th:href="@{/conversations}" id="clearFilters" class="btn-clear">Limpiar filtros</a>
+
                 </div>
-            </div>
+                <div id="resultCounter" class="result-counter filter-summary" th:text="${'Mostrando ' + conversations.numberOfElements + ' de ' + conversations.totalElements + ' registro(s)'}">Cargando registros...</div>
+            </form>
 
             <div class="table-wrapper">
+                <form id="bulkForm" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <div class="bulk-bar" sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')">
+                        <strong>Acciones masivas</strong>
+                        <button type="submit" formaction="/conversations/bulk/export">Exportar seleccion</button>
+                        <button type="submit" class="primary" formaction="/conversations/bulk/status" name="statusId" value="5">Cerrar seleccion</button>
+                        <select name="priorityId">
+                            <option value="1">Prioridad baja</option>
+                            <option value="2">Prioridad media</option>
+                            <option value="3">Prioridad alta</option>
+                            <option value="4">Prioridad critica</option>
+                        </select>
+                        <button type="submit" formaction="/conversations/bulk/priority">Cambiar prioridad</button>
+                        <select name="agentName">
+                            <option value="">Reasignar a...</option>
+                            <option th:each="agentOption : ${agents}" th:value="${agentOption}" th:text="${agentOption}">Agente</option>
+                        </select>
+                        <button type="submit" formaction="/conversations/bulk/assign">Reasignar</button>
+                    </div>
                 <table>
                     <thead>
                     <tr>
-                        <th>Código</th>
-                        <th>Cliente</th>
+                        <th class="select-cell" sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"><input type="checkbox" id="selectAll"></th>
+                        <th>Codigo</th>
+                        <th><a class="sort-link" th:href="@{/conversations(page=0,size=${pageSize},sort='cliente',dir=${sort == 'cliente' ? reverseDir : 'asc'},q=${q},status=${status},priority=${priority},channel=${channel},agent=${agent},asunto=${asunto},cliente=${cliente},from=${from},to=${to})}">Cliente <i data-lucide="arrow-up-down"></i></a></th>
                         <th>Canal</th>
-                        <th>Estado</th>
-                        <th>Prioridad</th>
-                        <th>Agente</th>
-                        <th>Fecha</th>
-                        <th>Acción</th>
+                        <th><a class="sort-link" th:href="@{/conversations(page=0,size=${pageSize},sort='estado',dir=${sort == 'estado' ? reverseDir : 'asc'},q=${q},status=${status},priority=${priority},channel=${channel},agent=${agent},asunto=${asunto},cliente=${cliente},from=${from},to=${to})}">Estado <i data-lucide="arrow-up-down"></i></a></th>
+                        <th><a class="sort-link" th:href="@{/conversations(page=0,size=${pageSize},sort='prioridad',dir=${sort == 'prioridad' ? reverseDir : 'asc'},q=${q},status=${status},priority=${priority},channel=${channel},agent=${agent},asunto=${asunto},cliente=${cliente},from=${from},to=${to})}">Prioridad <i data-lucide="arrow-up-down"></i></a></th>
+                        <th><a class="sort-link" th:href="@{/conversations(page=0,size=${pageSize},sort='agente',dir=${sort == 'agente' ? reverseDir : 'asc'},q=${q},status=${status},priority=${priority},channel=${channel},agent=${agent},asunto=${asunto},cliente=${cliente},from=${from},to=${to})}">Agente <i data-lucide="arrow-up-down"></i></a></th>
+                        <th><a class="sort-link" th:href="@{/conversations(page=0,size=${pageSize},sort='fecha',dir=${sort == 'fecha' ? reverseDir : 'desc'},q=${q},status=${status},priority=${priority},channel=${channel},agent=${agent},asunto=${asunto},cliente=${cliente},from=${from},to=${to})}">Fecha <i data-lucide="arrow-up-down"></i></a></th>
+                        <th>Accion</th>
                     </tr>
                     </thead>
                     <tbody id="conversationTable">
-                    <tr th:each="conversation : ${conversations.content}" th:attr="data-detail-url=@{/conversations/{id}(id=${conversation.id})}">
+                    <tr th:each="conversation : ${conversations.content}"
+                        th:attr="data-detail-url=@{/conversations/{id}(id=${conversation.id})},
+                                 data-code=${conversation.codigo},
+                                 data-client=${conversation.clienteNombre},
+                                 data-issue=${conversation.asunto},
+                                 data-description=${conversation.descripcion},
+                                 data-notes=${conversation.observaciones},
+                                 data-agent=${conversation.agenteNombre != null ? conversation.agenteNombre : userName},
+                                 data-status=${conversation.statusId == 1 ? 'Pendiente' : (conversation.statusId == 2 ? 'En Proceso' : (conversation.statusId == 3 ? 'Resuelto' : (conversation.statusId == 4 ? 'Escalado' : (conversation.statusId == 5 ? 'Cerrado' : 'Desconocido'))))},
+                                 data-priority=${conversation.priorityId == 1 ? 'Baja' : (conversation.priorityId == 2 ? 'Media' : (conversation.priorityId == 3 ? 'Alta' : (conversation.priorityId == 4 ? 'Critica' : 'Desconocida')))},
+                                 data-date=${conversation.fechaInicio != null ? #temporals.format(conversation.fechaInicio, 'dd/MM/yyyy HH:mm') : 'Sin fecha'},
+                                 data-end=${conversation.fechaInicio != null && conversation.tiempoGestionMinutos != null && conversation.tiempoGestionMinutos > 0 ? #temporals.format(conversation.fechaInicio.plusMinutes(conversation.tiempoGestionMinutos), 'dd/MM/yyyy HH:mm') : (conversation.fechaFinalizacion != null ? #temporals.format(conversation.fechaFinalizacion, 'dd/MM/yyyy HH:mm') : 'Sin fecha')},
+                                 data-time=${conversation.tiempoGestionMinutos != null ? conversation.tiempoGestionMinutos : 0},
+                                 data-row-date=${conversation.fechaInicio != null ? #temporals.format(conversation.fechaInicio, 'yyyy-MM-dd') : ''}">
 
+                        <td sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')"><input type="checkbox" name="ids" th:value="${conversation.id}" class="row-select" onclick="event.stopPropagation()"></td>
                         <td>
                             <div class="client-cell">
                                 <div class="client-info">
                                     <div class="client-name" th:text="${conversation.codigo}">CONV-00000</div>
-                                    <div class="client-code" onclick="copyCode(event, this)" title="Click para copiar">Click para copiar</div>
+                                    <button type="button" class="copy-code" onclick="copyCode(event, this)" title="Copiar codigo" aria-label="Copiar codigo"><i data-lucide="copy"></i></button>
                                 </div>
                             </div>
                         </td>
@@ -749,56 +1651,85 @@
                         </td>
 
                         <td>
-                            <span th:if="${conversation.statusId == 1}" class="badge badge-pending">⚠️ Pendiente</span>
-                            <span th:if="${conversation.statusId == 2}" class="badge badge-process">⏳ En Proceso</span>
-                            <span th:if="${conversation.statusId == 3}" class="badge badge-resolved">✓ Resuelto</span>
-                            <span th:if="${conversation.statusId == 4}" class="badge badge-escalated">✕ Escalado</span>
-                            <span th:if="${conversation.statusId == 5}" class="badge badge-resolved">✓ Cerrado</span>
+                            <span th:if="${conversation.statusId == 1}" class="badge badge-pending">Pendiente</span>
+                            <span th:if="${conversation.statusId == 2}" class="badge badge-process">En Proceso</span>
+                            <span th:if="${conversation.statusId == 3}" class="badge badge-resolved">Resuelto</span>
+                            <span th:if="${conversation.statusId == 4}" class="badge badge-escalated">Escalado</span>
+                            <span th:if="${conversation.statusId == 5}" class="badge badge-closed">Cerrado</span>
                         </td>
 
                         <td>
                             <span th:if="${conversation.priorityId == 1}" class="badge badge-default">Baja</span>
                             <span th:if="${conversation.priorityId == 2}" class="badge badge-pending">Media</span>
                             <span th:if="${conversation.priorityId == 3}" class="badge badge-process">Alta</span>
-                            <span th:if="${conversation.priorityId == 4}" class="badge badge-escalated">Crítica</span>
+                            <span th:if="${conversation.priorityId == 4}" class="badge badge-escalated">Critica</span>
                         </td>
 
                         <td th:text="${conversation.agenteNombre != null ? conversation.agenteNombre : userName}">Agente</td>
 
-                        <td th:text="${conversation.fechaInicio != null ? #temporals.format(conversation.fechaInicio, 'dd/MM/yyyy') : 'Sin fecha'}">00/00/0000</td>
+                        <td class="date-cell" th:text="${conversation.fechaInicio != null ? #temporals.format(conversation.fechaInicio, 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">00/00/0000 00:00</td>
 
                         <td>
                             <div class="actions-cell">
-                                <a th:href="@{/conversations/{id}(id=${conversation.id})}" onclick="event.stopPropagation()" class="action-btn">Ver</a>
+                                <a th:href="@{/conversations/{id}(id=${conversation.id})}" onclick="event.stopPropagation()" class="icon-btn primary" title="Ver detalle" aria-label="Ver detalle">
+                                    <i data-lucide="eye"></i>
+                                </a>
 
-                                <button type="button" onclick="toggleMenu(event, this)" class="menu-btn">⋯</button>
+                                <button type="button" onclick="toggleMenu(event, this)" class="icon-btn" title="Mas opciones" aria-label="Mas opciones">
+                                    <i data-lucide="more-horizontal"></i>
+                                </button>
 
-                                <div class="action-dropdown">
-                                    <a th:href="@{/conversations/{id}(id=${conversation.id})}">👁 Ver detalle</a>
-                                    <a sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')" th:href="@{/conversations/edit/{id}(id=${conversation.id})}">✏️ Editar</a>
-                                    <a sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')" th:href="@{/conversations/export/csv}">⬇ Descargar CSV</a>
+                                <div class="action-dropdown" onclick="event.stopPropagation()">
+                                    <a th:href="@{/conversations/{id}(id=${conversation.id})}"><i data-lucide="eye"></i>Ver detalle</a>
+                                    <a sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')" th:href="@{/conversations/edit/{id}(id=${conversation.id})}"><i data-lucide="pencil"></i>Editar</a>
+                                    <a sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')" th:href="@{/conversations/export/csv}"><i data-lucide="download"></i>Descargar CSV</a>
                                 </div>
                             </div>
                         </td>
                     </tr>
                     </tbody>
                 </table>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
+<div id="quickViewModal" class="quick-modal" aria-hidden="true">
+    <aside class="quick-panel">
+        <div class="quick-header">
+            <div>
+                <p class="header-kicker">Vista rapida</p>
+                <h2 id="quickCode">CONV-00000</h2>
+                <p id="quickClient">Cliente</p>
+            </div>
+            <button type="button" class="icon-btn" onclick="closeQuickView()" aria-label="Cerrar"><i data-lucide="x"></i></button>
+        </div>
+        <div class="quick-grid">
+            <div class="quick-item"><span>Estado</span><strong id="quickStatus">-</strong></div>
+            <div class="quick-item"><span>Prioridad</span><strong id="quickPriority">-</strong></div>
+            <div class="quick-item"><span>Agente</span><strong id="quickAgent">-</strong></div>
+            <div class="quick-item"><span>Tiempo gestion</span><strong id="quickTime">0 min</strong></div>
+            <div class="quick-item"><span>Inicio</span><strong id="quickDate">-</strong></div>
+            <div class="quick-item"><span>Fin/guardado</span><strong id="quickEnd">-</strong></div>
+        </div>
+        <div class="quick-item" style="margin-bottom:10px;"><span>Asunto</span><strong id="quickIssue">-</strong></div>
+        <div class="quick-item" style="margin-bottom:10px;"><span>Descripcion</span><div id="quickDescription" class="quick-note">Sin descripcion</div></div>
+        <div class="quick-item"><span>Observaciones</span><div id="quickNotes" class="quick-note">Sin observaciones</div></div>
+    </aside>
+</div>
+
 <div class="pagination-bar">
 
     <a th:if="${conversations.hasPrevious()}"
-       th:href="@{/conversations(page=${conversations.number - 1})}"
+       th:href="@{/conversations(page=${conversations.number - 1},size=${pageSize},sort=${sort},dir=${dir},q=${q},status=${status},priority=${priority},channel=${channel},agent=${agent},asunto=${asunto},cliente=${cliente},from=${from},to=${to})}"
        class="pagination-btn prev">
-        ← Anterior
+        Anterior
     </a>
 
     <span th:unless="${conversations.hasPrevious()}"
           class="pagination-disabled">
-        ← Anterior
+        Anterior
     </span>
 
     <div class="pagination-info">
@@ -809,14 +1740,14 @@
     </div>
 
     <a th:if="${conversations.hasNext()}"
-       th:href="@{/conversations(page=${conversations.number + 1})}"
+       th:href="@{/conversations(page=${conversations.number + 1},size=${pageSize},sort=${sort},dir=${dir},q=${q},status=${status},priority=${priority},channel=${channel},agent=${agent},asunto=${asunto},cliente=${cliente},from=${from},to=${to})}"
        class="pagination-btn next">
-        Siguiente →
+        Siguiente
     </a>
 
     <span th:unless="${conversations.hasNext()}"
           class="pagination-disabled">
-        Siguiente →
+        Siguiente
     </span>
 
 </div>
@@ -869,8 +1800,7 @@
     // Lógica de click en la fila entera
     document.querySelectorAll('#conversationTable tr').forEach(row => {
         row.addEventListener('click', () => {
-            const url = row.getAttribute('data-detail-url');
-            if (url) window.location.href = url;
+            openQuickView(row);
         });
     });
 
@@ -919,6 +1849,120 @@
 
     // Inicializar el contador al cargar la página
     filterRows();
+    const filterChannelEnhanced = document.getElementById('filterChannel');
+    const filterAgentEnhanced = document.getElementById('filterAgent');
+    const filterFromEnhanced = document.getElementById('filterFrom');
+    const filterToEnhanced = document.getElementById('filterTo');
+
+    function filterRowsEnhanced() {
+        const query = normalize(searchInput.value);
+        const status = filterStatus.value ? normalize(filterStatus.selectedOptions[0].textContent) : '';
+        const priority = filterPriority.value ? normalize(filterPriority.selectedOptions[0].textContent) : '';
+        const channel = filterChannelEnhanced.value ? normalize(filterChannelEnhanced.selectedOptions[0].textContent) : '';
+        const agent = normalize(filterAgentEnhanced.value);
+        const from = filterFromEnhanced.value;
+        const to = filterToEnhanced.value;
+        let visible = 0;
+
+        document.querySelectorAll('#conversationTable tr').forEach(row => {
+            const text = normalize(row.innerText);
+            const rowDate = row.dataset.rowDate || '';
+            const show = (!query || text.includes(query))
+                && (!status || text.includes(status))
+                && (!priority || text.includes(priority))
+                && (!channel || text.includes(channel))
+                && (!agent || text.includes(agent))
+                && (!from || (rowDate && rowDate >= from))
+                && (!to || (rowDate && rowDate <= to));
+
+            row.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+
+        resultCounter.textContent = `Mostrando ${visible} registro(s)`;
+    }
+
+    [searchInput, filterStatus, filterPriority, filterChannelEnhanced, filterAgentEnhanced, filterFromEnhanced, filterToEnhanced]
+        .forEach(control => {
+            control.addEventListener('input', filterRowsEnhanced);
+            control.addEventListener('change', filterRowsEnhanced);
+        });
+
+    document.getElementById('clearFilters').addEventListener('click', () => {
+        filterChannelEnhanced.value = '';
+        filterAgentEnhanced.value = '';
+        filterFromEnhanced.value = '';
+        filterToEnhanced.value = '';
+        filterRowsEnhanced();
+    });
+
+    filterRowsEnhanced();
+    const advancedFilterToggle = document.getElementById('advancedFilterToggle');
+    const advancedFilters = document.getElementById('advancedFilters');
+
+    function syncAdvancedFilterToggle() {
+        const expanded = advancedFilters.classList.contains('show');
+        advancedFilterToggle.setAttribute('aria-expanded', String(expanded));
+        advancedFilterToggle.classList.toggle('active', expanded);
+    }
+
+    advancedFilterToggle?.addEventListener('click', () => {
+        advancedFilters.classList.toggle('show');
+        syncAdvancedFilterToggle();
+    });
+    syncAdvancedFilterToggle();
+
+    document.getElementById('selectAll')?.addEventListener('change', (event) => {
+        document.querySelectorAll('.row-select').forEach(checkbox => {
+            checkbox.checked = event.target.checked;
+        });
+    });
+
+    function setText(id, value) {
+        document.getElementById(id).innerText = value || '-';
+    }
+
+    function openQuickView(row) {
+        setText('quickCode', row.dataset.code);
+        setText('quickClient', row.dataset.client);
+        setText('quickStatus', row.dataset.status);
+        setText('quickPriority', row.dataset.priority);
+        setText('quickAgent', row.dataset.agent);
+        setText('quickTime', `${row.dataset.time || 0} min`);
+        setText('quickDate', row.dataset.date);
+        setText('quickEnd', row.dataset.end);
+        setText('quickIssue', row.dataset.issue);
+        setText('quickDescription', row.dataset.description || 'Sin descripcion');
+        setText('quickNotes', row.dataset.notes || 'Sin observaciones');
+        const modal = document.getElementById('quickViewModal');
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeQuickView() {
+        const modal = document.getElementById('quickViewModal');
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    document.getElementById('quickViewModal')?.addEventListener('click', (event) => {
+        if (event.target.id === 'quickViewModal') closeQuickView();
+    });
+    copyCode = function(event, button) {
+        event.stopPropagation();
+        const code = button.previousElementSibling.innerText.trim();
+        navigator.clipboard.writeText(code).then(() => {
+            const originalHtml = button.innerHTML;
+            button.innerText = 'Copiado';
+            button.style.color = '#18bd73';
+            setTimeout(() => {
+                button.innerHTML = originalHtml;
+                button.style.color = '';
+                lucide.createIcons();
+            }, 1500);
+        });
+    };
+    lucide.createIcons();
 </script>
 </body>
 </html>

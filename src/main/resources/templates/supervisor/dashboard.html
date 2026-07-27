@@ -6,6 +6,8 @@
     <title>Resumen General</title>
     <link rel="stylesheet" th:href="@{/sneat/assets/css/metrics-dashboard.css}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="metrics-body">
@@ -169,19 +171,19 @@
                         <div id="resolvedMetric" class="kpi-value" th:text="${resueltas}">0</div>
                         <div class="kpi-note">Atenciones finalizadas</div>
                     </article>
-                    <article class="kpi" style="--accent:#f59f00;--soft:#fff8eb">
+                    <article class="kpi status-kpi" data-status-filter="pending" data-status-label="Pendientes" role="button" tabindex="0" style="--accent:#f59f00;--soft:#fff8eb">
                         <div class="icon-bubble"><i data-lucide="clock-3"></i></div>
                         <div class="kpi-label">Pendientes</div>
                         <div id="pendingMetric" class="kpi-value" th:text="${pendientes}">0</div>
                         <div class="kpi-note">Por gestionar</div>
                     </article>
-                    <article class="kpi" style="--accent:#ff4d6d;--soft:#fff0f3">
+                    <article class="kpi status-kpi" data-status-filter="escalated" data-status-label="Escaladas" role="button" tabindex="0" style="--accent:#ff4d6d;--soft:#fff0f3">
                         <div class="icon-bubble"><i data-lucide="arrow-up"></i></div>
                         <div class="kpi-label">Escaladas</div>
                         <div id="escalatedMetric" class="kpi-value" th:text="${escaladas}">0</div>
                         <div class="kpi-note">Requieren apoyo</div>
                     </article>
-                    <article class="kpi" style="--accent:#377dff;--soft:#f0f5ff">
+                    <article class="kpi status-kpi" data-status-filter="closed" data-status-label="Cerradas" role="button" tabindex="0" style="--accent:#377dff;--soft:#f0f5ff">
                         <div class="icon-bubble"><i data-lucide="archive"></i></div>
                         <div class="kpi-label">Cerradas</div>
                         <div id="closedMetric" class="kpi-value" th:text="${cerradas}">0</div>
@@ -287,6 +289,17 @@
         <section class="bottom-grid">
             <article class="card section">
                 <h2 class="section-title">Top de asuntos (temas mas consultados)</h2>
+                <div class="issue-ai-panel">
+                    <div>
+                        <div id="issueTrendRange" class="summary-label" th:text="${'Semana actual: ' + issueTrend.range + ' vs ' + issueTrend.previousRange}">
+                            Semana actual vs anterior
+                        </div>
+                        <p id="issueTrendSummary" class="kpi-note" th:text="${issueTrend.summary}">
+                            Listo para analizar tendencia por asuntos.
+                        </p>
+                    </div>
+                    <button class="rm-btn ghost" type="button" onclick="generateIssueTrendAnalysis()"><i data-lucide="sparkles"></i>Analizar tendencia IA</button>
+                </div>
                 <div id="topIssuesList"></div>
                 <a class="panel-link" href="#topIssuesList">Ver todos los asuntos <i data-lucide="arrow-right"></i></a>
             </article>
@@ -296,7 +309,19 @@
                 <a class="panel-link" href="#topClientsList">Abrir vista 360 al seleccionar <i data-lucide="arrow-right"></i></a>
             </article>
             <article class="card section">
-                <h2 class="section-title">Actividad en tiempo real <span class="pill" style="float:right;background:#e9f9f0;color:#18bd73;">En vivo</span></h2>
+                <h2 class="section-title">Actividad en tiempo real <span id="realtimeStatus" class="pill realtime-pill connected">En vivo</span></h2>
+                <div id="activeAgentList" class="presence-list">
+                    <div class="presence-row" th:each="agent : ${activeAgents}">
+                        <div class="activity-dot" th:text="${#strings.substring(agent.name,0,1)}">A</div>
+                        <div>
+                            <div class="activity-title" th:text="${agent.name}">Agente conectado</div>
+                            <div class="activity-time" th:text="${'Conectado hace ' + agent.connectedFor}">Conectado hace 0 min</div>
+                        </div>
+                        <span class="pill">Activo</span>
+                    </div>
+                    <div class="empty" th:if="${#lists.isEmpty(activeAgents)}">Sin agentes conectados.</div>
+                </div>
+                <div class="activity-divider">Conversaciones recientes</div>
                 <div class="activity-list" id="activityList">
                     <div class="activity-item" th:each="item : ${recientes}">
                         <div class="activity-dot" th:text="${#strings.substring(item.canal,0,1)}">W</div>
@@ -365,6 +390,29 @@
     </div>
 </div>
 
+<div id="statusConversationModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h2 id="statusModalTitle" class="page-title">Conversaciones</h2>
+                <p id="statusModalSubtitle" class="page-subtitle">Cargando conversaciones...</p>
+            </div>
+            <button class="modal-close" type="button" onclick="closeStatusConversationModal()" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="summary-grid">
+                <div class="summary-item"><div class="summary-label">Conversaciones</div><div id="statusModalTotal" class="summary-value">0</div></div>
+                <div class="summary-item"><div class="summary-label">Tiempo gestion</div><div id="statusModalTime" class="summary-value">0 min</div></div>
+                <div class="summary-item"><div class="summary-label">Rango</div><div id="statusModalRange" class="summary-value compact">Sin fechas</div></div>
+            </div>
+            <div style="margin-top:18px;">
+                <h3 class="section-title">Listado de conversaciones</h3>
+                <div id="statusConversationList" class="rank-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script th:inline="javascript">
     Chart.defaults.color = '#667085';
     Chart.defaults.font.family = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
@@ -383,6 +431,10 @@
     const promedioTiempoValue = Number(String(/*[[${promedioTiempo}]]*/ '0').replace(',', '.')) || 0;
     const initialGranularity = /*[[${granularity}]]*/ 'daily';
     const initialPeakHours = /*[[${peakHours}]]*/ {};
+    const initialIssueTrend = /*[[${issueTrend}]]*/ {};
+    const initialActiveAgents = /*[[${activeAgents}]]*/ [];
+    let dashboardStompClient = null;
+    let dashboardRealtimeRefreshTimer = null;
 
     function tooltip() {
         return {
@@ -574,9 +626,44 @@
         }
     });
 
-    function renderIssuesTable(containerId, labels, values) {
+    function renderIssuesTable(containerId, labels, values, issueTrend = null) {
         const container = document.getElementById(containerId);
         if (!container) return;
+
+        if (issueTrend?.range) {
+            document.getElementById('issueTrendRange').innerText = `Semana actual: ${issueTrend.range} vs ${issueTrend.previousRange || 'semana anterior'}`;
+            document.getElementById('issueTrendSummary').innerText = issueTrend.summary || 'Tendencia calculada frente a la semana anterior.';
+        }
+
+        if (issueTrend?.items?.length) {
+            container.innerHTML = `
+                <table class="metric-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Asunto</th>
+                            <th>Actual</th>
+                            <th>Anterior</th>
+                            <th>Tendencia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${issueTrend.items.slice(0, 10).map((item, index) => {
+                            const trendClass = item.direction === 'up' ? 'trend-down' : 'trend-up';
+                            return `
+                                <tr>
+                                    <td class="table-rank">${index + 1}</td>
+                                    <td class="table-name">${escapeHtml(item.asunto)}</td>
+                                    <td>${Number(item.current || 0)}</td>
+                                    <td>${Number(item.previous || 0)}</td>
+                                    <td><span class="${trendClass}">${escapeHtml(item.change || '0%')}</span></td>
+                                </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>`;
+            return;
+        }
+
         const maxValue = Math.max(...values.map(Number), 0);
         if (!labels.length || maxValue === 0) {
             container.innerHTML = '<div class="empty">Sin datos para mostrar.</div>';
@@ -687,6 +774,63 @@
             </div>`).join('');
     }
 
+    function renderStatusConversationList(items) {
+        const container = document.getElementById('statusConversationList');
+        if (!container) return;
+        if (!items || !items.length) {
+            container.innerHTML = '<div class="empty">Sin conversaciones para este estado.</div>';
+            return;
+        }
+
+        container.innerHTML = items.map(item => `
+            <div class="activity-item">
+                <div class="activity-dot">${escapeHtml((item.estado || 'S').slice(0, 2).toUpperCase())}</div>
+                <div>
+                    <div class="activity-title">${escapeHtml(item.codigo || 'Sin codigo')} - ${escapeHtml(item.cliente || 'Sin cliente')}</div>
+                    <div class="activity-time">${escapeHtml(item.fecha || 'Sin fecha')} - ${escapeHtml(item.asunto || 'Sin asunto')} - ${escapeHtml(item.agente || 'Sin agente')} - ${escapeHtml(formatMinutes(item.tiempoGestion))}</div>
+                </div>
+                <span class="pill">${escapeHtml(item.estado || 'Sin estado')}</span>
+            </div>`).join('');
+    }
+
+    function renderActivityList(items) {
+        const container = document.getElementById('activityList');
+        if (!container) return;
+        if (!items || !items.length) {
+            container.innerHTML = '<div class="empty">Sin actividad para mostrar.</div>';
+            return;
+        }
+
+        container.innerHTML = items.map(item => `
+            <div class="activity-item">
+                <div class="activity-dot">${escapeHtml((item.canal || 'C').slice(0, 1).toUpperCase())}</div>
+                <div>
+                    <div class="activity-title">${escapeHtml(item.estado || 'Sin estado')} - ${escapeHtml(item.cliente || 'Sin cliente')}</div>
+                    <div class="activity-time">${escapeHtml(item.canal || 'Sin canal')} - ${escapeHtml(item.fecha || 'Sin fecha')}</div>
+                </div>
+                <span class="pill">${escapeHtml(item.codigo || 'Chat')}</span>
+            </div>`).join('');
+    }
+
+    function renderActiveAgents(items) {
+        const container = document.getElementById('activeAgentList');
+        if (!container) return;
+        if (!items || !items.length) {
+            container.innerHTML = '<div class="empty">Sin agentes conectados.</div>';
+            return;
+        }
+
+        container.innerHTML = items.map(item => `
+            <div class="presence-row">
+                <div class="activity-dot">${escapeHtml((item.name || 'A').slice(0, 1).toUpperCase())}</div>
+                <div>
+                    <div class="activity-title">${escapeHtml(item.name || 'Agente')}</div>
+                    <div class="activity-time">Conectado hace ${escapeHtml(item.connectedFor || '0 min')}</div>
+                </div>
+                <span class="pill">Activo</span>
+            </div>`).join('');
+    }
+
     async function openClient360(cliente) {
         const modal = document.getElementById('client360Modal');
         modal.classList.add('show');
@@ -762,6 +906,45 @@
         modal.setAttribute('aria-hidden', 'true');
     }
 
+    async function openStatusConversationModal(status, label) {
+        const modal = document.getElementById('statusConversationModal');
+        const params = new URLSearchParams({ status });
+        const from = document.getElementById('filterFrom').value;
+        const to = document.getElementById('filterTo').value;
+        if (from) params.append('from', from);
+        if (to) params.append('to', to);
+
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.getElementById('statusModalTitle').innerText = label || 'Conversaciones';
+        document.getElementById('statusModalSubtitle').innerText = 'Cargando conversaciones del estado seleccionado...';
+        document.getElementById('statusModalTotal').innerText = '0';
+        document.getElementById('statusModalTime').innerText = '0 min';
+        document.getElementById('statusModalRange').innerText = 'Cargando';
+        document.getElementById('statusConversationList').innerHTML = '<div class="empty">Cargando conversaciones...</div>';
+
+        try {
+            const response = await fetch('/api/dashboard/status-conversations?' + params.toString());
+            if (!response.ok) throw new Error('No fue posible consultar el estado');
+            const data = await response.json();
+            document.getElementById('statusModalTitle').innerText = data.label || label || 'Conversaciones';
+            document.getElementById('statusModalSubtitle').innerText = 'Listado de conversaciones dentro del rango seleccionado.';
+            document.getElementById('statusModalTotal').innerText = data.totalConversaciones || 0;
+            document.getElementById('statusModalTime').innerText = formatMinutes(data.tiempoTotalGestion);
+            document.getElementById('statusModalRange').innerText = data.range || 'Sin fechas';
+            renderStatusConversationList(data.items);
+        } catch (error) {
+            document.getElementById('statusModalSubtitle').innerText = 'No fue posible cargar las conversaciones de este estado.';
+            document.getElementById('statusConversationList').innerHTML = '<div class="empty">Intenta nuevamente con otro estado o rango de fechas.</div>';
+        }
+    }
+
+    function closeStatusConversationModal() {
+        const modal = document.getElementById('statusConversationModal');
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
     async function refreshDashboardMetrics() {
         try {
             const params = new URLSearchParams();
@@ -795,8 +978,10 @@
             statusChart.update();
             setStatusPercents(statusValues);
             setGranularityBadge(data.granularity || 'daily');
-            renderIssuesTable('topIssuesList', data.asuntoLabels || [], data.asuntoValues || []);
+            renderIssuesTable('topIssuesList', data.asuntoLabels || [], data.asuntoValues || [], data.issueTrend);
             renderClientList('topClientsList', data.clienteLabels || [], data.clienteValues || [], data.clienteTiempoValues || [], true);
+            renderActivityList(data.recientes || []);
+            renderActiveAgents(data.activeAgents || []);
         } catch (error) {
             console.error('Error actualizando dashboard', error);
         }
@@ -815,6 +1000,26 @@
         }
     }
 
+    async function generateIssueTrendAnalysis() {
+        const summary = document.getElementById('issueTrendSummary');
+        const params = new URLSearchParams();
+        const from = document.getElementById('filterFrom').value;
+        const to = document.getElementById('filterTo').value;
+        if (from) params.append('from', from);
+        if (to) params.append('to', to);
+
+        summary.innerText = 'Analizando tendencia de asuntos con IA...';
+        try {
+            const response = await fetch('/api/dashboard/issue-trends' + (params.toString() ? '?' + params.toString() : ''));
+            if (!response.ok) throw new Error('No fue posible analizar la tendencia');
+            const data = await response.json();
+            renderIssuesTable('topIssuesList', [], [], data);
+            summary.innerText = (data.analysis || data.summary || 'Analisis no disponible.').replaceAll('|', ' ');
+        } catch (error) {
+            summary.innerText = 'No fue posible generar el analisis IA de tendencia por asuntos.';
+        }
+    }
+
     function applyDateFilter() {
         refreshDashboardMetrics();
     }
@@ -826,12 +1031,54 @@
         refreshDashboardMetrics();
     }
 
+    function setRealtimeStatus(status, label) {
+        const pill = document.getElementById('realtimeStatus');
+        if (!pill) return;
+        pill.classList.remove('connected', 'reconnecting', 'fallback');
+        pill.classList.add(status);
+        pill.innerText = label;
+    }
+
+    function scheduleRealtimeRefresh() {
+        window.clearTimeout(dashboardRealtimeRefreshTimer);
+        dashboardRealtimeRefreshTimer = window.setTimeout(refreshDashboardMetrics, 300);
+    }
+
+    function connectDashboardRealtime() {
+        if (!window.SockJS || !window.Stomp) {
+            setRealtimeStatus('fallback', 'Respaldo');
+            return;
+        }
+
+        const socket = new SockJS('/ws');
+        dashboardStompClient = Stomp.over(socket);
+        dashboardStompClient.debug = null;
+
+        dashboardStompClient.connect(
+            {},
+            function () {
+                setRealtimeStatus('connected', 'En vivo');
+                dashboardStompClient.subscribe('/topic/dashboard-events', function () {
+                    scheduleRealtimeRefresh();
+                });
+            },
+            function () {
+                setRealtimeStatus('reconnecting', 'Reconectando');
+                window.setTimeout(connectDashboardRealtime, 5000);
+            }
+        );
+    }
+
     document.getElementById('client360Modal')?.addEventListener('click', (event) => {
         if (event.target.id === 'client360Modal') closeClient360();
     });
 
     document.getElementById('peakHourModal')?.addEventListener('click', (event) => {
         if (event.target.id === 'peakHourModal') closePeakHourModal();
+    });
+
+    document.getElementById('statusConversationModal')?.addEventListener('click', (event) => {
+        if (event.target.id === 'statusConversationModal') closeStatusConversationModal();
     });
 
     document.getElementById('topClientsList')?.addEventListener('click', (event) => {
@@ -844,12 +1091,24 @@
         if (cell) openPeakHourModal(cell.dataset.peakHour);
     });
 
-    renderIssuesTable('topIssuesList', asuntoLabels, asuntoValues);
+    document.querySelectorAll('[data-status-filter]').forEach(card => {
+        card.addEventListener('click', () => openStatusConversationModal(card.dataset.statusFilter, card.dataset.statusLabel));
+        card.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openStatusConversationModal(card.dataset.statusFilter, card.dataset.statusLabel);
+            }
+        });
+    });
+
+    renderIssuesTable('topIssuesList', asuntoLabels, asuntoValues, initialIssueTrend);
     renderClientList('topClientsList', clienteLabels, clienteValues, clienteTiempoValues, true);
     renderPeakHours(initialPeakHours);
+    renderActiveAgents(initialActiveAgents);
     document.getElementById('granularityFilter').value = 'auto';
     setGranularityBadge(initialGranularity);
-    setInterval(refreshDashboardMetrics, 10000);
+    connectDashboardRealtime();
+    setInterval(refreshDashboardMetrics, 60000);
     lucide.createIcons();
 </script>
 </body>

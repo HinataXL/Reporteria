@@ -4,6 +4,7 @@ import com.erick.soporte.entity.User;
 import com.erick.soporte.repository.UserRepository;
 import com.erick.soporte.security.CustomUserPrincipal;
 import com.erick.soporte.security.TotpService;
+import com.erick.soporte.service.ActiveSessionService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -16,13 +17,16 @@ public class TwoFactorVerificationController {
 
     private final UserRepository userRepository;
     private final TotpService totpService;
+    private final ActiveSessionService activeSessionService;
 
     public TwoFactorVerificationController(
             UserRepository userRepository,
-            TotpService totpService
+            TotpService totpService,
+            ActiveSessionService activeSessionService
     ) {
         this.userRepository = userRepository;
         this.totpService = totpService;
+        this.activeSessionService = activeSessionService;
     }
 
     @GetMapping("/verify")
@@ -50,6 +54,7 @@ public class TwoFactorVerificationController {
         }
 
         session.setAttribute("2FA_VERIFIED", true);
+        activeSessionService.register(session.getId(), principal);
 
         return "redirect:/conversations";
     }

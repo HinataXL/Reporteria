@@ -20,6 +20,9 @@ public class GeminiReportService {
 
     private String lastReport = null;
     private long lastGenerated = 0;
+    private String lastIssueTrendKey = null;
+    private String lastIssueTrendReport = null;
+    private long lastIssueTrendGenerated = 0;
 
     public String generateDashboardReport(
             long total,
@@ -51,30 +54,7 @@ public class GeminiReportService {
         );
 
         try {
-            String url = "https://generativelanguage.googleapis.com/v1beta/models/"
-                    + model
-                    + ":generateContent?key="
-                    + apiKey;
-
-            Map<String, Object> body = Map.of(
-                    "contents", List.of(
-                            Map.of(
-                                    "parts", List.of(
-                                            Map.of("text", prompt)
-                                    )
-                            )
-                    )
-            );
-
-            Map response = restTemplate.postForObject(url, body, Map.class);
-
-            List candidates = (List) response.get("candidates");
-            Map candidate = (Map) candidates.get(0);
-            Map content = (Map) candidate.get("content");
-            List parts = (List) content.get("parts");
-            Map part = (Map) parts.get(0);
-
-            String report = String.valueOf(part.get("text"));
+            String report = callGemini(prompt);
 
             lastReport = report;
             lastGenerated = now;
@@ -94,5 +74,78 @@ public class GeminiReportService {
             %s
             """.formatted(e.getMessage());
         }
+    }
+
+    public String generateIssueTrendAnalysis(Map<String, Object> issueTrend) {
+        long now = System.currentTimeMillis();
+        String cacheKey = String.valueOf(issueTrend);
+
+        if (cacheKey.equals(lastIssueTrendKey) && lastIssueTrendReport != null && (now - lastIssueTrendGenerated) < 300000) {
+            return lastIssueTrendReport;
+        }
+
+        String prompt = """
+            Analiza la tendencia semanal de asuntos de un dashboard de soporte.
+
+            Datos:
+            %s
+
+            Responde en espanol, maximo 4 frases, sin markdown.
+            Indica:
+            1. asunto que mas crece,
+            2. asunto que baja o se estabiliza,
+            3. posible causa operativa,
+            4. accion recomendada para supervisor.
+            """.formatted(issueTrend);
+
+        try {
+            String report = callGemini(prompt);
+            lastIssueTrendKey = cacheKey;
+            lastIssueTrendReport = report;
+            lastIssueTrendGenerated = now;
+            return report;
+        } catch (Exception e) {
+            return fallbackIssueTrendAnalysis(issueTrend);
+        }
+    }
+
+    private String callGemini(String prompt) {
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/"
+                + model
+                + ":generateContent?key="
+                + apiKey;
+
+        Map<String, Object> body = Map.of(
+                "contents", List.of(
+                        Map.of(
+                                "parts", List.of(
+                                        Map.of("text", prompt)
+                                )
+                        )
+                )
+        );
+
+        Map response = restTemplate.postForObject(url, body, Map.class);
+
+        List candidates = (List) response.get("candidates");
+        Map candidate = (Map) candidates.get(0);
+        Map content = (Map) candidate.get("content");
+        List parts = (List) content.get("parts");
+        Map part = (Map) parts.get(0);
+
+        return String.valueOf(part.get("text"));
+    }
+
+    private String fallbackIssueTrendAnalysis(Map<String, Object> issueTrend) {
+        List<Map<String, Object>> items = (List<Map<String, Object>>) issueTrend.getOrDefault("items", List.of());
+
+        if (items.isEmpty()) {
+            return "Aun no hay datos suficientes para identificar tendencia por asuntos frente a la semana anterior.";
+        }
+
+        Map<String, Object> top = items.get(0);
+        return "El asunto con mayor movimiento es " + top.get("asunto") + ", con " + top.get("current")
+                + " conversaciones esta semana frente a " + top.get("previous")
+                + " la semana anterior. Revisa si el cambio responde a carga operativa, comunicacion preventiva o una incidencia recurrente.";
     }
 }

@@ -70,19 +70,19 @@
                         <div class="kpi-value" th:text="${resueltas}">0</div>
                         <div class="kpi-note">Cerradas con exito</div>
                     </article>
-                    <article class="kpi" style="--accent:#f59f00;--soft:#fff8eb">
+                    <article class="kpi status-kpi" data-status-filter="pending" data-status-label="Pendientes" role="button" tabindex="0" style="--accent:#f59f00;--soft:#fff8eb">
                         <div class="icon-bubble"><i data-lucide="clock-3"></i></div>
                         <div class="kpi-label">Pendientes</div>
                         <div class="kpi-value" th:text="${pendientes + enProceso}">0</div>
                         <div class="kpi-note">Abiertas o en proceso</div>
                     </article>
-                    <article class="kpi" style="--accent:#ff4d6d;--soft:#fff0f3">
+                    <article class="kpi status-kpi" data-status-filter="escalated" data-status-label="Escaladas" role="button" tabindex="0" style="--accent:#ff4d6d;--soft:#fff0f3">
                         <div class="icon-bubble"><i data-lucide="arrow-up"></i></div>
                         <div class="kpi-label">Escaladas</div>
                         <div class="kpi-value" th:text="${escaladas}">0</div>
                         <div class="kpi-note">En apoyo externo</div>
                     </article>
-                    <article class="kpi" style="--accent:#377dff;--soft:#f0f5ff">
+                    <article class="kpi status-kpi" data-status-filter="closed" data-status-label="Cerradas" role="button" tabindex="0" style="--accent:#377dff;--soft:#f0f5ff">
                         <div class="icon-bubble"><i data-lucide="archive"></i></div>
                         <div class="kpi-label">Cerradas</div>
                         <div class="kpi-value" th:text="${cerradas}">0</div>
@@ -183,6 +183,29 @@
     </main>
 </div>
 
+<div id="statusConversationModal" class="modal" aria-hidden="true">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h2 id="statusModalTitle" class="page-title">Conversaciones</h2>
+                <p id="statusModalSubtitle" class="page-subtitle">Cargando tus conversaciones...</p>
+            </div>
+            <button class="modal-close" type="button" onclick="closeStatusConversationModal()" aria-label="Cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="summary-grid">
+                <div class="summary-item"><div class="summary-label">Conversaciones</div><div id="statusModalTotal" class="summary-value">0</div></div>
+                <div class="summary-item"><div class="summary-label">Tiempo gestion</div><div id="statusModalTime" class="summary-value">0 min</div></div>
+                <div class="summary-item"><div class="summary-label">Rango</div><div id="statusModalRange" class="summary-value compact">Sin fechas</div></div>
+            </div>
+            <div style="margin-top:18px;">
+                <h3 class="section-title">Mis conversaciones</h3>
+                <div id="statusConversationList" class="rank-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script th:inline="javascript">
     Chart.defaults.color = '#667085';
     Chart.defaults.font.family = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
@@ -222,6 +245,14 @@
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
+    }
+
+    function formatMinutes(minutes) {
+        const value = Number(minutes || 0);
+        if (value < 60) return `${value} min`;
+        const hours = Math.floor(value / 60);
+        const rest = value % 60;
+        return rest ? `${hours} h ${rest} min` : `${hours} h`;
     }
 
     function setStatusPercents(values) {
@@ -304,6 +335,60 @@
         }).join('');
     }
 
+    function renderStatusConversationList(items) {
+        const container = document.getElementById('statusConversationList');
+        if (!container) return;
+        if (!items || !items.length) {
+            container.innerHTML = '<div class="empty">Sin conversaciones para este estado.</div>';
+            return;
+        }
+
+        container.innerHTML = items.map(item => `
+            <div class="activity-item">
+                <div class="activity-dot">${escapeHtml((item.estado || 'S').slice(0, 2).toUpperCase())}</div>
+                <div>
+                    <div class="activity-title">${escapeHtml(item.codigo || 'Sin codigo')} - ${escapeHtml(item.cliente || 'Sin cliente')}</div>
+                    <div class="activity-time">${escapeHtml(item.fecha || 'Sin fecha')} - ${escapeHtml(item.asunto || 'Sin asunto')} - ${escapeHtml(formatMinutes(item.tiempoGestion))}</div>
+                </div>
+                <span class="pill">${escapeHtml(item.estado || 'Sin estado')}</span>
+            </div>`).join('');
+    }
+
+    async function openStatusConversationModal(status, label) {
+        const modal = document.getElementById('statusConversationModal');
+        const params = new URLSearchParams({ status });
+
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.getElementById('statusModalTitle').innerText = label || 'Conversaciones';
+        document.getElementById('statusModalSubtitle').innerText = 'Cargando tus conversaciones del estado seleccionado...';
+        document.getElementById('statusModalTotal').innerText = '0';
+        document.getElementById('statusModalTime').innerText = '0 min';
+        document.getElementById('statusModalRange').innerText = 'Cargando';
+        document.getElementById('statusConversationList').innerHTML = '<div class="empty">Cargando conversaciones...</div>';
+
+        try {
+            const response = await fetch('/api/agent-dashboard/status-conversations?' + params.toString());
+            if (!response.ok) throw new Error('No fue posible consultar el estado');
+            const data = await response.json();
+            document.getElementById('statusModalTitle').innerText = data.label || label || 'Conversaciones';
+            document.getElementById('statusModalSubtitle').innerText = 'Listado limitado a tus conversaciones asignadas.';
+            document.getElementById('statusModalTotal').innerText = data.totalConversaciones || 0;
+            document.getElementById('statusModalTime').innerText = formatMinutes(data.tiempoTotalGestion);
+            document.getElementById('statusModalRange').innerText = data.range || 'Sin fechas';
+            renderStatusConversationList(data.items);
+        } catch (error) {
+            document.getElementById('statusModalSubtitle').innerText = 'No fue posible cargar tus conversaciones de este estado.';
+            document.getElementById('statusConversationList').innerHTML = '<div class="empty">Intenta nuevamente en unos segundos.</div>';
+        }
+    }
+
+    function closeStatusConversationModal() {
+        const modal = document.getElementById('statusConversationModal');
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
     new Chart(document.getElementById('statusChart'), {
         type: 'doughnut',
         data: {
@@ -372,6 +457,18 @@
 
     renderIssuesTable('topIssuesList', asuntoLabels, asuntoValues);
     renderClientList('topClientsList', clienteLabels, clienteValues);
+    document.getElementById('statusConversationModal')?.addEventListener('click', (event) => {
+        if (event.target.id === 'statusConversationModal') closeStatusConversationModal();
+    });
+    document.querySelectorAll('[data-status-filter]').forEach(card => {
+        card.addEventListener('click', () => openStatusConversationModal(card.dataset.statusFilter, card.dataset.statusLabel));
+        card.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openStatusConversationModal(card.dataset.statusFilter, card.dataset.statusLabel);
+            }
+        });
+    });
     lucide.createIcons();
 </script>
 </body>

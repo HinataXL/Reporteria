@@ -2,6 +2,7 @@ package com.erick.soporte.controller;
 
 import com.erick.soporte.entity.Conversation;
 import com.erick.soporte.repository.ConversationRepository;
+import com.erick.soporte.service.ActiveSessionService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,9 +24,14 @@ import java.util.stream.Collectors;
 public class SupervisorDashboardController {
 
     private final ConversationRepository conversationRepository;
+    private final ActiveSessionService activeSessionService;
 
-    public SupervisorDashboardController(ConversationRepository conversationRepository) {
+    public SupervisorDashboardController(
+            ConversationRepository conversationRepository,
+            ActiveSessionService activeSessionService
+    ) {
         this.conversationRepository = conversationRepository;
+        this.activeSessionService = activeSessionService;
     }
 
     @GetMapping("/supervisor/dashboard")
@@ -64,6 +70,7 @@ public class SupervisorDashboardController {
         );
         Map<String, Object> weeklyTrend = calculateWeeklyTrend(conversations);
         Map<String, Object> peakHours = calculatePeakHours(conversations);
+        Map<String, Object> issueTrend = calculateIssueTrend(conversations, null);
 
         Map<String, Long> porAgente = conversations.stream()
                 .collect(Collectors.groupingBy(
@@ -148,6 +155,7 @@ public class SupervisorDashboardController {
         model.addAttribute("operationalHealth", operationalHealth);
         model.addAttribute("weeklyTrend", weeklyTrend);
         model.addAttribute("peakHours", peakHours);
+        model.addAttribute("issueTrend", issueTrend);
 
         model.addAttribute("agenteLabels", porAgente.keySet());
         model.addAttribute("agenteValues", porAgente.values());
@@ -185,6 +193,7 @@ public class SupervisorDashboardController {
                     return item;
                 })
                 .toList());
+        model.addAttribute("activeAgents", activeSessionService.activeAgents());
 
         return "supervisor/dashboard";
     }
@@ -428,6 +437,79 @@ public class SupervisorDashboardController {
         trend.put("escalated", trendMetric(currentEscalated, previousEscalated, true));
         trend.put("avgTime", trendMetric(currentAvgTime, previousAvgTime, true));
         return trend;
+    }
+
+    private Map<String, Object> calculateIssueTrend(List<Conversation> conversations, LocalDate selectedAnchor) {
+        LocalDate anchor = selectedAnchor != null
+                ? selectedAnchor
+                : conversations.stream()
+                .filter(c -> c.getFechaInicio() != null)
+                .map(c -> c.getFechaInicio().toLocalDate())
+                .max(LocalDate::compareTo)
+                .orElse(LocalDate.now());
+
+        LocalDate currentStart = anchor.minusDays(6);
+        LocalDate previousStart = anchor.minusDays(13);
+
+        Map<String, Long> current = conversations.stream()
+                .filter(c -> c.getFechaInicio() != null)
+                .filter(c -> !c.getFechaInicio().toLocalDate().isBefore(currentStart))
+                .filter(c -> !c.getFechaInicio().toLocalDate().isAfter(anchor))
+                .collect(Collectors.groupingBy(this::issueName, Collectors.counting()));
+
+        Map<String, Long> previous = conversations.stream()
+                .filter(c -> c.getFechaInicio() != null)
+                .filter(c -> !c.getFechaInicio().toLocalDate().isBefore(previousStart))
+                .filter(c -> c.getFechaInicio().toLocalDate().isBefore(currentStart))
+                .collect(Collectors.groupingBy(this::issueName, Collectors.counting()));
+
+        List<Map<String, Object>> items = java.util.stream.Stream.concat(current.keySet().stream(), previous.keySet().stream())
+                .distinct()
+                .map(issue -> issueTrendItem(issue, current.getOrDefault(issue, 0L), previous.getOrDefault(issue, 0L)))
+                .sorted(Comparator
+                        .comparing((Map<String, Object> item) -> Math.abs((Long) item.get("delta"))).reversed()
+                        .thenComparing(item -> (Long) item.get("current"), Comparator.reverseOrder()))
+                .limit(10)
+                .toList();
+
+        Map<String, Object> trend = new LinkedHashMap<>();
+        trend.put("range", currentStart.format(DateTimeFormatter.ofPattern("dd/MM")) + " - " + anchor.format(DateTimeFormatter.ofPattern("dd/MM")));
+        trend.put("previousRange", previousStart.format(DateTimeFormatter.ofPattern("dd/MM")) + " - " + currentStart.minusDays(1).format(DateTimeFormatter.ofPattern("dd/MM")));
+        trend.put("items", items);
+        trend.put("summary", issueTrendSummary(items));
+        return trend;
+    }
+
+    private Map<String, Object> issueTrendItem(String issue, long current, long previous) {
+        long delta = current - previous;
+        double change = percentChange(current, previous);
+        String direction = delta > 0 ? "up" : delta < 0 ? "down" : "flat";
+        String signal = previous == 0 && current > 0 ? "Nuevo esta semana" : formatSignedPercent(change);
+
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("asunto", issue);
+        item.put("current", current);
+        item.put("previous", previous);
+        item.put("delta", delta);
+        item.put("change", signal);
+        item.put("direction", direction);
+        item.put("tone", delta > 0 ? "negative" : "positive");
+        return item;
+    }
+
+    private String issueTrendSummary(List<Map<String, Object>> items) {
+        if (items.isEmpty()) {
+            return "Sin asuntos suficientes para comparar contra la semana anterior.";
+        }
+
+        Map<String, Object> top = items.get(0);
+        return "Mayor variacion: " + top.get("asunto") + " (" + top.get("change") + ").";
+    }
+
+    private String issueName(Conversation conversation) {
+        return conversation.getAsunto() != null && !conversation.getAsunto().isBlank()
+                ? conversation.getAsunto()
+                : "Sin asunto";
     }
 
     private Map<String, Object> trendMetric(double current, double previous, boolean lowerIsBetter) {

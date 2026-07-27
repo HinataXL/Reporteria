@@ -2,10 +2,13 @@ package com.erick.soporte.controller;
 
 import com.erick.soporte.entity.Conversation;
 import com.erick.soporte.repository.ConversationRepository;
+import com.erick.soporte.service.ActiveSessionService;
 import com.erick.soporte.service.GeminiReportService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,10 +29,16 @@ public class DashboardApiController {
 
     private final ConversationRepository conversationRepository;
     private final GeminiReportService geminiReportService;
+    private final ActiveSessionService activeSessionService;
 
-    public DashboardApiController(ConversationRepository conversationRepository, GeminiReportService geminiReportService) {
+    public DashboardApiController(
+            ConversationRepository conversationRepository,
+            GeminiReportService geminiReportService,
+            ActiveSessionService activeSessionService
+    ) {
         this.conversationRepository = conversationRepository;
         this.geminiReportService = geminiReportService;
+        this.activeSessionService = activeSessionService;
 
     }
     @GetMapping("/api/dashboard/ai-report")
@@ -77,7 +86,8 @@ public class DashboardApiController {
             @RequestParam(required = false) String to,
             @RequestParam(required = false, defaultValue = "auto") String granularity
     ) {
-        List<Conversation> conversations = conversationRepository.findAll();
+        List<Conversation> allConversations = conversationRepository.findAll();
+        List<Conversation> conversations = allConversations;
 
         if (from != null && !from.isBlank()) {
             LocalDate fromDate = LocalDate.parse(from);
@@ -117,6 +127,7 @@ public class DashboardApiController {
         );
         Map<String, Object> weeklyTrend = calculateWeeklyTrend(conversations);
         Map<String, Object> peakHours = calculatePeakHours(conversations);
+        Map<String, Object> issueTrend = calculateIssueTrend(allConversations, resolveTrendAnchor(allConversations, from, to));
 
         Map<String, Long> porAgente = conversations.stream()
                 .collect(Collectors.groupingBy(
@@ -184,6 +195,24 @@ public class DashboardApiController {
                         Collectors.summingInt(c -> c.getTiempoGestionMinutos() != null ? c.getTiempoGestionMinutos() : 0)
                 ));
 
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        List<Map<String, Object>> recientes = conversations.stream()
+                .sorted(Comparator.comparing(
+                        Conversation::getId,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ).reversed())
+                .limit(5)
+                .map(c -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("codigo", c.getCodigo());
+                    item.put("cliente", c.getClienteNombre());
+                    item.put("canal", channelName(c.getChannelId()));
+                    item.put("estado", statusName(c.getStatusId()));
+                    item.put("fecha", c.getFechaInicio() != null ? c.getFechaInicio().format(dateTimeFormatter) : "Sin fecha");
+                    return item;
+                })
+                .toList();
+
         Map<String, Object> response = new LinkedHashMap<>();
 
         response.put("total", total);
@@ -195,6 +224,7 @@ public class DashboardApiController {
         response.put("operationalHealth", operationalHealth);
         response.put("weeklyTrend", weeklyTrend);
         response.put("peakHours", peakHours);
+        response.put("issueTrend", issueTrend);
 
         response.put("agenteLabels", porAgente.keySet());
         response.put("agenteValues", porAgente.values());
@@ -215,8 +245,22 @@ public class DashboardApiController {
         response.put("clienteTiempoValues", porCliente.keySet().stream()
                 .map(cliente -> tiempoGestionPorCliente.getOrDefault(cliente, 0))
                 .toList());
+        response.put("recientes", recientes);
+        response.put("activeAgents", activeSessionService.activeAgents());
 
         return response;
+    }
+
+    @GetMapping("/api/dashboard/issue-trends")
+    public Map<String, Object> issueTrends(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to
+    ) {
+        List<Conversation> conversations = conversationRepository.findAll();
+        LocalDate anchor = resolveTrendAnchor(conversations, from, to);
+        Map<String, Object> issueTrend = calculateIssueTrend(conversations, anchor);
+        issueTrend.put("analysis", geminiReportService.generateIssueTrendAnalysis(issueTrend));
+        return issueTrend;
     }
 
     @GetMapping("/api/dashboard/client-360")
@@ -371,6 +415,70 @@ public class DashboardApiController {
         return response;
     }
 
+    @GetMapping("/api/dashboard/status-conversations")
+    public Map<String, Object> statusConversations(
+            @RequestParam String status,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to
+    ) {
+        Long statusId = dashboardStatusId(status);
+        String label = dashboardStatusLabel(status);
+
+        List<Conversation> conversations = conversationRepository.findAll()
+                .stream()
+                .filter(c -> statusId.equals(c.getStatusId()))
+                .toList();
+
+        if (from != null && !from.isBlank()) {
+            LocalDate fromDate = LocalDate.parse(from);
+            conversations = conversations.stream()
+                    .filter(c -> c.getFechaInicio() != null)
+                    .filter(c -> !c.getFechaInicio().toLocalDate().isBefore(fromDate))
+                    .toList();
+        }
+
+        if (to != null && !to.isBlank()) {
+            LocalDate toDate = LocalDate.parse(to);
+            conversations = conversations.stream()
+                    .filter(c -> c.getFechaInicio() != null)
+                    .filter(c -> !c.getFechaInicio().toLocalDate().isAfter(toDate))
+                    .toList();
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        int totalManagementTime = conversations.stream()
+                .mapToInt(c -> c.getTiempoGestionMinutos() != null ? c.getTiempoGestionMinutos() : 0)
+                .sum();
+
+        List<Map<String, Object>> items = conversations.stream()
+                .sorted(Comparator.comparing(
+                        c -> c.getFechaInicio() != null ? c.getFechaInicio() : LocalDateTime.MIN,
+                        Comparator.reverseOrder()
+                ))
+                .map(c -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("codigo", c.getCodigo());
+                    item.put("cliente", c.getClienteNombre() != null && !c.getClienteNombre().isBlank() ? c.getClienteNombre() : "Sin cliente");
+                    item.put("asunto", c.getAsunto() != null && !c.getAsunto().isBlank() ? c.getAsunto() : "Sin asunto");
+                    item.put("estado", statusName(c.getStatusId()));
+                    item.put("agente", c.getAgenteNombre() != null && !c.getAgenteNombre().isBlank() ? c.getAgenteNombre() : "Sin agente");
+                    item.put("canal", channelName(c.getChannelId()));
+                    item.put("tiempoGestion", c.getTiempoGestionMinutos() != null ? c.getTiempoGestionMinutos() : 0);
+                    item.put("fecha", c.getFechaInicio() != null ? c.getFechaInicio().format(formatter) : "Sin fecha");
+                    return item;
+                })
+                .toList();
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("status", status);
+        response.put("label", label);
+        response.put("range", peakDateRange(conversations));
+        response.put("totalConversaciones", conversations.size());
+        response.put("tiempoTotalGestion", totalManagementTime);
+        response.put("items", items);
+        return response;
+    }
+
     private String channelName(Long id) {
         if (id == null) return "Desconocido";
 
@@ -404,6 +512,24 @@ public class DashboardApiController {
             case 4 -> "Escalado";
             case 5 -> "Cerrado";
             default -> "Desconocido";
+        };
+    }
+
+    private Long dashboardStatusId(String status) {
+        return switch (status) {
+            case "pending" -> 1L;
+            case "escalated" -> 4L;
+            case "closed" -> 5L;
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Estado de dashboard no valido");
+        };
+    }
+
+    private String dashboardStatusLabel(String status) {
+        return switch (status) {
+            case "pending" -> "Pendientes";
+            case "escalated" -> "Escaladas";
+            case "closed" -> "Cerradas";
+            default -> "Conversaciones";
         };
     }
 
@@ -608,6 +734,101 @@ public class DashboardApiController {
         trend.put("escalated", trendMetric(currentEscalated, previousEscalated, true));
         trend.put("avgTime", trendMetric(currentAvgTime, previousAvgTime, true));
         return trend;
+    }
+
+    private Map<String, Object> calculateIssueTrend(List<Conversation> conversations, LocalDate selectedAnchor) {
+        LocalDate anchor = selectedAnchor != null
+                ? selectedAnchor
+                : conversations.stream()
+                .filter(c -> c.getFechaInicio() != null)
+                .map(c -> c.getFechaInicio().toLocalDate())
+                .max(LocalDate::compareTo)
+                .orElse(LocalDate.now());
+
+        LocalDate currentStart = anchor.minusDays(6);
+        LocalDate previousStart = anchor.minusDays(13);
+
+        Map<String, Long> current = conversations.stream()
+                .filter(c -> c.getFechaInicio() != null)
+                .filter(c -> !c.getFechaInicio().toLocalDate().isBefore(currentStart))
+                .filter(c -> !c.getFechaInicio().toLocalDate().isAfter(anchor))
+                .collect(Collectors.groupingBy(this::issueName, Collectors.counting()));
+
+        Map<String, Long> previous = conversations.stream()
+                .filter(c -> c.getFechaInicio() != null)
+                .filter(c -> !c.getFechaInicio().toLocalDate().isBefore(previousStart))
+                .filter(c -> c.getFechaInicio().toLocalDate().isBefore(currentStart))
+                .collect(Collectors.groupingBy(this::issueName, Collectors.counting()));
+
+        List<Map<String, Object>> items = java.util.stream.Stream.concat(current.keySet().stream(), previous.keySet().stream())
+                .distinct()
+                .map(issue -> issueTrendItem(issue, current.getOrDefault(issue, 0L), previous.getOrDefault(issue, 0L)))
+                .sorted(Comparator
+                        .comparing((Map<String, Object> item) -> Math.abs((Long) item.get("delta"))).reversed()
+                        .thenComparing(item -> (Long) item.get("current"), Comparator.reverseOrder()))
+                .limit(10)
+                .toList();
+
+        Map<String, Object> trend = new LinkedHashMap<>();
+        trend.put("range", currentStart.format(DateTimeFormatter.ofPattern("dd/MM")) + " - " + anchor.format(DateTimeFormatter.ofPattern("dd/MM")));
+        trend.put("previousRange", previousStart.format(DateTimeFormatter.ofPattern("dd/MM")) + " - " + currentStart.minusDays(1).format(DateTimeFormatter.ofPattern("dd/MM")));
+        trend.put("items", items);
+        trend.put("summary", issueTrendSummary(items));
+        return trend;
+    }
+
+    private Map<String, Object> issueTrendItem(String issue, long current, long previous) {
+        long delta = current - previous;
+        double change = percentChange(current, previous);
+        String direction = delta > 0 ? "up" : delta < 0 ? "down" : "flat";
+        String signal = previous == 0 && current > 0 ? "Nuevo esta semana" : formatSignedPercent(change);
+
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("asunto", issue);
+        item.put("current", current);
+        item.put("previous", previous);
+        item.put("delta", delta);
+        item.put("change", signal);
+        item.put("direction", direction);
+        item.put("tone", delta > 0 ? "negative" : "positive");
+        return item;
+    }
+
+    private String issueTrendSummary(List<Map<String, Object>> items) {
+        if (items.isEmpty()) {
+            return "Sin asuntos suficientes para comparar contra la semana anterior.";
+        }
+
+        Map<String, Object> top = items.get(0);
+        return "Mayor variacion: " + top.get("asunto") + " (" + top.get("change") + ").";
+    }
+
+    private LocalDate resolveTrendAnchor(List<Conversation> conversations, String from, String to) {
+        if (to != null && !to.isBlank()) {
+            return LocalDate.parse(to);
+        }
+
+        if (from != null && !from.isBlank()) {
+            LocalDate fromDate = LocalDate.parse(from);
+            return conversations.stream()
+                    .filter(c -> c.getFechaInicio() != null)
+                    .map(c -> c.getFechaInicio().toLocalDate())
+                    .filter(date -> !date.isBefore(fromDate))
+                    .max(LocalDate::compareTo)
+                    .orElse(fromDate);
+        }
+
+        return conversations.stream()
+                .filter(c -> c.getFechaInicio() != null)
+                .map(c -> c.getFechaInicio().toLocalDate())
+                .max(LocalDate::compareTo)
+                .orElse(LocalDate.now());
+    }
+
+    private String issueName(Conversation conversation) {
+        return conversation.getAsunto() != null && !conversation.getAsunto().isBlank()
+                ? conversation.getAsunto()
+                : "Sin asunto";
     }
 
     private Map<String, Object> trendMetric(double current, double previous, boolean lowerIsBetter) {
