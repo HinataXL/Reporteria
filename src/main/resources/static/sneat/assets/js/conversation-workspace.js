@@ -8,6 +8,11 @@ window.ConversationWorkspace = (() => {
     let sessionExpired = false;
     let redirectingToLogin = false;
     let validationActive = false;
+    let sessionRenewalPending = false;
+    let sessionTitleInterval = null;
+    let sessionNotificationSent = false;
+    let sessionToastShown = false;
+    const originalDocumentTitle = document.title;
 
     const formId = "conversationForm";
     const tabsContainerId = "conversationTabs";
@@ -16,6 +21,8 @@ window.ConversationWorkspace = (() => {
     const pauseBtnId = "pauseTimerBtn";
     const sessionPromptDelayMs = 8 * 60 * 1000;
     const recentClientsKey = "conversationRecentClients";
+    const sessionAlertTitle = "Sesion por expirar";
+    const sessionAlertMessage = "Tu sesion esta por vencer. Vuelve a Reporteria para continuar trabajando.";
 
     function saveState() {
         sessionStorage.setItem("conversationTabs", JSON.stringify(tabs));
@@ -56,6 +63,7 @@ window.ConversationWorkspace = (() => {
 
         stopTimer();
         hideSessionPrompt();
+        clearSessionAttention();
         showToast("Sesion expirada. Vuelve a iniciar sesion para guardar.", true);
 
         const tab = getActiveTab();
@@ -112,6 +120,58 @@ window.ConversationWorkspace = (() => {
         }
     }
 
+    function requestSessionNotificationPermission() {
+        if (!("Notification" in window) || Notification.permission !== "default") {
+            return;
+        }
+
+        Notification.requestPermission().catch(() => {});
+    }
+
+    function notifySessionAttention() {
+        if (!document.hidden || sessionNotificationSent || !("Notification" in window)) {
+            return;
+        }
+
+        if (Notification.permission === "granted") {
+            new Notification("Sesion por expirar", {
+                body: sessionAlertMessage,
+                tag: "skill-soporte-session",
+                requireInteraction: true
+            });
+            sessionNotificationSent = true;
+        }
+    }
+
+    function startSessionTitleAlert() {
+        if (sessionTitleInterval) {
+            return;
+        }
+
+        let showAlert = true;
+        document.title = sessionAlertTitle;
+
+        sessionTitleInterval = setInterval(() => {
+            document.title = showAlert
+                ? sessionAlertTitle
+                : originalDocumentTitle;
+            showAlert = !showAlert;
+        }, 1200);
+    }
+
+    function clearSessionAttention() {
+        sessionRenewalPending = false;
+        sessionNotificationSent = false;
+        sessionToastShown = false;
+
+        if (sessionTitleInterval) {
+            clearInterval(sessionTitleInterval);
+            sessionTitleInterval = null;
+        }
+
+        document.title = originalDocumentTitle;
+    }
+
     function hideSessionPrompt() {
         const prompt = document.getElementById("sessionContinuePrompt");
 
@@ -127,6 +187,13 @@ window.ConversationWorkspace = (() => {
             return;
         }
 
+        sessionRenewalPending = true;
+        startSessionTitleAlert();
+        notifySessionAttention();
+        if (!sessionToastShown) {
+            showToast("Tu sesion esta por vencer. Presiona Continuar trabajando.", true);
+            sessionToastShown = true;
+        }
         prompt.classList.remove("hidden");
     }
 
@@ -163,6 +230,7 @@ window.ConversationWorkspace = (() => {
 
         if (renewed) {
             hideSessionPrompt();
+            clearSessionAttention();
             scheduleSessionPrompt();
             showToast("Sesion renovada correctamente");
         }
@@ -930,7 +998,20 @@ window.ConversationWorkspace = (() => {
             }
 
             if (event.key === "Escape") {
-                hideSessionPrompt();
+                if (!sessionRenewalPending) {
+                    hideSessionPrompt();
+                }
+            }
+        });
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                notifySessionAttention();
+                return;
+            }
+
+            if (sessionRenewalPending && !sessionExpired) {
+                showSessionPrompt();
             }
         });
 
@@ -976,6 +1057,7 @@ window.ConversationWorkspace = (() => {
         const form = getForm();
         if (!form) return;
 
+        requestSessionNotificationPermission();
         tabs = tabs.map(normalizeTab);
 
         if (!activeTabId || !tabs.some(t => t.id === activeTabId)) {
