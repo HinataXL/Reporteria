@@ -109,6 +109,12 @@
         <p class="text-sm text-qCyanLight">Crear usuario para acceder al sistema</p>
     </div>
 
+    <div th:if="${error}"
+         class="mb-6 bg-qDanger/10 border border-qDanger/40 rounded-2xl p-4 text-qDanger text-sm font-bold animate-slide-up"
+         th:text="${error}">
+        No fue posible crear el usuario.
+    </div>
+
     <div class="bg-qCard backdrop-blur-[20px] border border-qCyan/20 rounded-[20px] p-6 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.3)] animate-slide-up">
 
         <form id="form-new-user" th:action="@{/users/save}" method="post" novalidate>
@@ -286,7 +292,7 @@
             <button type="button" onclick="closeModal()" class="py-2.5 px-5 bg-transparent border border-qCyan/30 rounded-xl text-qCyanLight text-[12px] font-bold uppercase tracking-wide hover:bg-qCyan/10 hover:text-qCyan transition-all">
                 Volver
             </button>
-            <button type="button" onclick="confirmCreate()" class="py-2.5 px-5 bg-gradient-to-br from-qGold to-qGoldLight rounded-xl text-[#1a1a1a] text-[12px] font-bold uppercase tracking-wide hover:-translate-y-0.5 hover:shadow-[0_8px_16px_rgba(255,215,0,0.3)] transition-all">
+            <button type="button" onclick="confirmCreate()" class="btn-confirm py-2.5 px-5 bg-gradient-to-br from-qGold to-qGoldLight rounded-xl text-[#1a1a1a] text-[12px] font-bold uppercase tracking-wide hover:-translate-y-0.5 hover:shadow-[0_8px_16px_rgba(255,215,0,0.3)] transition-all">
                 Guardar Usuario
             </button>
         </div>
@@ -460,8 +466,10 @@
     function confirmCreate() {
         // Bloquear UI
         const btnConf = document.querySelector('.btn-confirm');
-        btnConf.disabled = true;
-        btnConf.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Guardando...';
+        if (btnConf) {
+            btnConf.disabled = true;
+            btnConf.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Guardando...';
+        }
 
         const delivery = document.querySelector('input[name="deliveryMethod"]:checked').value;
         if (delivery === 'pantalla') {

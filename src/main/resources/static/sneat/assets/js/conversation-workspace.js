@@ -7,6 +7,7 @@ window.ConversationWorkspace = (() => {
     let sessionPromptTimeout = null;
     let sessionExpired = false;
     let redirectingToLogin = false;
+    let validationActive = false;
 
     const formId = "conversationForm";
     const tabsContainerId = "conversationTabs";
@@ -14,12 +15,15 @@ window.ConversationWorkspace = (() => {
     const timerInputId = "tiempoGestionMinutos";
     const pauseBtnId = "pauseTimerBtn";
     const sessionPromptDelayMs = 8 * 60 * 1000;
+    const recentClientsKey = "conversationRecentClients";
 
     function saveState() {
         sessionStorage.setItem("conversationTabs", JSON.stringify(tabs));
         if (activeTabId) {
             sessionStorage.setItem("activeConversationTabId", activeTabId);
         }
+
+        updateDraftStatus();
     }
 
     function getForm() {
@@ -199,6 +203,25 @@ window.ConversationWorkspace = (() => {
         return data;
     }
 
+    function hasMeaningfulData(data = {}) {
+        const ignoredFields = new Set([
+            "_csrf",
+            "fechaInicio",
+            "tiempoGestionMinutos",
+            "channelId",
+            "statusId",
+            "priorityId",
+            "ticketAperturado",
+            "conversacionTransferida"
+        ]);
+
+        return Object.entries(data).some(([key, value]) => {
+            if (ignoredFields.has(key)) return false;
+            if (typeof value === "boolean") return value;
+            return String(value || "").trim().length > 0;
+        });
+    }
+
     function setFormData(data) {
         const form = getForm();
 
@@ -230,25 +253,47 @@ window.ConversationWorkspace = (() => {
         if (!tab) return;
 
         tab.data = getFormData();
+        tab.dirty = hasMeaningfulData(tab.data);
+        tab.lastDraftSave = Date.now();
         saveState();
+    }
+
+    function updateDraftStatus(message) {
+        const draftStatus = document.getElementById("draftStatus");
+        if (!draftStatus) return;
+
+        const tab = getActiveTab();
+        if (!tab || !tab.dirty) {
+            draftStatus.innerText = "Borrador listo";
+            return;
+        }
+
+        const savedAt = tab.lastDraftSave
+            ? new Date(tab.lastDraftSave).toLocaleTimeString("es-GT", {
+                hour: "2-digit",
+                minute: "2-digit"
+            })
+            : "";
+
+        draftStatus.innerText = message || `Borrador guardado ${savedAt}`;
     }
 
     function getTabLabel(tab) {
         if (tab.saved && tab.codigo) {
-            return `✅ ${tab.codigo}`;
+            return `Guardada ${tab.codigo}`;
         }
 
         const status = tab.running
-            ? "🟢"
-            : "⏸";
+            ? "En gestion"
+            : "Pausada";
 
         const name =
             tab.data?.clienteNombre ||
             tab.data?.cliente_nombre ||
             tab.data?.cliente ||
-            "Nueva conversación";
+            "Nueva conversacion";
 
-        return `${status} ${name}`;
+        return `${status} - ${name}`;
     }
 
     function renderTabs() {
@@ -264,18 +309,16 @@ window.ConversationWorkspace = (() => {
             button.type = "button";
 
             button.className =
-                "px-4 py-3 rounded-2xl font-black border transition " +
-                (tab.id === activeTabId
-                    ? "bg-[#ffd700] text-black border-[#ffd700]"
-                    : "bg-white/10 text-white border-white/10");
+                "conversation-tab" +
+                (tab.id === activeTabId ? " active" : "");
 
             button.innerHTML = `
                 <span>${getTabLabel(tab)}</span>
-                <span style="margin-left:10px;color:#ff6b6b;font-weight:900;">✕</span>
+                <span class="conversation-tab-close" data-close-tab="true">x</span>
             `;
 
             button.onclick = (event) => {
-                if (event.target.innerText === "✕") {
+                if (event.target.dataset.closeTab === "true") {
                     closeTab(tab.id);
                 } else {
                     switchTab(tab.id);
@@ -293,22 +336,20 @@ window.ConversationWorkspace = (() => {
         if (!btn || !tab) return;
 
         if (tab.running) {
-            btn.innerText = "⏸ Pausar";
-            btn.className =
-                "mt-5 w-full bg-[#ffd700] hover:bg-yellow-300 text-black font-black py-2 rounded-xl transition";
+            btn.innerText = "Pausar";
+            btn.className = "timer-action running";
 
             if (status) {
-                status.innerText = "🟢 En gestión";
-                status.className = "mt-2 text-sm font-black text-green-400";
+                status.innerText = "En gestion";
+                status.className = "timer-status running mt-2";
             }
         } else {
-            btn.innerText = "▶ Reanudar";
-            btn.className =
-                "mt-5 w-full bg-green-400 hover:bg-green-300 text-black font-black py-2 rounded-xl transition";
+            btn.innerText = "Reanudar";
+            btn.className = "timer-action paused";
 
             if (status) {
-                status.innerText = "⏸ Pausado";
-                status.className = "mt-2 text-sm font-black text-yellow-300";
+                status.innerText = "Pausado";
+                status.className = "timer-status paused mt-2";
             }
         }
     }
@@ -417,8 +458,11 @@ window.ConversationWorkspace = (() => {
     }
 
     function closeTab(id) {
-        const shouldClose = confirm("¿Deseas cerrar esta conversación en borrador?");
-        if (!shouldClose) return;
+        const tabToClose = tabs.find(t => t.id === id);
+        if (tabToClose && tabToClose.dirty && !tabToClose.saved) {
+            const shouldClose = confirm("Hay datos capturados sin guardar. ¿Deseas cerrar este borrador?");
+            if (!shouldClose) return;
+        }
 
         tabs = tabs.filter(t => t.id !== id);
 
@@ -446,6 +490,176 @@ window.ConversationWorkspace = (() => {
         });
     }
 
+    function getField(name) {
+        const form = getForm();
+        return form ? form.querySelector(`[name="${name}"]`) : null;
+    }
+
+    function setFieldError(name, message, showErrors) {
+        const field = getField(name);
+        const error = document.querySelector(`[data-error-for="${name}"]`);
+
+        if (field) {
+            field.classList.toggle("field-error", Boolean(message) && showErrors);
+        }
+
+        if (error) {
+            error.innerText = message || "";
+            error.classList.toggle("visible", Boolean(message) && showErrors);
+        }
+    }
+
+    function valueOf(name) {
+        const field = getField(name);
+        return field ? String(field.value || "").trim() : "";
+    }
+
+    function isResolvedOrClosed() {
+        const status = valueOf("statusId");
+        return status === "3" || status === "5";
+    }
+
+    function validateForm(showErrors = false) {
+        let valid = true;
+        const requiredFields = [
+            ["clienteNombre", "Ingresa el nombre del cliente."],
+            ["channelId", "Selecciona el canal de origen."],
+            ["issueTypeId", "Selecciona el asunto."],
+            ["statusId", "Selecciona el estado."],
+            ["priorityId", "Selecciona la prioridad."]
+        ];
+
+        requiredFields.forEach(([name, message]) => {
+            const missing = !valueOf(name);
+            setFieldError(name, missing ? message : "", showErrors);
+            valid = valid && !missing;
+        });
+
+        const rejectionBox = document.getElementById("rejectionCodeBox");
+        const requiresRejection = rejectionBox && !rejectionBox.classList.contains("hidden");
+        const missingRejection = requiresRejection && !valueOf("rejectionCodeId");
+        setFieldError("rejectionCodeId", missingRejection ? "Selecciona el codigo de rechazo." : "", showErrors);
+        valid = valid && !missingRejection;
+
+        const ticketCheck = document.getElementById("ticketAperturado");
+        const missingTicket = ticketCheck && ticketCheck.checked && !valueOf("numeroTicket");
+        setFieldError("numeroTicket", missingTicket ? "Ingresa el numero de ticket." : "", showErrors);
+        valid = valid && !missingTicket;
+
+        const transferCheck = document.getElementById("conversacionTransferida");
+        const missingDepartment = transferCheck && transferCheck.checked && !valueOf("departmentId");
+        setFieldError("departmentId", missingDepartment ? "Selecciona el departamento destino." : "", showErrors);
+        valid = valid && !missingDepartment;
+
+        const descriptionLength = valueOf("descripcion").length;
+        const observationsLength = valueOf("observaciones").length;
+        const missingClosureDetail = isResolvedOrClosed() && descriptionLength < 30 && observationsLength < 15;
+        const closureMessage = "Para resolver o cerrar, agrega una descripcion clara o una observacion interna.";
+        setHint("descriptionHint", missingClosureDetail ? closureMessage : "", showErrors);
+        setHint("observationsHint", missingClosureDetail ? "Minimo sugerido: descripcion de 30 caracteres u observacion de 15." : "", showErrors);
+        valid = valid && !missingClosureDetail;
+
+        updateCounters();
+        return valid;
+    }
+
+    function setHint(id, message, showErrors) {
+        const hint = document.getElementById(id);
+        if (!hint) return;
+
+        hint.innerText = message || "";
+        hint.classList.toggle("visible", Boolean(message) && showErrors);
+    }
+
+    function updateCounters() {
+        const description = document.getElementById("descripcion");
+        const observations = document.getElementById("observaciones");
+        const descriptionCounter = document.getElementById("descriptionCounter");
+        const observationsCounter = document.getElementById("observationsCounter");
+
+        if (description && descriptionCounter) {
+            descriptionCounter.innerText = description.value.length;
+            descriptionCounter.parentElement?.classList.toggle(
+                "counter-warning",
+                isResolvedOrClosed() && description.value.trim().length < 30
+            );
+        }
+
+        if (observations && observationsCounter) {
+            observationsCounter.innerText = observations.value.length;
+            observationsCounter.parentElement?.classList.toggle(
+                "counter-warning",
+                isResolvedOrClosed() && observations.value.trim().length < 15
+            );
+        }
+    }
+
+    function applyTemplate(text) {
+        const description = document.getElementById("descripcion");
+        if (!description || !text) return;
+
+        const separator = description.value.trim() ? "\n" : "";
+        description.value = `${description.value.trim()}${separator}${text}`;
+        description.dispatchEvent(new Event("input", { bubbles: true }));
+        description.focus();
+    }
+
+    function getRecentClients() {
+        try {
+            return JSON.parse(localStorage.getItem(recentClientsKey) || "[]");
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function hydrateRecentClientSuggestions() {
+        const clients = getRecentClients();
+        const mappings = [
+            ["recentClients", "name"],
+            ["recentPhones", "phone"],
+            ["recentEmails", "email"]
+        ];
+
+        mappings.forEach(([id, key]) => {
+            const list = document.getElementById(id);
+            if (!list) return;
+
+            list.innerHTML = "";
+            clients
+                .map(client => client[key])
+                .filter(Boolean)
+                .slice(0, 10)
+                .forEach(value => {
+                    const option = document.createElement("option");
+                    option.value = value;
+                    list.appendChild(option);
+                });
+        });
+    }
+
+    function rememberCurrentClient() {
+        const name = valueOf("clienteNombre");
+        const phone = valueOf("clienteTelefono");
+        const email = valueOf("clienteCorreo");
+
+        if (!name && !phone && !email) return;
+
+        const clients = getRecentClients()
+            .filter(client => client.name !== name && client.phone !== phone && client.email !== email);
+
+        clients.unshift({ name, phone, email, savedAt: Date.now() });
+        localStorage.setItem(recentClientsKey, JSON.stringify(clients.slice(0, 10)));
+        hydrateRecentClientSuggestions();
+    }
+
+    function setFormBusy(isBusy) {
+        const form = getForm();
+        if (!form) return;
+
+        form.classList.toggle("is-saving", isBusy);
+        updateDraftStatus(isBusy ? "Guardando..." : undefined);
+    }
+
     function formatLocalDateTime(timestamp) {
         const date = new Date(timestamp);
         const pad = value => String(value).padStart(2, "0");
@@ -468,15 +682,23 @@ window.ConversationWorkspace = (() => {
         // Evita doble guardado
         if (tab.saving || tab.saved) {
             console.warn("La conversación ya se está guardando o ya fue guardada");
+            showToast("Esta conversacion ya se esta guardando.", true);
             return;
         }
 
-        const submitButton = form.querySelector(
-            'button[type="submit"]'
+        if (!validateForm(true)) {
+            validationActive = true;
+            showToast("Revisa los campos marcados antes de guardar.", true);
+            return;
+        }
+
+        const submitButtons = document.querySelectorAll(
+            'button[type="submit"][form="conversationForm"], #conversationForm button[type="submit"]'
         );
 
         try {
             tab.saving = true;
+            validationActive = false;
 
             // Detener y calcular el tiempo final
             tab.elapsedSeconds = getCurrentElapsedSeconds(tab);
@@ -500,14 +722,12 @@ window.ConversationWorkspace = (() => {
             saveActiveTabData();
             saveState();
 
-            if (submitButton) {
-                submitButton.disabled = true;
-
-                submitButton.dataset.originalText =
-                    submitButton.innerHTML;
-
-                submitButton.innerHTML = "Guardando...";
-            }
+            submitButtons.forEach(button => {
+                button.disabled = true;
+                button.dataset.originalText = button.innerHTML;
+                button.innerHTML = "Guardando...";
+            });
+            setFormBusy(true);
 
             const sessionReady = await keepSessionAlive(true);
 
@@ -544,9 +764,11 @@ window.ConversationWorkspace = (() => {
             }
 
             tab.saved = true;
+            tab.dirty = false;
             tab.codigo = data.codigo;
             tab.conversationId = data.id;
             tab.saving = false;
+            rememberCurrentClient();
 
             console.log(
                 "Conversación guardada correctamente:",
@@ -586,13 +808,13 @@ window.ConversationWorkspace = (() => {
             );
 
         } finally {
-            if (submitButton) {
-                submitButton.disabled = false;
-
-                submitButton.innerHTML =
-                    submitButton.dataset.originalText ||
-                    "Guardar conversación";
-            }
+            setFormBusy(false);
+            submitButtons.forEach(button => {
+                button.disabled = false;
+                button.innerHTML =
+                    button.dataset.originalText ||
+                    "Guardar conversacion";
+            });
         }
     }
 
@@ -672,12 +894,52 @@ window.ConversationWorkspace = (() => {
 
         form.addEventListener("input", () => {
             saveActiveTabData();
+            validateForm(validationActive);
+            updateCounters();
             renderTabs();
         });
 
         form.addEventListener("change", () => {
             saveActiveTabData();
+            validateForm(validationActive);
+            updateCounters();
             renderTabs();
+        });
+
+        form.querySelectorAll("[required], #numeroTicket, #departmentId").forEach(field => {
+            field.addEventListener("blur", () => {
+                validateForm(true);
+            });
+        });
+
+        document.querySelectorAll("[data-template-text]").forEach(button => {
+            button.addEventListener("click", () => {
+                applyTemplate(button.dataset.templateText);
+            });
+        });
+
+        document.addEventListener("keydown", event => {
+            if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                event.preventDefault();
+                form.requestSubmit();
+            }
+
+            if (event.altKey && event.key.toLowerCase() === "n") {
+                event.preventDefault();
+                addTab();
+            }
+
+            if (event.key === "Escape") {
+                hideSessionPrompt();
+            }
+        });
+
+        window.addEventListener("beforeunload", event => {
+            const hasUnsavedDrafts = tabs.some(tab => tab.dirty && !tab.saved);
+            if (!hasUnsavedDrafts) return;
+
+            event.preventDefault();
+            event.returnValue = "";
         });
 
         form.addEventListener("submit", async function (event) {
@@ -731,6 +993,10 @@ window.ConversationWorkspace = (() => {
 
         bindEvents();
         scheduleSessionPrompt();
+        hydrateRecentClientSuggestions();
+        updateCounters();
+        validateForm(false);
+        updateDraftStatus();
 
         console.log("Conversation Workspace v2 inicializado");
     }

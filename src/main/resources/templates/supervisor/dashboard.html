@@ -66,7 +66,7 @@
                         <option value="monthly">Mensual</option>
                     </select>
                 </label>
-                <button class="rm-btn ghost" type="button" onclick="applyDateFilter()"><i data-lucide="filter"></i>Filtrar</button>
+                <button class="rm-btn ghost" type="button" data-dashboard-filter onclick="applyDateFilter()"><i data-lucide="filter"></i>Filtrar</button>
                 <button class="rm-btn ghost" type="button" onclick="clearDateFilter()"><i data-lucide="x"></i>Limpiar</button>
                 <a class="rm-btn primary" th:href="@{/supervisor/report/pdf}"><i data-lucide="download"></i>Exportar</a>
             </div>
@@ -218,7 +218,15 @@
                         <div id="avgMetric" class="time-value" th:text="${promedioTiempo + ' min'}">0 min</div>
                         <div class="metric-caption">Tiempo promedio</div>
                     </div>
-                    <div><span class="time-trend">-8.5%</span> <span class="metric-caption">vs Abr 2025</span></div>
+                    <div>
+                        <span id="timeTrendValue"
+                              class="time-trend"
+                              th:classappend="${weeklyTrend.timeTrendTone}"
+                              th:text="${weeklyTrend.timeTrendLabel}">0.0%</span>
+                        <span id="timeTrendCaption"
+                              class="metric-caption"
+                              th:text="${weeklyTrend.timeTrendDescription}">vs semana anterior</span>
+                    </div>
                 </div>
                 <div class="mini-chart-wrap"><canvas id="timeChart"></canvas></div>
             </article>
@@ -432,9 +440,11 @@
     const initialGranularity = /*[[${granularity}]]*/ 'daily';
     const initialPeakHours = /*[[${peakHours}]]*/ {};
     const initialIssueTrend = /*[[${issueTrend}]]*/ {};
+    const initialWeeklyTrend = /*[[${weeklyTrend}]]*/ {};
     const initialActiveAgents = /*[[${activeAgents}]]*/ [];
     let dashboardStompClient = null;
     let dashboardRealtimeRefreshTimer = null;
+    let timeChart = null;
 
     function tooltip() {
         return {
@@ -512,6 +522,27 @@
         updateTrendMetric('weeklyPending', trend.pending);
         updateTrendMetric('weeklyEscalated', trend.escalated);
         updateTrendMetric('weeklyAvgTime', trend.avgTime);
+        updateTimeTrend(trend);
+        updateTimeChart(trend);
+    }
+
+    function updateTimeTrend(trend) {
+        if (!trend) return;
+
+        const value = document.getElementById('timeTrendValue');
+        const caption = document.getElementById('timeTrendCaption');
+        value.innerText = trend.timeTrendLabel || '0.0%';
+        value.classList.remove('positive', 'negative');
+        value.classList.add(trend.timeTrendTone || 'positive');
+        caption.innerText = trend.timeTrendDescription || 'vs semana anterior';
+    }
+
+    function updateTimeChart(trend) {
+        if (!trend?.timeSeries || !timeChart) return;
+
+        timeChart.data.labels = trend.timeSeries.labels || [];
+        timeChart.data.datasets[0].data = trend.timeSeries.values || [];
+        timeChart.update();
     }
 
     function renderPeakHours(peakHours) {
@@ -600,19 +631,20 @@
         }
     });
 
-    const timeChart = new Chart(document.getElementById('timeChart'), {
+    timeChart = new Chart(document.getElementById('timeChart'), {
         type: 'line',
         data: {
-            labels: productividadLabels,
+            labels: initialWeeklyTrend.timeSeries?.labels || [],
             datasets: [{
-                label: 'Promedio',
-                data: productividadValues.map(value => Number(value || 0) + promedioTiempoValue),
+                label: 'Tiempo promedio semanal',
+                data: initialWeeklyTrend.timeSeries?.values || [],
                 borderColor: '#6236ff',
-                backgroundColor: 'rgba(98,54,255,0.09)',
+                backgroundColor: 'rgba(98,54,255,0.07)',
                 fill: true,
-                tension: 0.38,
-                pointRadius: 3,
-                borderWidth: 3
+                tension: 0.32,
+                pointRadius: 0,
+                pointHoverRadius: 5,
+                borderWidth: 2.5
             }]
         },
         options: {
@@ -620,8 +652,14 @@
             maintainAspectRatio: false,
             plugins: { legend: { display: false }, tooltip: tooltip() },
             scales: {
-                x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 8, maxRotation: 55 } },
-                y: { beginAtZero: true }
+                x: { grid: { display: false }, ticks: { autoSkip: true, maxTicksLimit: 6, maxRotation: 0 } },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        maxTicksLimit: 4,
+                        callback: value => `${value} min`
+                    }
+                }
             }
         }
     });
@@ -946,7 +984,16 @@
     }
 
     async function refreshDashboardMetrics() {
+        const filterButton = document.querySelector('[data-dashboard-filter]');
+        const originalFilterText = filterButton ? filterButton.innerHTML : '';
+
         try {
+            if (filterButton) {
+                filterButton.disabled = true;
+                filterButton.innerHTML = '<i data-lucide="loader-circle"></i>Filtrando';
+                lucide.createIcons();
+            }
+
             const params = new URLSearchParams();
             const from = document.getElementById('filterFrom').value;
             const to = document.getElementById('filterTo').value;
@@ -955,7 +1002,7 @@
             if (to) params.append('to', to);
             if (granularity) params.append('granularity', granularity);
             const response = await fetch('/api/dashboard/metrics' + (params.toString() ? '?' + params.toString() : ''));
-            if (!response.ok) return;
+            if (!response.ok) throw new Error('No fue posible actualizar el dashboard');
             const data = await response.json();
             document.getElementById('totalMetric').innerText = data.total;
             document.getElementById('resolvedMetric').innerText = data.resueltas;
@@ -969,10 +1016,6 @@
             dailyChart.data.labels = data.productividadLabels || [];
             dailyChart.data.datasets[0].data = data.productividadValues || [];
             dailyChart.update();
-            timeChart.data.labels = data.productividadLabels || [];
-            const avg = Number(String(data.promedioTiempo || '0').replace(',', '.')) || 0;
-            timeChart.data.datasets[0].data = (data.productividadValues || []).map(value => Number(value || 0) + avg);
-            timeChart.update();
             const statusValues = [data.resueltas || 0, data.pendientes || 0, data.cerradas || 0, data.escaladas || 0];
             statusChart.data.datasets[0].data = statusValues;
             statusChart.update();
@@ -984,6 +1027,12 @@
             renderActiveAgents(data.activeAgents || []);
         } catch (error) {
             console.error('Error actualizando dashboard', error);
+        } finally {
+            if (filterButton) {
+                filterButton.disabled = false;
+                filterButton.innerHTML = originalFilterText;
+                lucide.createIcons();
+            }
         }
     }
 

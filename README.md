@@ -1,132 +1,324 @@
-# 📊 Sistema de Reportería para Skill de Soporte
+# Skill Soporte - Reporteria Operativa
 
-# 📊 Sistema de Reportería de Soporte
+Aplicacion web para gestionar, monitorear y reportar conversaciones de soporte multicanal. El sistema centraliza conversaciones, usuarios, dashboards por rol, auditoria, exportaciones y analisis operativo con Gemini.
 
-Sistema web desarrollado con Spring Boot para la gestión y monitoreo de conversaciones de soporte, incluyendo autenticación segura, dashboard en tiempo real, reportería y análisis con IA.
+## Estado del Proyecto
 
----
+Proyecto privado en desarrollo activo.
 
-# 🚀 Tecnologías utilizadas
+Funcionalidades principales disponibles:
+
+- Autenticacion con Spring Security.
+- Roles ADMIN, SUPERVISOR y AGENTE.
+- Seguridad 2FA con aplicacion autenticadora.
+- Gestion de usuarios administrativos.
+- Gestion de conversaciones de soporte.
+- Dashboard de supervisor con metricas operativas.
+- Dashboard de agente con metricas asignadas.
+- Indicadores por estado: pendientes, resueltas, escaladas y cerradas.
+- Top 10 asuntos y top 10 clientes.
+- Vista 360 de clientes.
+- Horas pico de atencion.
+- Tendencias semanales y comparativa contra periodo anterior.
+- Actividad en tiempo real mediante WebSocket.
+- Keep-alive de sesion para evitar expiraciones durante gestion.
+- Exportacion CSV.
+- Reporte PDF supervisor.
+- Auditoria de acciones del sistema.
+- Monitoreo de uso de Gemini desde panel admin.
+
+## Tecnologias
 
 - Java 21
-- Spring Boot 4
+- Spring Boot 4.0.6
+- Spring MVC
 - Spring Security
+- Spring Data JPA
 - Thymeleaf
 - PostgreSQL
-- Supabase
-- TailwindCSS
-- Chart.js
-- OpenAI API
-- ngrok
+- WebSocket/STOMP
 - Maven
+- Docker
+- TailwindCSS
+- Chart.js / ApexCharts
+- Gemini API
+- OpenHTMLToPDF
 
----
+## Estructura Principal
 
-# 🔐 Funcionalidades principales
+```text
+src/main/java/com/erick/soporte
+  config/        Configuracion WebSocket
+  controller/    Controladores MVC y API
+  entity/        Entidades JPA
+  repository/    Repositorios Spring Data
+  security/      Login, roles, 2FA y filtros de seguridad
+  service/       Servicios de auditoria, reportes, IA y tiempo real
 
-## Autenticación y seguridad
+src/main/resources
+  templates/     Vistas Thymeleaf
+  static/        CSS, JS e imagenes
+  application.properties
+```
 
-- Login personalizado
-- Roles:
-  - ADMIN
-  - SUPERVISOR
-  - AGENTE
-- Protección por rutas
-- 2FA (OTP con aplicación autenticadora)
-- Sesiones protegidas
-- Logout seguro
+## Roles y Accesos
 
----
+### ADMIN
 
-# 👥 Gestión de usuarios
+- Acceso a panel administrador.
+- Gestion de usuarios.
+- Auditoria del sistema.
+- Estado y uso de Gemini.
+- Exportacion CSV.
+- Acceso a dashboards operativos.
 
-- Creación de usuarios
-- Roles dinámicos
-- Contraseñas cifradas con BCrypt
-- Lectura de usuarios desde Supabase
+### SUPERVISOR
 
----
+- Dashboard supervisor.
+- Reportes y exportaciones.
+- Acciones masivas sobre conversaciones.
+- Vista global de metricas del equipo.
 
-# 💬 Gestión de conversaciones
+### AGENTE
 
-- Crear conversaciones
-- Editar conversaciones
-- Ver detalle completo
-- Exportar CSV
-- Estados:
-  - Pendiente
-  - En proceso
-  - Resuelto
-  - Escalado
-  - Cerrado
-- Prioridades:
-  - Baja
-  - Media
-  - Alta
-  - Crítica
+- Dashboard agente.
+- Creacion y seguimiento de conversaciones.
+- Vista limitada a conversaciones asignadas.
 
----
+## Rutas Relevantes
 
-# 📈 Dashboard Supervisor
+```text
+/login
+/conversations
+/conversations/create
+/conversations/export/csv
+/supervisor/dashboard
+/agent/dashboard
+/admin/dashboard
+/admin/gemini
+/admin/logs
+/users
+/settings/2fa
+/profile
+```
 
-Dashboard dinámico con métricas en tiempo real:
+APIs principales:
 
-- Conversaciones por agente
-- Conversaciones por canal
-- Conversaciones por prioridad
-- Productividad diaria
-- Tiempo promedio de gestión
-- Conversaciones pendientes
-- Conversaciones resueltas
-- Conversaciones escaladas
+```text
+/api/conversations/save
+/api/dashboard/metrics
+/api/dashboard/ai-report
+/api/dashboard/issue-trends
+/api/dashboard/client-360
+/api/dashboard/peak-hour
+/api/dashboard/status-conversations
+/api/agent-dashboard/status-conversations
+/api/session/keep-alive
+/api/webhooks/qpaypro
+```
 
-## Características visuales
+## Variables de Entorno
 
-- Diseño glassmorphism
-- Chart.js
-- Gradientes
-- Animaciones
-- Actualización automática vía polling API
-
----
-
-# 🤖 Inteligencia Artificial
-
-Integración con OpenAI para:
-
-- Análisis automático de métricas
-- Reportes operativos
-- Riesgos operacionales
-- Recomendaciones automáticas
-- Puntos de mejora
-
----
-
-# 🌐 Acceso público con ngrok
-
-El sistema puede exponerse públicamente usando ngrok para:
-
-- QA
-- Demos
-- Pruebas móviles
-- Testing remoto
-
----
-
-# ⚙️ Variables de entorno
-
-## OpenAI
+La aplicacion usa variables de entorno para la conexion a base de datos, Gemini y configuracion general.
 
 ```env
-OPENAI_API_KEY=tu_api_key
-# 👨‍💻 Autor
+PORT=8080
 
-**Erick Alejandro Pedroza Miguel**
+DATABASE_URL=jdbc:postgresql://host:5432/database
+DATABASE_USERNAME=usuario
+DATABASE_PASSWORD=password
 
-Proyecto enfocado en reportería operativa para skills de soporte multicanal.
+GEMINI_API_KEY=tu_api_key
+```
 
----
+Configuracion actual en `application.properties`:
 
-# 📄 Licencia
+```properties
+spring.datasource.url=${DATABASE_URL}&prepareThreshold=0
+spring.datasource.username=${DATABASE_USERNAME}
+spring.datasource.password=${DATABASE_PASSWORD}
+gemini.api.key=${GEMINI_API_KEY}
+gemini.model=gemini-2.5-flash
+app.allowed-email-domain=@fixss.com
+server.servlet.session.timeout=10m
+```
 
-Proyecto privado en desarrollo.
+Si se requiere cambiar el modelo de Gemini, actualizar `gemini.model` en `application.properties`.
+
+Nota: `DATABASE_URL` debe incluir el prefijo JDBC, por ejemplo:
+
+```text
+jdbc:postgresql://localhost:5432/soporte
+```
+
+## Ejecucion Local
+
+Requisitos:
+
+- Java 21
+- Maven 3.9+
+- PostgreSQL
+
+Compilar:
+
+```bash
+./mvnw clean package -DskipTests
+```
+
+Ejecutar:
+
+```bash
+./mvnw spring-boot:run
+```
+
+En Windows:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+La aplicacion queda disponible en:
+
+```text
+http://localhost:8080
+```
+
+## Docker
+
+Construir imagen:
+
+```bash
+docker build -t skill-soporte .
+```
+
+Ejecutar contenedor:
+
+```bash
+docker run --rm -p 8080:8080 \
+  -e DATABASE_URL="jdbc:postgresql://host.docker.internal:5432/soporte" \
+  -e DATABASE_USERNAME="usuario" \
+  -e DATABASE_PASSWORD="password" \
+  -e GEMINI_API_KEY="tu_api_key" \
+  skill-soporte
+```
+
+## Base de Datos
+
+El proyecto usa JPA con:
+
+```properties
+spring.jpa.hibernate.ddl-auto=update
+```
+
+Tablas principales:
+
+- `users`
+- `roles`
+- `conversations`
+- `audit_logs`
+- `issue_type`
+- `departments`
+- `rejection_codes`
+- `webhook_events`
+
+Importante: en PostgreSQL, si se cargan usuarios manualmente, validar que la secuencia de `users.id` este sincronizada con el valor maximo existente.
+
+## Seguridad
+
+- Las contrasenas se almacenan con BCrypt.
+- El acceso se controla por roles.
+- 2FA utiliza TOTP.
+- Las rutas `/api/webhooks/qpaypro` y `/ws/**` se excluyen de CSRF por requerimientos de integracion.
+- El dominio permitido para login se controla con `app.allowed-email-domain`.
+
+## IA con Gemini
+
+Gemini se usa para:
+
+- Resumen operativo del dashboard.
+- Analisis de tendencias por asunto.
+- Apoyo en reportes supervisor.
+- Monitoreo desde `/admin/gemini`.
+
+El servicio esta preparado para no bloquear el arranque si Gemini no esta disponible; en ese caso se muestra un fallback operativo.
+
+## Auditoria
+
+La auditoria registra acciones relevantes del sistema en `audit_logs`, incluyendo:
+
+- Usuario
+- Rol
+- Accion
+- Modulo
+- Descripcion
+- IP
+- User-Agent
+- Fecha
+
+La vista administrativa esta disponible en:
+
+```text
+/admin/logs
+```
+
+## Tiempo Real
+
+El sistema usa WebSocket/STOMP para publicar eventos hacia dashboards y actividad en tiempo real.
+
+Endpoint:
+
+```text
+/ws
+```
+
+Topics usados:
+
+```text
+/topic/dashboard-events
+/topic/webhook-events
+```
+
+## Exportaciones y Reportes
+
+- CSV de conversaciones: `/conversations/export/csv`
+- PDF supervisor: `/supervisor/report/pdf`
+
+El CSV incluye informacion operativa como fecha de creacion, fecha de finalizacion/guardado y tiempo de gestion cuando esta disponible.
+
+## Despliegue
+
+El proyecto incluye `Dockerfile` multi-stage:
+
+1. Compila con Maven y Java 21.
+2. Ejecuta el `.jar` final sobre Eclipse Temurin 21 JRE.
+
+Puerto expuesto:
+
+```text
+8080
+```
+
+## Mantenimiento
+
+Antes de subir cambios:
+
+```bash
+./mvnw -DskipTests compile
+```
+
+Recomendaciones:
+
+- No subir credenciales ni archivos locales.
+- Mantener variables sensibles fuera del repositorio.
+- Revisar migraciones o cambios de entidades antes de desplegar.
+- Validar creacion de usuarios, dashboards y exportaciones despues de cambios de base de datos.
+
+## Autor
+
+Erick Alejandro Pedroza Miguel
+
+Proyecto enfocado en reporteria operativa y gestion de soporte multicanal.
+
+## Licencia
+
+Proyecto privado. Todos los derechos reservados.

@@ -4,6 +4,7 @@ import com.erick.soporte.entity.Conversation;
 import com.erick.soporte.repository.ConversationRepository;
 import com.erick.soporte.service.GeminiReportService;
 import com.erick.soporte.service.PdfReportService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ import java.util.List;
 public class SupervisorReportController {
 
     private final ConversationRepository conversationRepository;
-    private final GeminiReportService geminiReportService;
+    private final ObjectProvider<GeminiReportService> geminiReportServiceProvider;
     private final PdfReportService pdfReportService;
     private String channelName(Long id) {
         if (id == null) return "Desconocido";
@@ -48,11 +49,11 @@ public class SupervisorReportController {
 
     public SupervisorReportController(
             ConversationRepository conversationRepository,
-            GeminiReportService geminiReportService,
+            ObjectProvider<GeminiReportService> geminiReportServiceProvider,
             PdfReportService pdfReportService
     ) {
         this.conversationRepository = conversationRepository;
-        this.geminiReportService = geminiReportService;
+        this.geminiReportServiceProvider = geminiReportServiceProvider;
         this.pdfReportService = pdfReportService;
     }
 
@@ -102,13 +103,16 @@ public class SupervisorReportController {
                 .average()
                 .orElse(0);
 
-        String aiReport = geminiReportService.generateDashboardReport(
+        GeminiReportService geminiReportService = geminiReportServiceProvider.getIfAvailable();
+        String aiReport = geminiReportService != null
+                ? geminiReportService.generateDashboardReport(
                 total,
                 pendientes,
                 resueltas,
                 escaladas,
                 promedioTiempo
-        );
+        )
+                : "Analisis IA local temporal: Gemini no esta disponible en el contexto de la aplicacion.";
 
         byte[] pdf = pdfReportService.generatePdf(
                 total,

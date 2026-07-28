@@ -2,37 +2,72 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Logs del sistema</title>
+    <title>Auditoria del sistema</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
 
-<main class="p-8">
-    <h1 class="text-4xl font-black mb-6">Logs del sistema</h1>
+<main class="max-w-7xl mx-auto p-6">
+    <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
+        <div>
+            <p class="text-[#00d9ff] text-sm font-black uppercase tracking-[0.22em] mb-2">Administracion</p>
+            <h1 class="text-4xl font-black">Auditoria del sistema</h1>
+            <p class="text-slate-300 text-sm mt-2">
+                Ultimos eventos registrados de acciones, usuarios, modulos e IP.
+            </p>
+        </div>
+
+        <a href="/admin/dashboard"
+           class="bg-[#ffd700] hover:bg-yellow-300 text-black px-5 py-3 rounded-2xl font-black">
+            Volver al panel
+        </a>
+    </header>
+
+    <section class="grid md:grid-cols-3 gap-5 mb-6">
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Eventos registrados</p>
+            <h2 class="text-5xl font-black text-[#ffd700] mt-3" th:text="${totalAuditLogs}">0</h2>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Vista actual</p>
+            <h2 class="text-5xl font-black text-[#00d9ff] mt-3" th:text="${logs.size()}">0</h2>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Orden</p>
+            <h2 class="text-3xl font-black text-[#00ff88] mt-3">Reciente</h2>
+        </div>
+    </section>
 
     <div class="bg-white/10 border border-white/10 rounded-3xl overflow-hidden">
         <table class="w-full text-sm">
-            <thead class="bg-white/10">
+            <thead class="bg-white/10 text-[#00d9ff] uppercase text-xs tracking-wide">
             <tr>
                 <th class="p-4 text-left">Fecha</th>
                 <th class="p-4 text-left">Usuario</th>
                 <th class="p-4 text-left">Rol</th>
-                <th class="p-4 text-left">Acción</th>
-                <th class="p-4 text-left">Módulo</th>
-                <th class="p-4 text-left">Descripción</th>
+                <th class="p-4 text-left">Accion</th>
+                <th class="p-4 text-left">Modulo</th>
+                <th class="p-4 text-left">Descripcion</th>
                 <th class="p-4 text-left">IP</th>
             </tr>
             </thead>
 
             <tbody>
             <tr th:each="log : ${logs}" class="border-t border-white/10 hover:bg-white/5">
-                <td class="p-4" th:text="${#temporals.format(log.fecha, 'dd/MM/yyyy HH:mm:ss')}"></td>
-                <td class="p-4" th:text="${log.usuarioNombre}"></td>
-                <td class="p-4" th:text="${log.rol}"></td>
+                <td class="p-4 whitespace-nowrap" th:text="${#temporals.format(log.fecha, 'dd/MM/yyyy HH:mm:ss')}"></td>
+                <td class="p-4" th:text="${log.usuarioNombre ?: 'Sistema'}"></td>
+                <td class="p-4" th:text="${log.rol ?: '-'}"></td>
                 <td class="p-4 font-bold text-[#ffd700]" th:text="${log.accion}"></td>
                 <td class="p-4" th:text="${log.modulo}"></td>
-                <td class="p-4" th:text="${log.descripcion}"></td>
-                <td class="p-4" th:text="${log.ip}"></td>
+                <td class="p-4 min-w-[260px]" th:text="${log.descripcion}"></td>
+                <td class="p-4 whitespace-nowrap" th:text="${log.ip ?: '-'}"></td>
+            </tr>
+            <tr th:if="${logs == null or logs.empty}">
+                <td colspan="7" class="p-8 text-center text-slate-300">
+                    Aun no hay eventos de auditoria registrados.
+                </td>
             </tr>
             </tbody>
         </table>

@@ -436,7 +436,52 @@ public class SupervisorDashboardController {
         trend.put("pending", trendMetric(currentPending, previousPending, true));
         trend.put("escalated", trendMetric(currentEscalated, previousEscalated, true));
         trend.put("avgTime", trendMetric(currentAvgTime, previousAvgTime, true));
+        trend.put("timeTrendLabel", timeTrendLabel(currentAvgTime, previousAvgTime));
+        trend.put("timeTrendTone", percentChange(currentAvgTime, previousAvgTime) <= 0 ? "positive" : "negative");
+        trend.put("timeTrendDescription", "vs semana anterior");
+        trend.put("timeSeries", averageTimeByWeek(conversations, anchor));
         return trend;
+    }
+
+    private Map<String, Object> averageTimeByWeek(List<Conversation> conversations, LocalDate anchor) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM");
+        LocalDate firstWeek = anchor.with(WeekFields.ISO.dayOfWeek(), 1).minusWeeks(5);
+
+        Map<LocalDate, Double> byWeek = conversations.stream()
+                .filter(c -> c.getFechaInicio() != null)
+                .filter(c -> c.getTiempoGestionMinutos() != null)
+                .filter(c -> !c.getFechaInicio().toLocalDate().isBefore(firstWeek))
+                .filter(c -> !c.getFechaInicio().toLocalDate().isAfter(anchor))
+                .collect(Collectors.groupingBy(
+                        c -> c.getFechaInicio().toLocalDate().with(WeekFields.ISO.dayOfWeek(), 1),
+                        TreeMap::new,
+                        Collectors.averagingInt(Conversation::getTiempoGestionMinutos)
+                ));
+
+        List<LocalDate> weeks = java.util.stream.IntStream.rangeClosed(0, 5)
+                .mapToObj(firstWeek::plusWeeks)
+                .toList();
+
+        Map<String, Object> series = new LinkedHashMap<>();
+        series.put("labels", weeks.stream()
+                .map(week -> "Sem " + week.format(formatter))
+                .toList());
+        series.put("values", weeks.stream()
+                .map(week -> Math.round(byWeek.getOrDefault(week, 0.0) * 10.0) / 10.0)
+                .toList());
+        return series;
+    }
+
+    private String timeTrendLabel(double current, double previous) {
+        if (previous == 0 && current == 0) {
+            return "0.0%";
+        }
+
+        if (previous == 0) {
+            return "Nuevo";
+        }
+
+        return formatSignedPercent(percentChange(current, previous));
     }
 
     private Map<String, Object> calculateIssueTrend(List<Conversation> conversations, LocalDate selectedAnchor) {

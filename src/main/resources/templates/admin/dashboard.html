@@ -17,7 +17,7 @@
     <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-5 mb-8">
         <div>
             <p class="text-[#00d9ff] text-sm font-black uppercase tracking-[0.22em] mb-2">
-                Administración
+                Administracion
             </p>
 
             <h1 class="text-5xl font-black">
@@ -25,7 +25,7 @@
             </h1>
 
             <p class="text-slate-300 text-sm mt-2">
-                Control general del sistema, usuarios, seguridad y reportería.
+                Control general del sistema, usuarios, seguridad y reporteria.
             </p>
         </div>
 
@@ -47,15 +47,20 @@
             <h2 class="text-5xl font-black text-[#00d9ff] mt-3" th:text="${totalConversations}">0</h2>
         </div>
 
-        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+        <a href="/settings/2fa"
+           class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
             <p class="text-slate-300 font-bold">2FA</p>
             <h2 class="text-3xl font-black text-[#00ff88] mt-3">Activo</h2>
-        </div>
+            <p class="text-xs text-slate-300 mt-2">Configuracion de seguridad</p>
+        </a>
 
-        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+        <a href="/admin/gemini"
+           class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
             <p class="text-slate-300 font-bold">IA</p>
             <h2 class="text-3xl font-black text-[#ffd700] mt-3">Gemini</h2>
-        </div>
+            <p class="text-xs text-slate-300 mt-2"
+               th:text="${geminiStatus['configured']} ? 'Configurado' : 'Sin API key'">Configurado</p>
+        </a>
 
     </section>
 
@@ -63,7 +68,7 @@
 
         <a href="/users"
            class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
-            <h2 class="text-2xl font-black mb-2">👥 Usuarios</h2>
+            <h2 class="text-2xl font-black mb-2">Usuarios</h2>
             <p class="text-slate-300 text-sm">
                 Crear, consultar y administrar usuarios del sistema.
             </p>
@@ -71,116 +76,83 @@
 
         <a href="/supervisor/dashboard"
            class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
-            <h2 class="text-2xl font-black mb-2">📊 Dashboard Supervisor</h2>
+            <h2 class="text-2xl font-black mb-2">Dashboard Supervisor</h2>
             <p class="text-slate-300 text-sm">
-                Métricas, gráficos y análisis operativo del equipo.
+                Metricas, graficos y analisis operativo del equipo.
             </p>
         </a>
 
         <a href="/settings/2fa"
            class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
-            <h2 class="text-2xl font-black mb-2">🔐 Seguridad 2FA</h2>
+            <h2 class="text-2xl font-black mb-2">Seguridad 2FA</h2>
             <p class="text-slate-300 text-sm">
-                Configuración de autenticación con app autenticadora.
+                Configuracion de autenticacion con app autenticadora.
             </p>
         </a>
 
         <a href="/conversations/export/csv"
            class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
-            <h2 class="text-2xl font-black mb-2">⬇ Exportar CSV</h2>
+            <h2 class="text-2xl font-black mb-2">Exportar CSV</h2>
             <p class="text-slate-300 text-sm">
-                Descargar histórico completo de conversaciones.
+                Descargar historico completo de conversaciones.
             </p>
         </a>
 
-        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
-            <h2 class="text-2xl font-black mb-2">🤖 Estado IA</h2>
+        <a href="/admin/gemini"
+           class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
+            <h2 class="text-2xl font-black mb-2">Estado IA</h2>
             <p class="text-slate-300 text-sm">
-                Servicio preparado para análisis automático con Gemini.
+                Uso, estado, errores y actividad reciente de Gemini.
             </p>
-        </div>
+            <p class="text-[#00d9ff] text-xs font-black mt-4 uppercase tracking-wide"
+               th:text="${geminiStatus['externalCalls']} + ' llamadas externas'">0 llamadas externas</p>
+        </a>
 
-        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
-            <h2 class="text-2xl font-black mb-2">🧾 Auditoría</h2>
+        <a href="/admin/logs"
+           class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
+            <h2 class="text-2xl font-black mb-2">Auditoria</h2>
             <p class="text-slate-300 text-sm">
-                Próximamente: historial de acciones y cambios del sistema.
+                Historial de acciones, usuarios, modulos e IP del sistema.
             </p>
-        </div>
+            <p class="text-[#ffd700] text-xs font-black mt-4 uppercase tracking-wide"
+               th:text="${totalAuditLogs} + ' eventos registrados'">0 eventos registrados</p>
+        </a>
 
     </section>
 
 </div>
 <script>
-    console.log("Script WebSocket cargado en dashboard admin");
-
     function requestNotificationPermission() {
-        console.log("Verificando permisos de notificación...");
-
         if (!("Notification" in window)) {
-            console.warn("Este navegador no soporta notificaciones");
             return;
         }
 
-        console.log("Estado actual de permisos:", Notification.permission);
-
         if (Notification.permission === "default") {
-            Notification.requestPermission().then(permission => {
-                console.log("Nuevo estado de permisos:", permission);
-            });
+            Notification.requestPermission();
         }
     }
 
     function showDesktopNotification(event) {
-        console.log("Intentando mostrar notificación:", event);
-
-        if (!("Notification" in window)) {
-            console.warn("Notification API no disponible");
+        if (!("Notification" in window) || Notification.permission !== "granted") {
             return;
         }
 
-        if (Notification.permission === "granted") {
-            new Notification("Nuevo evento Qpaypro Detectado", {
-                body: event.description || event.payload || "Se recibió un nuevo evento",
-                icon: "/img/logo.png"
-            });
-        } else {
-            console.warn("No se puede mostrar notificación. Permiso:", Notification.permission);
-        }
+        new Notification("Nuevo evento Skill Soporte", {
+            body: event.description || event.payload || "Se recibio un nuevo evento",
+            icon: "/img/logo.png"
+        });
     }
 
     function connectWebSocket() {
-        console.log("Inicializando conexión WebSocket...");
-
         const socket = new SockJS('/ws');
         const stompClient = Stomp.over(socket);
+        stompClient.debug = null;
 
-        stompClient.debug = function (str) {
-            console.log("STOMP:", str);
-        };
-
-        stompClient.connect(
-            {},
-            function () {
-                console.log("WebSocket conectado correctamente");
-
-                stompClient.subscribe('/topic/webhook-events', function (message) {
-                    console.log("Mensaje crudo recibido:", message.body);
-
-                    const event = JSON.parse(message.body);
-
-                    console.log("Nuevo evento recibido:", event);
-
-                    showDesktopNotification(event);
-
-                    if (typeof refreshDashboardMetrics === "function") {
-                        refreshDashboardMetrics();
-                    }
-                });
-            },
-            function (error) {
-                console.error("Error conectando WebSocket:", error);
-            }
-        );
+        stompClient.connect({}, function () {
+            stompClient.subscribe('/topic/webhook-events', function (message) {
+                showDesktopNotification(JSON.parse(message.body));
+            });
+        });
     }
 
     requestNotificationPermission();

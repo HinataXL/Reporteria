@@ -4,8 +4,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class GeminiReportService {
@@ -23,6 +26,17 @@ public class GeminiReportService {
     private String lastIssueTrendKey = null;
     private String lastIssueTrendReport = null;
     private long lastIssueTrendGenerated = 0;
+    private final AtomicLong dashboardRequests = new AtomicLong();
+    private final AtomicLong issueTrendRequests = new AtomicLong();
+    private final AtomicLong cacheHits = new AtomicLong();
+    private final AtomicLong externalCalls = new AtomicLong();
+    private final AtomicLong successfulCalls = new AtomicLong();
+    private final AtomicLong failedCalls = new AtomicLong();
+    private volatile LocalDateTime lastCallAt;
+    private volatile LocalDateTime lastSuccessAt;
+    private volatile LocalDateTime lastFailureAt;
+    private volatile String lastOperation = "Sin actividad";
+    private volatile String lastError = null;
 
     public String generateDashboardReport(
             long total,
@@ -31,9 +45,11 @@ public class GeminiReportService {
             long escaladas,
             double promedioTiempo
     ) {
+        dashboardRequests.incrementAndGet();
         long now = System.currentTimeMillis();
 
         if (lastReport != null && (now - lastGenerated) < 300000) {
+            cacheHits.incrementAndGet();
             return lastReport;
         }
 
@@ -54,7 +70,7 @@ public class GeminiReportService {
         );
 
         try {
-            String report = callGemini(prompt);
+            String report = callGemini(prompt, "Resumen dashboard");
 
             lastReport = report;
             lastGenerated = now;
@@ -77,10 +93,12 @@ public class GeminiReportService {
     }
 
     public String generateIssueTrendAnalysis(Map<String, Object> issueTrend) {
+        issueTrendRequests.incrementAndGet();
         long now = System.currentTimeMillis();
         String cacheKey = String.valueOf(issueTrend);
 
         if (cacheKey.equals(lastIssueTrendKey) && lastIssueTrendReport != null && (now - lastIssueTrendGenerated) < 300000) {
+            cacheHits.incrementAndGet();
             return lastIssueTrendReport;
         }
 
@@ -99,7 +117,7 @@ public class GeminiReportService {
             """.formatted(issueTrend);
 
         try {
-            String report = callGemini(prompt);
+            String report = callGemini(prompt, "Tendencia de asuntos");
             lastIssueTrendKey = cacheKey;
             lastIssueTrendReport = report;
             lastIssueTrendGenerated = now;
@@ -109,7 +127,29 @@ public class GeminiReportService {
         }
     }
 
-    private String callGemini(String prompt) {
+    public Map<String, Object> getUsageSnapshot() {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("model", model);
+        snapshot.put("configured", apiKey != null && !apiKey.isBlank() && !apiKey.contains("${"));
+        snapshot.put("dashboardRequests", dashboardRequests.get());
+        snapshot.put("issueTrendRequests", issueTrendRequests.get());
+        snapshot.put("cacheHits", cacheHits.get());
+        snapshot.put("externalCalls", externalCalls.get());
+        snapshot.put("successfulCalls", successfulCalls.get());
+        snapshot.put("failedCalls", failedCalls.get());
+        snapshot.put("lastCallAt", lastCallAt);
+        snapshot.put("lastSuccessAt", lastSuccessAt);
+        snapshot.put("lastFailureAt", lastFailureAt);
+        snapshot.put("lastOperation", lastOperation);
+        snapshot.put("lastError", lastError);
+        return snapshot;
+    }
+
+    private String callGemini(String prompt, String operation) {
+        externalCalls.incrementAndGet();
+        lastCallAt = LocalDateTime.now();
+        lastOperation = operation;
+
         String url = "https://generativelanguage.googleapis.com/v1beta/models/"
                 + model
                 + ":generateContent?key="
@@ -125,15 +165,25 @@ public class GeminiReportService {
                 )
         );
 
-        Map response = restTemplate.postForObject(url, body, Map.class);
+        try {
+            Map response = restTemplate.postForObject(url, body, Map.class);
 
-        List candidates = (List) response.get("candidates");
-        Map candidate = (Map) candidates.get(0);
-        Map content = (Map) candidate.get("content");
-        List parts = (List) content.get("parts");
-        Map part = (Map) parts.get(0);
+            List candidates = (List) response.get("candidates");
+            Map candidate = (Map) candidates.get(0);
+            Map content = (Map) candidate.get("content");
+            List parts = (List) content.get("parts");
+            Map part = (Map) parts.get(0);
 
-        return String.valueOf(part.get("text"));
+            successfulCalls.incrementAndGet();
+            lastSuccessAt = LocalDateTime.now();
+            lastError = null;
+            return String.valueOf(part.get("text"));
+        } catch (Exception e) {
+            failedCalls.incrementAndGet();
+            lastFailureAt = LocalDateTime.now();
+            lastError = e.getMessage();
+            throw e;
+        }
     }
 
     private String fallbackIssueTrendAnalysis(Map<String, Object> issueTrend) {

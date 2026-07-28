@@ -4,6 +4,7 @@ import com.erick.soporte.entity.Conversation;
 import com.erick.soporte.repository.ConversationRepository;
 import com.erick.soporte.service.ActiveSessionService;
 import com.erick.soporte.service.GeminiReportService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,16 +29,16 @@ import java.util.stream.Collectors;
 public class DashboardApiController {
 
     private final ConversationRepository conversationRepository;
-    private final GeminiReportService geminiReportService;
+    private final ObjectProvider<GeminiReportService> geminiReportServiceProvider;
     private final ActiveSessionService activeSessionService;
 
     public DashboardApiController(
             ConversationRepository conversationRepository,
-            GeminiReportService geminiReportService,
+            ObjectProvider<GeminiReportService> geminiReportServiceProvider,
             ActiveSessionService activeSessionService
     ) {
         this.conversationRepository = conversationRepository;
-        this.geminiReportService = geminiReportService;
+        this.geminiReportServiceProvider = geminiReportServiceProvider;
         this.activeSessionService = activeSessionService;
 
     }
@@ -66,13 +67,16 @@ public class DashboardApiController {
                 .average()
                 .orElse(0);
 
-        String reporte = geminiReportService.generateDashboardReport(
+        GeminiReportService geminiReportService = geminiReportServiceProvider.getIfAvailable();
+        String reporte = geminiReportService != null
+                ? geminiReportService.generateDashboardReport(
                 total,
                 pendientes,
                 resueltas,
                 escaladas,
                 promedioTiempo
-        );
+        )
+                : "Analisis IA local temporal: Gemini no esta disponible en el contexto de la aplicacion.";
 
         Map<String, Object> response = new LinkedHashMap<>();
 
@@ -127,7 +131,7 @@ public class DashboardApiController {
         );
         Map<String, Object> weeklyTrend = calculateWeeklyTrend(conversations);
         Map<String, Object> peakHours = calculatePeakHours(conversations);
-        Map<String, Object> issueTrend = calculateIssueTrend(allConversations, resolveTrendAnchor(allConversations, from, to));
+        Map<String, Object> issueTrend = calculateIssueTrend(allConversations, from, to);
 
         Map<String, Long> porAgente = conversations.stream()
                 .collect(Collectors.groupingBy(
@@ -257,9 +261,11 @@ public class DashboardApiController {
             @RequestParam(required = false) String to
     ) {
         List<Conversation> conversations = conversationRepository.findAll();
-        LocalDate anchor = resolveTrendAnchor(conversations, from, to);
-        Map<String, Object> issueTrend = calculateIssueTrend(conversations, anchor);
-        issueTrend.put("analysis", geminiReportService.generateIssueTrendAnalysis(issueTrend));
+        Map<String, Object> issueTrend = calculateIssueTrend(conversations, from, to);
+        GeminiReportService geminiReportService = geminiReportServiceProvider.getIfAvailable();
+        issueTrend.put("analysis", geminiReportService != null
+                ? geminiReportService.generateIssueTrendAnalysis(issueTrend)
+                : "Aun no es posible consultar Gemini. Revisa la configuracion del servicio IA.");
         return issueTrend;
     }
 
@@ -733,7 +739,52 @@ public class DashboardApiController {
         trend.put("pending", trendMetric(currentPending, previousPending, true));
         trend.put("escalated", trendMetric(currentEscalated, previousEscalated, true));
         trend.put("avgTime", trendMetric(currentAvgTime, previousAvgTime, true));
+        trend.put("timeTrendLabel", timeTrendLabel(currentAvgTime, previousAvgTime));
+        trend.put("timeTrendTone", percentChange(currentAvgTime, previousAvgTime) <= 0 ? "positive" : "negative");
+        trend.put("timeTrendDescription", "vs semana anterior");
+        trend.put("timeSeries", averageTimeByWeek(conversations, anchor));
         return trend;
+    }
+
+    private Map<String, Object> averageTimeByWeek(List<Conversation> conversations, LocalDate anchor) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM");
+        LocalDate firstWeek = anchor.with(WeekFields.ISO.dayOfWeek(), 1).minusWeeks(5);
+
+        Map<LocalDate, Double> byWeek = conversations.stream()
+                .filter(c -> c.getFechaInicio() != null)
+                .filter(c -> c.getTiempoGestionMinutos() != null)
+                .filter(c -> !c.getFechaInicio().toLocalDate().isBefore(firstWeek))
+                .filter(c -> !c.getFechaInicio().toLocalDate().isAfter(anchor))
+                .collect(Collectors.groupingBy(
+                        c -> c.getFechaInicio().toLocalDate().with(WeekFields.ISO.dayOfWeek(), 1),
+                        TreeMap::new,
+                        Collectors.averagingInt(Conversation::getTiempoGestionMinutos)
+                ));
+
+        List<LocalDate> weeks = java.util.stream.IntStream.rangeClosed(0, 5)
+                .mapToObj(firstWeek::plusWeeks)
+                .toList();
+
+        Map<String, Object> series = new LinkedHashMap<>();
+        series.put("labels", weeks.stream()
+                .map(week -> "Sem " + week.format(formatter))
+                .toList());
+        series.put("values", weeks.stream()
+                .map(week -> Math.round(byWeek.getOrDefault(week, 0.0) * 10.0) / 10.0)
+                .toList());
+        return series;
+    }
+
+    private String timeTrendLabel(double current, double previous) {
+        if (previous == 0 && current == 0) {
+            return "0.0%";
+        }
+
+        if (previous == 0) {
+            return "Nuevo";
+        }
+
+        return formatSignedPercent(percentChange(current, previous));
     }
 
     private Map<String, Object> calculateIssueTrend(List<Conversation> conversations, LocalDate selectedAnchor) {
@@ -772,6 +823,52 @@ public class DashboardApiController {
         Map<String, Object> trend = new LinkedHashMap<>();
         trend.put("range", currentStart.format(DateTimeFormatter.ofPattern("dd/MM")) + " - " + anchor.format(DateTimeFormatter.ofPattern("dd/MM")));
         trend.put("previousRange", previousStart.format(DateTimeFormatter.ofPattern("dd/MM")) + " - " + currentStart.minusDays(1).format(DateTimeFormatter.ofPattern("dd/MM")));
+        trend.put("items", items);
+        trend.put("summary", issueTrendSummary(items));
+        return trend;
+    }
+
+    private Map<String, Object> calculateIssueTrend(List<Conversation> conversations, String from, String to) {
+        LocalDate anchor = resolveTrendAnchor(conversations, from, to);
+        LocalDate currentStart = from != null && !from.isBlank()
+                ? LocalDate.parse(from)
+                : anchor.minusDays(6);
+
+        if (currentStart.isAfter(anchor)) {
+            currentStart = anchor;
+        }
+
+        LocalDate currentPeriodStart = currentStart;
+        LocalDate currentPeriodEnd = anchor;
+        long periodDays = ChronoUnit.DAYS.between(currentPeriodStart, currentPeriodEnd) + 1;
+        LocalDate previousStart = currentPeriodStart.minusDays(periodDays);
+        LocalDate previousEnd = currentPeriodStart.minusDays(1);
+
+        Map<String, Long> current = conversations.stream()
+                .filter(c -> c.getFechaInicio() != null)
+                .filter(c -> !c.getFechaInicio().toLocalDate().isBefore(currentPeriodStart))
+                .filter(c -> !c.getFechaInicio().toLocalDate().isAfter(currentPeriodEnd))
+                .collect(Collectors.groupingBy(this::issueName, Collectors.counting()));
+
+        Map<String, Long> previous = conversations.stream()
+                .filter(c -> c.getFechaInicio() != null)
+                .filter(c -> !c.getFechaInicio().toLocalDate().isBefore(previousStart))
+                .filter(c -> !c.getFechaInicio().toLocalDate().isAfter(previousEnd))
+                .collect(Collectors.groupingBy(this::issueName, Collectors.counting()));
+
+        List<Map<String, Object>> items = java.util.stream.Stream.concat(current.keySet().stream(), previous.keySet().stream())
+                .distinct()
+                .map(issue -> issueTrendItem(issue, current.getOrDefault(issue, 0L), previous.getOrDefault(issue, 0L)))
+                .sorted(Comparator
+                        .comparing((Map<String, Object> item) -> Math.abs((Long) item.get("delta"))).reversed()
+                        .thenComparing(item -> (Long) item.get("current"), Comparator.reverseOrder()))
+                .limit(10)
+                .toList();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM");
+        Map<String, Object> trend = new LinkedHashMap<>();
+        trend.put("range", currentPeriodStart.format(formatter) + " - " + currentPeriodEnd.format(formatter));
+        trend.put("previousRange", previousStart.format(formatter) + " - " + previousEnd.format(formatter));
         trend.put("items", items);
         trend.put("summary", issueTrendSummary(items));
         return trend;

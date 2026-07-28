@@ -7,31 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
-        body {
-            background:
-                    radial-gradient(circle at top left, rgba(0, 217, 255, 0.12), transparent 35%),
-                    radial-gradient(circle at bottom right, rgba(255, 215, 0, 0.08), transparent 30%),
-                    #10231F;
-        }
-
-        .glass-card {
-            background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
-            border: 1px solid rgba(255,255,255,0.12);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08);
-        }
-
-        .form-input {
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(0,217,255,0.22);
-            transition: all .2s ease;
-        }
-
-        .form-input:focus {
-            border-color: #00d9ff;
-            box-shadow: 0 0 0 3px rgba(0,217,255,0.12);
-            transform: translateY(-1px);
-        }
-
         .fade-up {
             animation: fadeUp .55s ease both;
         }
@@ -40,52 +15,463 @@
             from { opacity: 0; transform: translateY(14px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        body {
+            background: linear-gradient(180deg, #eef8ff 0%, #f7fbff 48%, #f5f7fb 100%);
+            color: #08093f;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .conversation-shell {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 24px 22px;
+        }
+
+        .create-header {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 14px;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .header-tools {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .back-link,
+        .secondary-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 36px;
+            border-radius: 8px;
+            padding: 0 13px;
+            background: #fff;
+            border: 1px solid #dfe5f2;
+            color: #08093f;
+            font-size: 12px;
+            font-weight: 900;
+            box-shadow: 0 8px 18px rgba(17,24,39,0.04);
+        }
+
+        .back-link:hover,
+        .secondary-action:hover {
+            color: #6236ff;
+            background: #f4f1ff;
+        }
+
+        .primary-action,
+        .new-chat-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 36px;
+            border-radius: 8px;
+            padding: 0 15px;
+            background: linear-gradient(135deg, #7448ff, #6236ff);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 950;
+            box-shadow: 0 10px 24px rgba(98,54,255,.18);
+        }
+
+        .page-kicker {
+            display: none;
+        }
+
+        .page-title {
+            color: #08093f;
+            font-size: clamp(26px, 4vw, 34px);
+            font-weight: 950;
+            letter-spacing: 0;
+            line-height: 1.05;
+        }
+
+        .page-subtitle {
+            color: #667085;
+            font-size: 12px;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 34px;
+            border-radius: 999px;
+            padding: 0 12px;
+            background: #e9f9f0;
+            border: 1px solid #bdebd2;
+            color: #07864a;
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .draft-pill {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            border-radius: 999px;
+            padding: 0 12px;
+            background: #f4f1ff;
+            border: 1px solid #d8defc;
+            color: #6236ff;
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .tabs-panel {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .conversation-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 34px;
+            border-radius: 999px;
+            padding: 0 8px 0 12px;
+            background: #fff;
+            border: 1px solid #dfe5f2;
+            color: #344054;
+            font-size: 11px;
+            font-weight: 900;
+            box-shadow: none;
+            transition: all .18s ease;
+        }
+
+        .conversation-tab:hover,
+        .conversation-tab.active {
+            color: #6236ff;
+            border-color: #c8c0ff;
+            background: #f4f1ff;
+        }
+
+        .conversation-tab-close {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 999px;
+            color: #667085;
+        }
+
+        .conversation-tab-close:hover {
+            background: #ffe4e8;
+            color: #e5484d;
+        }
+
+        .conversation-form {
+            border-radius: 12px;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .glass-card {
+            background: #fff;
+            border: 1px solid #d8e2f0;
+            box-shadow: 0 16px 36px rgba(53,79,110,0.10);
+        }
+
+        .form-section {
+            padding: 16px 18px;
+            border-bottom: 1px solid #edf1f7;
+        }
+
+        .form-section.grid {
+            gap: 12px 14px !important;
+        }
+
+        .section-title {
+            grid-column: 1 / -1;
+            color: #667085;
+            font-size: 12px;
+            font-weight: 950;
+            margin-bottom: 0;
+            text-transform: uppercase;
+        }
+
+        .section-copy {
+            display: none;
+        }
+
+        label {
+            color: #667085 !important;
+            font-size: 11px !important;
+            letter-spacing: .01em;
+        }
+
+        .form-input {
+            min-height: 36px;
+            border-radius: 999px;
+            background: #fff;
+            border: 1px solid #cfd7e4;
+            color: #08093f;
+            padding: 7px 12px !important;
+            font-size: 13px;
+        }
+
+        .form-input:focus {
+            border-color: #6236ff;
+            box-shadow: 0 0 0 4px rgba(98,54,255,0.10);
+            transform: none;
+        }
+
+        .form-input.field-error {
+            border-color: #ff5c7a !important;
+            box-shadow: 0 0 0 4px rgba(255,92,122,0.10);
+        }
+
+        .field-error-message {
+            display: none;
+            margin-top: 5px;
+            color: #d92d55;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .field-error-message.visible {
+            display: block;
+        }
+
+        .counter-warning {
+            color: #d97706 !important;
+            font-weight: 900;
+        }
+
+        .quick-templates {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding-top: 2px;
+        }
+
+        .quick-template-btn {
+            min-height: 30px;
+            border-radius: 999px;
+            padding: 0 11px;
+            border: 1px solid #d8defc;
+            background: #f8fbff;
+            color: #344054;
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .quick-template-btn:hover {
+            color: #6236ff;
+            background: #f4f1ff;
+        }
+
+        .conversation-form.is-saving {
+            opacity: .72;
+            pointer-events: none;
+        }
+
+        select.form-input {
+            background-color: #fff !important;
+        }
+
+        textarea.form-input {
+            min-height: 92px;
+            border-radius: 12px;
+        }
+
+        .management-section {
+            background: #fff;
+        }
+
+        .timer-card {
+            background: linear-gradient(145deg, #ffffff, #f4f6ff) !important;
+            border: 1px solid #d8defc !important;
+            border-radius: 12px !important;
+            padding: 14px !important;
+            align-self: end;
+        }
+
+        #timerDisplay {
+            color: #6236ff !important;
+            font-size: 30px !important;
+            line-height: 1;
+        }
+
+        #timerStatus {
+            color: #07864a !important;
+        }
+
+        #pauseTimerBtn {
+            background: #07c8f9 !important;
+            color: #06101a !important;
+            border-radius: 8px !important;
+            min-height: 34px;
+        }
+
+        .timer-status {
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            border-radius: 999px;
+            padding: 4px 9px;
+            font-size: 11px;
+            font-weight: 950;
+        }
+
+        .timer-status.running {
+            background: #e9f9f0;
+            color: #07864a !important;
+        }
+
+        .timer-status.paused {
+            background: #fff7df;
+            color: #ad6500 !important;
+        }
+
+        .timer-action {
+            margin-top: 10px;
+            width: 100%;
+            border-radius: 8px;
+            min-height: 34px;
+            font-size: 12px;
+            font-weight: 950;
+            transition: all .18s ease;
+        }
+
+        .timer-action.running {
+            background: linear-gradient(135deg, #7448ff, #6236ff) !important;
+            color: #fff !important;
+        }
+
+        .timer-action.paused {
+            background: #6236ff !important;
+            color: #fff !important;
+        }
+
+        .toggle-card {
+            background: #fbfcff !important;
+            border: 1px solid #cfd7e4 !important;
+            border-radius: 12px !important;
+            padding: 12px !important;
+        }
+
+        .toggle-card input[type="checkbox"] {
+            accent-color: #667085;
+        }
+
+        .visual-field {
+            pointer-events: none;
+        }
+
+        .visual-field .form-input,
+        .visual-field input {
+            background: #f8fbff !important;
+            color: #667085;
+            opacity: 1;
+        }
+
+        .form-actions {
+            background: #fbfcff;
+            padding: 12px 18px;
+        }
+
+        #workspaceToast {
+            background: #18bd73 !important;
+            color: #fff !important;
+            border-radius: 12px !important;
+        }
+
+        #sessionContinuePrompt > div {
+            background: #fff !important;
+            border: 1px solid #dfe5f2 !important;
+            color: #08093f;
+        }
+
+        #sessionContinuePrompt h2 {
+            color: #6236ff !important;
+        }
+
+        #sessionContinuePrompt p {
+            color: #667085 !important;
+        }
+
+        @media (max-width: 768px) {
+            .conversation-shell {
+                padding: 18px;
+            }
+
+            .create-header {
+                grid-template-columns: 1fr;
+            }
+
+            .header-tools {
+                justify-content: flex-start;
+            }
+        }
     </style>
 </head>
 
-<body class="text-[#F4F0E6] min-h-screen">
+<body class="min-h-screen">
 
-<div class="max-w-6xl mx-auto p-6">
+<div class="conversation-shell">
 
-    <header class="mb-8 fade-up">
-        <a href="/conversations"
-           class="inline-flex items-center gap-2 text-[#ffd700] border border-[#ffd700] px-4 py-2 rounded-2xl font-black hover:bg-[#ffd700] hover:text-black transition">
-            ← Volver
-        </a>
+    <header class="create-header fade-up">
+        <div>
+            <a href="/conversations"
+               class="back-link">
+                Volver
+            </a>
 
-        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mt-6">
-            <div>
-                <h1 class="text-5xl font-black tracking-tight">
-                    Nueva conversación
+            <div class="mt-3">
+                <p class="page-kicker">Insights Desk</p>
+                <h1 class="page-title">
+                    Nueva conversacion
                 </h1>
 
-                <p class="text-slate-300 mt-2">
-                    🎧 Registro manual de atención de soporte.
+                <p class="page-subtitle">
+                    Registro manual de atencion de soporte.
                 </p>
             </div>
+        </div>
 
-            <div class="bg-white/10 border border-white/10 rounded-2xl px-4 py-2 text-sm font-bold">
-                <span class="text-[#00d9ff]">●</span> Sistema Activo
-            </div>
+        <div class="header-tools">
+            <span class="status-pill">Sistema activo</span>
+            <span id="draftStatus" class="draft-pill">Borrador listo</span>
+            <button type="submit"
+                    form="conversationForm"
+                    class="primary-action">
+                Guardar
+            </button>
         </div>
     </header>
 
-    <div class="mb-6">
-        <div class="flex items-center gap-3 mb-4">
-            <button type="button"
-                    id="btnNewConversation"
-                    class="bg-[#00d9ff] text-black px-5 py-3 rounded-2xl font-black">
-                + Nueva conversación
-            </button>
-        </div>
+    <div class="tabs-panel">
+        <button type="button"
+                id="btnNewConversation"
+                class="new-chat-btn">
+            Nueva conversacion
+        </button>
 
-        <div id="conversationTabs" class="flex flex-wrap gap-3"></div>
+        <div id="conversationTabs" class="flex flex-wrap gap-2"></div>
     </div>
 
     <form id="conversationForm"
           th:action="@{/conversations/save}"
           method="post"
-          class="glass-card rounded-[32px] p-7 fade-up grid gap-7">
+          class="glass-card conversation-form fade-up">
 
         <input type="hidden"
                th:name="${_csrf.parameterName}"
@@ -94,65 +480,75 @@
                id="fechaInicio"
                name="fechaInicio" />
 
-        <section class="grid md:grid-cols-2 gap-5">
+        <section class="form-section grid md:grid-cols-2 gap-4">
+            <h2 class="section-title">Cliente</h2>
+            <p class="section-copy">Datos basicos para identificar la atencion.</p>
 
             <div>
-                <label class="font-black text-sm text-slate-300">
-                    👤 Nombre del cliente <span class="text-red-400">*</span>
+                <label class="font-black text-sm">
+                    Nombre del cliente <span class="text-red-400">*</span>
                 </label>
                 <input name="clienteNombre"
                        required
-                       placeholder="Ej. Juan Pérez"
+                       list="recentClients"
+                       placeholder="Ej. Juan Perez"
                        class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none">
+                <datalist id="recentClients"></datalist>
+                <p class="field-error-message" data-error-for="clienteNombre"></p>
             </div>
 
             <div>
-                <label class="font-black text-sm text-slate-300">
-                    📞 Teléfono
+                <label class="font-black text-sm">
+                    Telefono
                 </label>
                 <input name="clienteTelefono"
+                       list="recentPhones"
                        placeholder="+502 0000-0000"
                        class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none">
+                <datalist id="recentPhones"></datalist>
             </div>
 
             <div>
-                <label class="font-black text-sm text-slate-300">
-                    ✉️ Correo
+                <label class="font-black text-sm">
+                    Correo
                 </label>
                 <input name="clienteCorreo"
                        type="email"
+                       list="recentEmails"
                        placeholder="cliente@empresa.com"
                        class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none">
+                <datalist id="recentEmails"></datalist>
             </div>
 
             <div>
-                <label class="font-black text-sm text-slate-300">
-                    🌐 Canal de origen <span class="text-red-400">*</span>
+                <label class="font-black text-sm">
+                    Canal de origen <span class="text-red-400">*</span>
                 </label>
                 <select name="channelId"
                         required
-                        class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none bg-[#10231F]">
+                        class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none">
                     <option value="1">WhatsApp</option>
                     <option value="2">Instagram</option>
                     <option value="3">Facebook</option>
                 </select>
+                <p class="field-error-message" data-error-for="channelId"></p>
             </div>
 
         </section>
 
-        <hr class="border-white/10">
-
-        <section class="grid gap-5">
+        <section class="form-section grid md:grid-cols-2 gap-4">
+            <h2 class="section-title">Conversacion</h2>
+            <p class="section-copy">Clasificacion y detalle operativo del caso.</p>
 
             <div>
-                <label class="font-black text-sm text-slate-300">
-                    🧾 Problema / Asunto <span class="text-red-400">*</span>
+                <label class="font-black text-sm">
+                    Problema / Asunto <span class="text-red-400">*</span>
                 </label>
 
                 <select id="issueTypeId"
                         name="issueTypeId"
                         required
-                        class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none bg-[#10231F]">
+                        class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none">
                     <option value="">Seleccione un problema</option>
 
                     <option th:each="issue : ${issueTypes}"
@@ -162,17 +558,54 @@
                         Problema
                     </option>
                 </select>
+                <p class="field-error-message" data-error-for="issueTypeId"></p>
+            </div>
+
+            <div class="visual-field">
+                <label class="font-black text-sm">
+                    Tipo de ticket
+                </label>
+
+                <select tabindex="-1"
+                        disabled
+                        aria-label="Tipo de ticket"
+                        class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none">
+                    <option>Requerimiento</option>
+                    <option>Incidente</option>
+                    <option>Consulta</option>
+                    <option>Queja</option>
+                </select>
+                <p class="field-error-message" data-error-for="rejectionCodeId"></p>
+            </div>
+
+            <div class="quick-templates">
+                <span class="text-xs font-black text-slate-500">Plantillas rapidas</span>
+                <button type="button"
+                        class="quick-template-btn"
+                        data-template-text="Se valida la solicitud del cliente y se brinda seguimiento segun el proceso correspondiente.">
+                    Seguimiento
+                </button>
+                <button type="button"
+                        class="quick-template-btn"
+                        data-template-text="Cliente reporta inconveniente. Se documenta el caso y se indican los pasos de solucion aplicables.">
+                    Incidencia
+                </button>
+                <button type="button"
+                        class="quick-template-btn"
+                        data-template-text="Consulta resuelta durante la atencion. Cliente queda informado sobre el resultado y proximos pasos.">
+                    Resuelto
+                </button>
             </div>
 
             <div id="rejectionCodeBox" class="hidden">
-                <label class="font-black text-sm text-slate-300">
-                    💳 Código de rechazo bancario <span class="text-red-400">*</span>
+                <label class="font-black text-sm">
+                    Codigo de rechazo bancario <span class="text-red-400">*</span>
                 </label>
 
                 <select name="rejectionCodeId"
                         id="rejectionCodeId"
-                        class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none bg-[#10231F]">
-                    <option value="">Seleccione código de rechazo</option>
+                        class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none">
+                    <option value="">Seleccione codigo de rechazo</option>
 
                     <option th:each="code : ${rejectionCodes}"
                             th:value="${code.id}"
@@ -182,10 +615,10 @@
                 </select>
             </div>
 
-            <div>
+            <div class="md:col-span-2">
                 <div class="flex items-center justify-between mb-2">
-                    <label class="font-black text-sm text-slate-300">
-                        📝 Descripción de la conversación
+                    <label class="font-black text-sm">
+                        Descripcion de la conversacion
                     </label>
 
                     <span class="text-xs text-slate-400">
@@ -197,54 +630,59 @@
                           id="descripcion"
                           rows="5"
                           maxlength="1000"
-                          placeholder="Escribe el detalle aquí..."
+                          placeholder="Escribe el detalle aqui..."
                           class="form-input w-full px-4 py-3 rounded-2xl outline-none resize-y"></textarea>
+                <p id="descriptionHint" class="field-error-message"></p>
             </div>
 
         </section>
 
-        <section class="grid md:grid-cols-3 gap-5 bg-black/15 border border-white/10 rounded-3xl p-5">
+        <section class="form-section management-section grid md:grid-cols-3 gap-4">
+            <h2 class="section-title">Gestion</h2>
+            <p class="section-copy">Estado, prioridad y tiempo activo de la atencion.</p>
 
             <div>
-                <label class="font-black text-sm text-slate-300">
-                    📌 Estado
+                <label class="font-black text-sm">
+                    Estado
                 </label>
                 <select name="statusId"
-                        class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none bg-[#10231F]">
+                        class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none">
                     <option value="1">Pendiente</option>
                     <option value="2">En Proceso</option>
                     <option value="3">Resuelto</option>
                     <option value="4">Escalado</option>
                     <option value="5">Cerrado</option>
                 </select>
+                <p class="field-error-message" data-error-for="statusId"></p>
             </div>
 
             <div>
-                <label class="font-black text-sm text-slate-300">
-                    🚦 Prioridad
+                <label class="font-black text-sm">
+                    Prioridad
                 </label>
                 <select name="priorityId"
-                        class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none bg-[#10231F]">
+                        class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none">
                     <option value="1">Baja</option>
                     <option value="2">Normal</option>
                     <option value="3">Alta</option>
                 </select>
+                <p class="field-error-message" data-error-for="priorityId"></p>
             </div>
 
-            <div class="rounded-3xl border border-cyan-700 p-6 bg-white/5">
+            <div class="timer-card">
 
-                <p class="text-sm font-black text-slate-300 mb-2">
-                    ⏱ Tiempo de gestión
+                <p class="text-sm font-black mb-2">
+                    Tiempo de gestion
                 </p>
 
                 <p id="timerDisplay"
-                   class="text-5xl font-black text-[#ffd700]">
+                   class="text-5xl font-black">
                     00:00
                 </p>
 
                 <p id="timerStatus"
-                   class="mt-2 text-sm font-black text-green-400">
-                    🟢 En gestión
+                   class="timer-status running mt-2">
+                    En gestion
                 </p>
 
                 <input type="hidden"
@@ -255,55 +693,58 @@
                 <button id="pauseTimerBtn"
                         type="button"
                         onclick="ConversationWorkspace.toggleTimer()"
-                        class="mt-5 w-full bg-[#ffd700] hover:bg-yellow-300 text-black font-black py-2 rounded-xl transition">
-                    ⏸ Pausar
+                        class="timer-action running">
+                    Pausar
                 </button>
 
             </div>
         </section>
 
-        <section class="grid md:grid-cols-2 gap-5">
+        <section class="form-section grid md:grid-cols-3 gap-4">
+            <h2 class="section-title">Seguimiento</h2>
+            <p class="section-copy">Datos adicionales si el caso requiere ticket o transferencia.</p>
 
-            <div class="bg-white/5 border border-white/10 rounded-3xl p-5">
+            <div class="toggle-card p-5">
                 <label class="flex items-center gap-3 font-black cursor-pointer">
                     <input type="checkbox"
                            id="ticketAperturado"
                            name="ticketAperturado"
                            value="true"
                            class="w-5 h-5">
-                    ¿Se aperturó ticket?
+                    Se aperturo ticket
                 </label>
 
                 <div id="ticketBox" class="hidden mt-4">
-                    <label class="font-black text-sm text-slate-300">
-                        🎫 Número de ticket <span class="text-red-400">*</span>
+                    <label class="font-black text-sm">
+                        Numero de ticket <span class="text-red-400">*</span>
                     </label>
 
                     <input name="numeroTicket"
                            id="numeroTicket"
                            placeholder="Ej. INC-2026-000145"
                            class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none">
+                    <p class="field-error-message" data-error-for="numeroTicket"></p>
                 </div>
             </div>
 
-            <div class="bg-white/5 border border-white/10 rounded-3xl p-5">
+            <div class="toggle-card p-5">
                 <label class="flex items-center gap-3 font-black cursor-pointer">
                     <input type="checkbox"
                            id="conversacionTransferida"
                            name="conversacionTransferida"
                            value="true"
                            class="w-5 h-5">
-                    Conversación transferida
+                    Conversacion transferida
                 </label>
 
                 <div id="departmentBox" class="hidden mt-4">
-                    <label class="font-black text-sm text-slate-300">
-                        🏢 Departamento <span class="text-red-400">*</span>
+                    <label class="font-black text-sm">
+                        Departamento <span class="text-red-400">*</span>
                     </label>
 
                     <select name="departmentId"
                             id="departmentId"
-                            class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none bg-[#10231F]">
+                            class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none">
                         <option value="">Seleccione departamento</option>
 
                         <option th:each="department : ${departments}"
@@ -312,15 +753,28 @@
                             Departamento
                         </option>
                     </select>
+                    <p class="field-error-message" data-error-for="departmentId"></p>
                 </div>
+            </div>
+
+            <div class="toggle-card visual-field">
+                <label class="flex items-center gap-3 font-black cursor-pointer">
+                    <input type="checkbox"
+                           tabindex="-1"
+                           disabled
+                           class="w-5 h-5">
+                    Enviado correo de confirmacion
+                </label>
             </div>
 
         </section>
 
-        <section>
+        <section class="form-section">
+            <h2 class="section-title">Notas internas</h2>
+            <p class="section-copy">Observaciones visibles para el equipo al consultar la conversacion.</p>
             <div class="flex items-center justify-between mb-2">
-                <label class="font-black text-sm text-slate-300">
-                    🕶 Observaciones internas
+                <label class="font-black text-sm">
+                    Observaciones internas
                 </label>
 
                 <span class="text-xs text-slate-400">
@@ -332,20 +786,21 @@
                       id="observaciones"
                       rows="4"
                       maxlength="500"
-                      placeholder="Notas adicionales que quieras dejar guardada"
+                      placeholder="Notas adicionales que quieras dejar guardadas"
                       class="form-input w-full px-4 py-3 rounded-2xl outline-none resize-y border-dashed"></textarea>
+            <p id="observationsHint" class="field-error-message"></p>
         </section>
 
-        <footer class="flex flex-col md:flex-row md:justify-end gap-3 pt-3">
+        <footer class="form-actions flex flex-col md:flex-row md:justify-end gap-3">
 
             <a href="/conversations"
-               class="bg-white/10 hover:bg-white/15 border border-white/10 px-6 py-3 rounded-2xl font-black text-center transition">
+               class="secondary-action">
                 Cancelar
             </a>
 
             <button type="submit"
-                    class="bg-[#ffd700] hover:bg-yellow-300 text-black px-8 py-3 rounded-2xl font-black transition shadow-lg shadow-yellow-500/20">
-                Guardar conversación
+                    class="primary-action">
+                Guardar conversacion
             </button>
 
         </footer>
@@ -427,18 +882,18 @@
 </div>
 <div id="sessionContinuePrompt"
      class="fixed inset-0 z-[9998] hidden
-            bg-black/70 backdrop-blur-sm
+            bg-slate-900/45 backdrop-blur-sm
             flex items-center justify-center p-6">
 
     <div class="w-full max-w-md rounded-[28px]
-                bg-[#10231F] border border-[#00d9ff]/30
+                bg-white border border-slate-200
                 shadow-2xl p-7 text-center">
 
-        <h2 class="text-3xl font-black text-[#ffd700]">
+        <h2 class="text-3xl font-black text-[#6236ff]">
             Continuar trabajando
         </h2>
 
-        <p class="mt-3 text-slate-300 font-bold">
+        <p class="mt-3 text-slate-500 font-bold">
             Tu sesion esta por vencer. Renuevala para conservar tus conversaciones abiertas.
         </p>
 

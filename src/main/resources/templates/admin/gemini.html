@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Estado IA Gemini</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+
+<main class="max-w-7xl mx-auto p-6">
+    <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
+        <div>
+            <p class="text-[#00d9ff] text-sm font-black uppercase tracking-[0.22em] mb-2">Administracion</p>
+            <h1 class="text-4xl font-black">Estado IA</h1>
+            <p class="text-slate-300 text-sm mt-2">Uso operativo y salud del servicio Gemini.</p>
+        </div>
+
+        <a href="/admin/dashboard"
+           class="bg-[#ffd700] hover:bg-yellow-300 text-black px-5 py-3 rounded-2xl font-black">
+            Volver al panel
+        </a>
+    </header>
+
+    <section class="grid md:grid-cols-4 gap-5 mb-6">
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Estado</p>
+            <h2 class="text-3xl font-black mt-3"
+                th:classappend="${geminiStatus['configured']} ? ' text-[#00ff88]' : ' text-[#ff4d6d]'"
+                th:text="${geminiStatus['configured']} ? 'Configurado' : 'Sin API key'">Configurado</h2>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Modelo</p>
+            <h2 class="text-2xl font-black text-[#ffd700] mt-3" th:text="${geminiStatus['model']}">gemini</h2>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Llamadas externas</p>
+            <h2 class="text-5xl font-black text-[#00d9ff] mt-3" th:text="${geminiStatus['externalCalls']}">0</h2>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Cache usada</p>
+            <h2 class="text-5xl font-black text-[#ffd700] mt-3" th:text="${geminiStatus['cacheHits']}">0</h2>
+        </div>
+    </section>
+
+    <section class="grid lg:grid-cols-3 gap-5 mb-6">
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Reportes dashboard</p>
+            <h2 class="text-4xl font-black text-[#00d9ff] mt-3" th:text="${geminiStatus['dashboardRequests']}">0</h2>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Analisis de asuntos</p>
+            <h2 class="text-4xl font-black text-[#00d9ff] mt-3" th:text="${geminiStatus['issueTrendRequests']}">0</h2>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Resultado</p>
+            <div class="flex gap-4 mt-4">
+                <div>
+                    <p class="text-xs uppercase text-slate-400 font-black">Exitos</p>
+                    <p class="text-3xl font-black text-[#00ff88]" th:text="${geminiStatus['successfulCalls']}">0</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase text-slate-400 font-black">Fallos</p>
+                    <p class="text-3xl font-black text-[#ff4d6d]" th:text="${geminiStatus['failedCalls']}">0</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid lg:grid-cols-2 gap-5">
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <h2 class="text-2xl font-black mb-4">Actividad reciente</h2>
+            <dl class="grid gap-3 text-sm">
+                <div class="flex justify-between gap-4 border-b border-white/10 pb-3">
+                    <dt class="text-slate-300">Ultima operacion</dt>
+                    <dd class="font-bold text-right" th:text="${geminiStatus['lastOperation']}">Sin actividad</dd>
+                </div>
+                <div class="flex justify-between gap-4 border-b border-white/10 pb-3">
+                    <dt class="text-slate-300">Ultima llamada</dt>
+                    <dd class="font-bold text-right"
+                        th:text="${geminiStatus['lastCallAt'] != null ? #temporals.format(geminiStatus['lastCallAt'], 'dd/MM/yyyy HH:mm:ss') : 'Sin registros'}">Sin registros</dd>
+                </div>
+                <div class="flex justify-between gap-4 border-b border-white/10 pb-3">
+                    <dt class="text-slate-300">Ultimo exito</dt>
+                    <dd class="font-bold text-right"
+                        th:text="${geminiStatus['lastSuccessAt'] != null ? #temporals.format(geminiStatus['lastSuccessAt'], 'dd/MM/yyyy HH:mm:ss') : 'Sin registros'}">Sin registros</dd>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <dt class="text-slate-300">Ultimo fallo</dt>
+                    <dd class="font-bold text-right"
+                        th:text="${geminiStatus['lastFailureAt'] != null ? #temporals.format(geminiStatus['lastFailureAt'], 'dd/MM/yyyy HH:mm:ss') : 'Sin registros'}">Sin registros</dd>
+                </div>
+            </dl>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <h2 class="text-2xl font-black mb-4">Ultimo error</h2>
+            <p class="text-sm text-slate-300 leading-6"
+               th:text="${geminiStatus['lastError'] != null ? geminiStatus['lastError'] : 'No se han registrado errores recientes.'}">
+                No se han registrado errores recientes.
+            </p>
+        </div>
+    </section>
+</main>
+
+</body>
+</html>
