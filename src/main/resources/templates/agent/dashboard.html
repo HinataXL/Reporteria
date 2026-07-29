@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>Dashboard Agente</title>
     <link rel="stylesheet" th:href="@{/sneat/assets/css/metrics-dashboard.css}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -61,31 +63,31 @@
                     <article class="kpi" style="--accent:#5b2df6;--soft:#f4f1ff">
                         <div class="icon-bubble"><i data-lucide="messages-square"></i></div>
                         <div class="kpi-label">Total</div>
-                        <div class="kpi-value" th:text="${total}">0</div>
+                        <div id="agentTotalMetric" class="kpi-value" th:text="${total}">0</div>
                         <div class="kpi-note">Casos asignados</div>
                     </article>
                     <article class="kpi" style="--accent:#18b26b;--soft:#effaf5">
                         <div class="icon-bubble"><i data-lucide="check-circle-2"></i></div>
                         <div class="kpi-label">Resueltas</div>
-                        <div class="kpi-value" th:text="${resueltas}">0</div>
+                        <div id="agentResolvedMetric" class="kpi-value" th:text="${resueltas}">0</div>
                         <div class="kpi-note">Cerradas con exito</div>
                     </article>
                     <article class="kpi status-kpi" data-status-filter="pending" data-status-label="Pendientes" role="button" tabindex="0" style="--accent:#f59f00;--soft:#fff8eb">
                         <div class="icon-bubble"><i data-lucide="clock-3"></i></div>
                         <div class="kpi-label">Pendientes</div>
-                        <div class="kpi-value" th:text="${pendientes + enProceso}">0</div>
+                        <div id="agentPendingMetric" class="kpi-value" th:text="${pendientes + enProceso}">0</div>
                         <div class="kpi-note">Abiertas o en proceso</div>
                     </article>
                     <article class="kpi status-kpi" data-status-filter="escalated" data-status-label="Escaladas" role="button" tabindex="0" style="--accent:#ff4d6d;--soft:#fff0f3">
                         <div class="icon-bubble"><i data-lucide="arrow-up"></i></div>
                         <div class="kpi-label">Escaladas</div>
-                        <div class="kpi-value" th:text="${escaladas}">0</div>
+                        <div id="agentEscalatedMetric" class="kpi-value" th:text="${escaladas}">0</div>
                         <div class="kpi-note">En apoyo externo</div>
                     </article>
                     <article class="kpi status-kpi" data-status-filter="closed" data-status-label="Cerradas" role="button" tabindex="0" style="--accent:#377dff;--soft:#f0f5ff">
                         <div class="icon-bubble"><i data-lucide="archive"></i></div>
                         <div class="kpi-label">Cerradas</div>
-                        <div class="kpi-value" th:text="${cerradas}">0</div>
+                        <div id="agentClosedMetric" class="kpi-value" th:text="${cerradas}">0</div>
                         <div class="kpi-note">Chats guardados</div>
                     </article>
                 </div>
@@ -263,6 +265,40 @@
         document.getElementById('escalatedPct').innerText = `${((Number(values[3] || 0) * 100) / total).toFixed(1)}%`;
     }
 
+    function statusBucket(statusId) {
+        const value = Number(statusId);
+        if (value === 3) return 0;
+        if (value === 1 || value === 2) return 1;
+        if (value === 5) return 2;
+        if (value === 4) return 3;
+        return null;
+    }
+
+    function updateMetricText(id, value) {
+        const element = document.getElementById(id);
+        if (element) element.innerText = String(Math.max(0, Number(value || 0)));
+    }
+
+    function syncAgentStatusSummary(previousStatus, nextStatus) {
+        const previousBucket = statusBucket(previousStatus);
+        const nextBucket = statusBucket(nextStatus);
+        if (previousBucket === null || nextBucket === null || previousBucket === nextBucket) {
+            return;
+        }
+
+        initialStatusValues[previousBucket] = Math.max(0, Number(initialStatusValues[previousBucket] || 0) - 1);
+        initialStatusValues[nextBucket] = Number(initialStatusValues[nextBucket] || 0) + 1;
+        updateMetricText('agentResolvedMetric', initialStatusValues[0]);
+        updateMetricText('agentPendingMetric', initialStatusValues[1]);
+        updateMetricText('agentClosedMetric', initialStatusValues[2]);
+        updateMetricText('agentEscalatedMetric', initialStatusValues[3]);
+        setStatusPercents(initialStatusValues);
+        if (window.agentStatusChart) {
+            window.agentStatusChart.data.datasets[0].data = initialStatusValues;
+            window.agentStatusChart.update();
+        }
+    }
+
     const initialStatusValues = [
         Number(/*[[${resueltas}]]*/ 0),
         Number(/*[[${pendientes + enProceso}]]*/ 0),
@@ -335,6 +371,23 @@
         }).join('');
     }
 
+    let currentStatusFilter = null;
+    let currentStatusLabel = null;
+
+    function statusOptions(selected) {
+        const options = [
+            [1, 'Pendiente'],
+            [2, 'En Proceso'],
+            [3, 'Resuelto'],
+            [4, 'Escalado'],
+            [5, 'Cerrado']
+        ];
+
+        return options.map(([value, label]) =>
+            `<option value="${value}" ${Number(selected) === value ? 'selected' : ''}>${label}</option>`
+        ).join('');
+    }
+
     function renderStatusConversationList(items) {
         const container = document.getElementById('statusConversationList');
         if (!container) return;
@@ -350,13 +403,54 @@
                     <div class="activity-title">${escapeHtml(item.codigo || 'Sin codigo')} - ${escapeHtml(item.cliente || 'Sin cliente')}</div>
                     <div class="activity-time">${escapeHtml(item.fecha || 'Sin fecha')} - ${escapeHtml(item.asunto || 'Sin asunto')} - ${escapeHtml(formatMinutes(item.tiempoGestion))}</div>
                 </div>
-                <span class="pill">${escapeHtml(item.estado || 'Sin estado')}</span>
+                <div class="status-action">
+                    <select class="status-select" data-conversation-id="${item.id || ''}" data-current-status="${item.statusId || ''}" aria-label="Cambiar estado de ${escapeHtml(item.codigo || 'conversacion')}">
+                        ${statusOptions(item.statusId)}
+                    </select>
+                    <span class="status-feedback" data-status-feedback="${item.id || ''}"></span>
+                </div>
             </div>`).join('');
+    }
+
+    async function changeConversationStatus(select) {
+        const conversationId = select.dataset.conversationId;
+        const previousStatus = select.dataset.currentStatus;
+        const nextStatus = select.value;
+        const feedback = document.querySelector(`[data-status-feedback="${conversationId}"]`);
+        if (!conversationId || !nextStatus || nextStatus === previousStatus) return;
+
+        select.disabled = true;
+        if (feedback) feedback.innerText = 'Guardando...';
+
+        try {
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+            const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+            if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+
+            const body = new URLSearchParams({ statusId: nextStatus });
+            const response = await fetch(`/api/conversations/${conversationId}/status`, {
+                method: 'POST',
+                headers,
+                body
+            });
+            if (!response.ok) throw new Error('No fue posible cambiar el estado');
+
+            if (feedback) feedback.innerText = 'Actualizado';
+            syncAgentStatusSummary(previousStatus, nextStatus);
+            await openStatusConversationModal(currentStatusFilter, currentStatusLabel);
+        } catch (error) {
+            select.value = previousStatus;
+            if (feedback) feedback.innerText = 'Error al guardar';
+            select.disabled = false;
+        }
     }
 
     async function openStatusConversationModal(status, label) {
         const modal = document.getElementById('statusConversationModal');
         const params = new URLSearchParams({ status });
+        currentStatusFilter = status;
+        currentStatusLabel = label;
 
         modal.classList.add('show');
         modal.setAttribute('aria-hidden', 'false');
@@ -389,7 +483,7 @@
         modal.setAttribute('aria-hidden', 'true');
     }
 
-    new Chart(document.getElementById('statusChart'), {
+    window.agentStatusChart = new Chart(document.getElementById('statusChart'), {
         type: 'doughnut',
         data: {
             labels: ['Resueltas', 'Pendientes', 'Cerradas', 'Escaladas'],
@@ -459,6 +553,9 @@
     renderClientList('topClientsList', clienteLabels, clienteValues);
     document.getElementById('statusConversationModal')?.addEventListener('click', (event) => {
         if (event.target.id === 'statusConversationModal') closeStatusConversationModal();
+    });
+    document.getElementById('statusConversationList')?.addEventListener('change', (event) => {
+        if (event.target.matches('.status-select')) changeConversationStatus(event.target);
     });
     document.querySelectorAll('[data-status-filter]').forEach(card => {
         card.addEventListener('click', () => openStatusConversationModal(card.dataset.statusFilter, card.dataset.statusLabel));

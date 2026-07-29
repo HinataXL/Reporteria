@@ -61,6 +61,10 @@ public class Conversation {
 
     private Boolean ticketAperturado = false;
     private String numeroTicket;
+    private String zohoTicketId;
+    private String zohoTicketUrl;
+    private String zohoContactId;
+    private LocalDateTime zohoTicketCreatedAt;
 
     private Boolean conversacionTransferida = false;
     private Integer departmentId;
@@ -221,6 +225,38 @@ public class Conversation {
 
     public void setNumeroTicket(String numeroTicket) {
         this.numeroTicket = numeroTicket;
+    }
+
+    public String getZohoTicketId() {
+        return zohoTicketId;
+    }
+
+    public void setZohoTicketId(String zohoTicketId) {
+        this.zohoTicketId = zohoTicketId;
+    }
+
+    public String getZohoTicketUrl() {
+        return zohoTicketUrl;
+    }
+
+    public void setZohoTicketUrl(String zohoTicketUrl) {
+        this.zohoTicketUrl = zohoTicketUrl;
+    }
+
+    public String getZohoContactId() {
+        return zohoContactId;
+    }
+
+    public void setZohoContactId(String zohoContactId) {
+        this.zohoContactId = zohoContactId;
+    }
+
+    public LocalDateTime getZohoTicketCreatedAt() {
+        return zohoTicketCreatedAt;
+    }
+
+    public void setZohoTicketCreatedAt(LocalDateTime zohoTicketCreatedAt) {
+        this.zohoTicketCreatedAt = zohoTicketCreatedAt;
     }
 
     public Boolean getConversacionTransferida() {

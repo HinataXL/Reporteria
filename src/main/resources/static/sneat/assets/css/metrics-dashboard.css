@@ -956,7 +956,7 @@ body.metrics-body {
 
 .activity-item {
     display: grid;
-    grid-template-columns: 30px minmax(0, 1fr) auto;
+    grid-template-columns: 30px minmax(0, 1fr) minmax(150px, auto);
     align-items: center;
     gap: 12px;
 }
@@ -995,6 +995,41 @@ body.metrics-body {
     font-size: 11px;
     font-weight: 900;
     white-space: nowrap;
+}
+
+.status-action {
+    display: grid;
+    justify-items: end;
+    gap: 4px;
+}
+
+.status-select {
+    min-width: 138px;
+    border: 1px solid var(--rm-line);
+    border-radius: 999px;
+    background: #f8faff;
+    color: var(--rm-navy);
+    font-size: 12px;
+    font-weight: 900;
+    padding: 8px 10px;
+    outline: none;
+}
+
+.status-select:focus {
+    border-color: var(--rm-purple);
+    box-shadow: 0 0 0 3px rgba(91, 45, 246, 0.12);
+}
+
+.status-select:disabled {
+    cursor: wait;
+    opacity: 0.7;
+}
+
+.status-feedback {
+    color: var(--rm-muted);
+    font-size: 10px;
+    font-weight: 900;
+    min-height: 12px;
 }
 
 .realtime-pill {

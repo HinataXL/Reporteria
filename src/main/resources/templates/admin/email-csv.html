@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Enviar CSV por correo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+
+<main class="max-w-5xl mx-auto p-6">
+    <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-8">
+        <div>
+            <p class="text-[#00d9ff] text-sm font-black uppercase tracking-[0.22em] mb-2">
+                Reporteria
+            </p>
+            <h1 class="text-5xl font-black">Enviar CSV por correo</h1>
+            <p class="text-slate-300 text-sm mt-2">
+                Genera un reporte por rango de fechas, lo adjunta como CSV y lo envia manualmente.
+            </p>
+        </div>
+
+        <a href="/admin/dashboard"
+           class="bg-[#ffd700] hover:bg-yellow-300 text-black px-5 py-3 rounded-2xl font-black text-center">
+            Volver al panel
+        </a>
+    </header>
+
+    <section class="grid lg:grid-cols-[1.2fr_0.8fr] gap-6">
+        <form method="post"
+              action="/admin/reports/email-csv/send"
+              class="bg-white/10 border border-white/10 rounded-3xl p-6 space-y-5">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+            <div th:if="${success}"
+                 class="rounded-2xl border border-emerald-400/30 bg-emerald-400/10 text-emerald-100 px-4 py-3 font-bold"
+                 th:text="${success}">
+                Reporte enviado.
+            </div>
+
+            <div th:if="${error}"
+                 class="rounded-2xl border border-rose-400/30 bg-rose-400/10 text-rose-100 px-4 py-3 font-bold"
+                 th:text="${error}">
+                Error.
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <label class="block">
+                    <span class="text-xs uppercase tracking-wide text-slate-300 font-black">Desde</span>
+                    <input type="date"
+                           name="from"
+                           required
+                           class="mt-2 w-full rounded-2xl bg-white text-slate-950 border border-white/20 px-4 py-3 font-bold outline-none focus:ring-2 focus:ring-[#00d9ff]"
+                           th:value="${lastFrom != null ? lastFrom : from}">
+                </label>
+
+                <label class="block">
+                    <span class="text-xs uppercase tracking-wide text-slate-300 font-black">Hasta</span>
+                    <input type="date"
+                           name="to"
+                           required
+                           class="mt-2 w-full rounded-2xl bg-white text-slate-950 border border-white/20 px-4 py-3 font-bold outline-none focus:ring-2 focus:ring-[#00d9ff]"
+                           th:value="${lastTo != null ? lastTo : to}">
+                </label>
+            </div>
+
+            <label class="block">
+                <span class="text-xs uppercase tracking-wide text-slate-300 font-black">Para</span>
+                <input type="text"
+                       name="recipients"
+                       required
+                       placeholder="destino@zoho.com"
+                       class="mt-2 w-full rounded-2xl bg-white text-slate-950 border border-white/20 px-4 py-3 font-bold outline-none focus:ring-2 focus:ring-[#00d9ff]"
+                       th:value="${lastRecipients != null ? lastRecipients : mailDefaults.to}">
+                <span class="text-xs text-slate-400 mt-2 block">Puedes separar varios correos con coma.</span>
+            </label>
+
+            <label class="block">
+                <span class="text-xs uppercase tracking-wide text-slate-300 font-black">Copia</span>
+                <input type="text"
+                       name="cc"
+                       placeholder="copia@outlook.com"
+                       class="mt-2 w-full rounded-2xl bg-white text-slate-950 border border-white/20 px-4 py-3 font-bold outline-none focus:ring-2 focus:ring-[#00d9ff]"
+                       th:value="${lastCc != null ? lastCc : mailDefaults.cc}">
+                <span class="text-xs text-slate-400 mt-2 block">Opcional. Ideal para la direccion Outlook.</span>
+            </label>
+
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                <button type="submit"
+                        class="bg-[#6d3df5] hover:bg-[#5a2ee0] text-white px-6 py-3 rounded-2xl font-black shadow-lg shadow-[#6d3df5]/25">
+                    Generar y enviar CSV
+                </button>
+                <a href="/conversations/export/csv"
+                   class="bg-white/10 hover:bg-white/15 border border-white/10 text-white px-6 py-3 rounded-2xl font-black text-center">
+                    Descargar historico
+                </a>
+            </div>
+        </form>
+
+        <aside class="bg-white/10 border border-white/10 rounded-3xl p-6 h-fit">
+            <p class="text-xs uppercase tracking-[0.18em] text-[#00d9ff] font-black mb-3">Configuracion</p>
+            <h2 class="text-2xl font-black mb-4">Zoho Mail SMTP</h2>
+            <div class="space-y-4 text-sm text-slate-300">
+                <div>
+                    <p class="text-slate-400">Remitente</p>
+                    <p class="text-white font-black break-all" th:text="${mailDefaults.from ?: 'Sin configurar'}">correo@zoho.com</p>
+                </div>
+                <div>
+                    <p class="text-slate-400">Estado</p>
+                    <p class="font-black"
+                       th:classappend="${mailDefaults.configured} ? ' text-emerald-300' : ' text-rose-300'"
+                       th:text="${mailDefaults.configured} ? 'Listo para enviar' : 'Falta configurar correo'">
+                        Listo
+                    </p>
+                </div>
+                <div class="rounded-2xl bg-black/20 border border-white/10 p-4">
+                    <p class="text-white font-black mb-2">Columnas incluidas</p>
+                    <p>Cliente, telefono, asunto, fecha de inicio, fecha guardado y observaciones.</p>
+                </div>
+            </div>
+        </aside>
+    </section>
+</main>
+
+</body>
+</html>

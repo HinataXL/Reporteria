@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>Resumen General</title>
     <link rel="stylesheet" th:href="@{/sneat/assets/css/metrics-dashboard.css}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -812,6 +814,23 @@
             </div>`).join('');
     }
 
+    let currentStatusFilter = null;
+    let currentStatusLabel = null;
+
+    function statusOptions(selected) {
+        const options = [
+            [1, 'Pendiente'],
+            [2, 'En Proceso'],
+            [3, 'Resuelto'],
+            [4, 'Escalado'],
+            [5, 'Cerrado']
+        ];
+
+        return options.map(([value, label]) =>
+            `<option value="${value}" ${Number(selected) === value ? 'selected' : ''}>${label}</option>`
+        ).join('');
+    }
+
     function renderStatusConversationList(items) {
         const container = document.getElementById('statusConversationList');
         if (!container) return;
@@ -827,8 +846,49 @@
                     <div class="activity-title">${escapeHtml(item.codigo || 'Sin codigo')} - ${escapeHtml(item.cliente || 'Sin cliente')}</div>
                     <div class="activity-time">${escapeHtml(item.fecha || 'Sin fecha')} - ${escapeHtml(item.asunto || 'Sin asunto')} - ${escapeHtml(item.agente || 'Sin agente')} - ${escapeHtml(formatMinutes(item.tiempoGestion))}</div>
                 </div>
-                <span class="pill">${escapeHtml(item.estado || 'Sin estado')}</span>
+                <div class="status-action">
+                    <select class="status-select" data-conversation-id="${item.id || ''}" data-current-status="${item.statusId || ''}" aria-label="Cambiar estado de ${escapeHtml(item.codigo || 'conversacion')}">
+                        ${statusOptions(item.statusId)}
+                    </select>
+                    <span class="status-feedback" data-status-feedback="${item.id || ''}"></span>
+                </div>
             </div>`).join('');
+    }
+
+    async function changeConversationStatus(select) {
+        const conversationId = select.dataset.conversationId;
+        const previousStatus = select.dataset.currentStatus;
+        const nextStatus = select.value;
+        const feedback = document.querySelector(`[data-status-feedback="${conversationId}"]`);
+        if (!conversationId || !nextStatus || nextStatus === previousStatus) return;
+
+        select.disabled = true;
+        if (feedback) feedback.innerText = 'Guardando...';
+
+        try {
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+            const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+            if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+
+            const body = new URLSearchParams({ statusId: nextStatus });
+            const response = await fetch(`/api/conversations/${conversationId}/status`, {
+                method: 'POST',
+                headers,
+                body
+            });
+            if (!response.ok) throw new Error('No fue posible cambiar el estado');
+
+            if (feedback) feedback.innerText = 'Actualizado';
+            await openStatusConversationModal(currentStatusFilter, currentStatusLabel);
+            if (typeof refreshDashboardMetrics === 'function') {
+                refreshDashboardMetrics();
+            }
+        } catch (error) {
+            select.value = previousStatus;
+            if (feedback) feedback.innerText = 'Error al guardar';
+            select.disabled = false;
+        }
     }
 
     function renderActivityList(items) {
@@ -951,6 +1011,8 @@
         const to = document.getElementById('filterTo').value;
         if (from) params.append('from', from);
         if (to) params.append('to', to);
+        currentStatusFilter = status;
+        currentStatusLabel = label;
 
         modal.classList.add('show');
         modal.setAttribute('aria-hidden', 'false');
@@ -1128,6 +1190,9 @@
 
     document.getElementById('statusConversationModal')?.addEventListener('click', (event) => {
         if (event.target.id === 'statusConversationModal') closeStatusConversationModal();
+    });
+    document.getElementById('statusConversationList')?.addEventListener('change', (event) => {
+        if (event.target.matches('.status-select')) changeConversationStatus(event.target);
     });
 
     document.getElementById('topClientsList')?.addEventListener('click', (event) => {

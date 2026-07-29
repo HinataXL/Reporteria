@@ -5,6 +5,8 @@ import com.erick.soporte.repository.UserRepository;
 import com.erick.soporte.security.CustomUserPrincipal;
 import com.erick.soporte.security.TotpService;
 import com.erick.soporte.service.ActiveSessionService;
+import com.erick.soporte.service.LoginAlertMailService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -18,15 +20,18 @@ public class TwoFactorVerificationController {
     private final UserRepository userRepository;
     private final TotpService totpService;
     private final ActiveSessionService activeSessionService;
+    private final LoginAlertMailService loginAlertMailService;
 
     public TwoFactorVerificationController(
             UserRepository userRepository,
             TotpService totpService,
-            ActiveSessionService activeSessionService
+            ActiveSessionService activeSessionService,
+            LoginAlertMailService loginAlertMailService
     ) {
         this.userRepository = userRepository;
         this.totpService = totpService;
         this.activeSessionService = activeSessionService;
+        this.loginAlertMailService = loginAlertMailService;
     }
 
     @GetMapping("/verify")
@@ -39,6 +44,7 @@ public class TwoFactorVerificationController {
             @RequestParam int code,
             Authentication authentication,
             HttpSession session,
+            HttpServletRequest request,
             Model model
     ) {
         CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
@@ -55,6 +61,7 @@ public class TwoFactorVerificationController {
 
         session.setAttribute("2FA_VERIFIED", true);
         activeSessionService.register(session.getId(), principal);
+        loginAlertMailService.notifyIfWatchedUserLoggedIn(principal, request);
 
         return "redirect:/conversations";
     }

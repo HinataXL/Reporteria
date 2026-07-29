@@ -12,6 +12,8 @@ window.ConversationWorkspace = (() => {
     let sessionTitleInterval = null;
     let sessionNotificationSent = false;
     let sessionToastShown = false;
+    let zohoClientSuggestions = [];
+    let clientSearchTimeout = null;
     const originalDocumentTitle = document.title;
 
     const formId = "conversationForm";
@@ -609,10 +611,7 @@ window.ConversationWorkspace = (() => {
         setFieldError("rejectionCodeId", missingRejection ? "Selecciona el codigo de rechazo." : "", showErrors);
         valid = valid && !missingRejection;
 
-        const ticketCheck = document.getElementById("ticketAperturado");
-        const missingTicket = ticketCheck && ticketCheck.checked && !valueOf("numeroTicket");
-        setFieldError("numeroTicket", missingTicket ? "Ingresa el numero de ticket." : "", showErrors);
-        valid = valid && !missingTicket;
+        setFieldError("numeroTicket", "", showErrors);
 
         const transferCheck = document.getElementById("conversacionTransferida");
         const missingDepartment = transferCheck && transferCheck.checked && !valueOf("departmentId");
@@ -682,6 +681,10 @@ window.ConversationWorkspace = (() => {
 
     function hydrateRecentClientSuggestions() {
         const clients = getRecentClients();
+        renderClientSuggestions(clients);
+    }
+
+    function renderClientSuggestions(clients = []) {
         const mappings = [
             ["recentClients", "name"],
             ["recentPhones", "phone"],
@@ -703,6 +706,85 @@ window.ConversationWorkspace = (() => {
                     list.appendChild(option);
                 });
         });
+    }
+
+    function activeClientSearchTerm() {
+        return [
+            valueOf("clienteNombre"),
+            valueOf("clienteTelefono"),
+            valueOf("clienteCorreo")
+        ].find(value => value && value.trim().length >= 2);
+    }
+
+    async function searchZohoClients() {
+        const term = activeClientSearchTerm();
+        if (!term) {
+            zohoClientSuggestions = [];
+            hydrateRecentClientSuggestions();
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/clients/search?q=${encodeURIComponent(term)}`);
+            if (!response.ok) {
+                return;
+            }
+
+            zohoClientSuggestions = await response.json();
+            renderClientSuggestions([
+                ...zohoClientSuggestions,
+                ...getRecentClients()
+            ]);
+        } catch (error) {
+            console.warn("No fue posible buscar clientes sincronizados", error);
+        }
+    }
+
+    function scheduleClientSearch() {
+        if (clientSearchTimeout) {
+            clearTimeout(clientSearchTimeout);
+        }
+
+        clientSearchTimeout = setTimeout(searchZohoClients, 280);
+    }
+
+    function fillClientFromSuggestion() {
+        const currentValues = [
+            valueOf("clienteNombre"),
+            valueOf("clienteTelefono"),
+            valueOf("clienteCorreo")
+        ]
+            .filter(Boolean)
+            .map(value => String(value).trim().toLowerCase());
+
+        const selected = zohoClientSuggestions.find(client =>
+            [client.name, client.phone, client.mobile, client.email]
+                .filter(Boolean)
+                .some(value => currentValues.includes(String(value).trim().toLowerCase()))
+        );
+
+        if (!selected) {
+            return;
+        }
+
+        const form = getForm();
+        const fields = {
+            zohoContactId: selected.zohoContactId,
+            clienteNombre: selected.name,
+            clienteTelefono: selected.phone || selected.mobile,
+            clienteCorreo: selected.email
+        };
+
+        Object.entries(fields).forEach(([fieldName, value]) => {
+            if (!value) return;
+            const field = form.elements[fieldName];
+            if (field) {
+                field.value = value;
+            }
+        });
+
+        saveActiveTabData();
+        validateForm(validationActive);
     }
 
     function rememberCurrentClient() {
@@ -978,6 +1060,11 @@ window.ConversationWorkspace = (() => {
             field.addEventListener("blur", () => {
                 validateForm(true);
             });
+        });
+
+        form.querySelectorAll('[name="clienteNombre"], [name="clienteTelefono"], [name="clienteCorreo"]').forEach(field => {
+            field.addEventListener("input", scheduleClientSearch);
+            field.addEventListener("change", fillClientFromSuggestion);
         });
 
         document.querySelectorAll("[data-template-text]").forEach(button => {

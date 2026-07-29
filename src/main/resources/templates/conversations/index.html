@@ -1681,6 +1681,16 @@
 
                                 <div class="action-dropdown" onclick="event.stopPropagation()">
                                     <a th:href="@{/conversations/{id}(id=${conversation.id})}"><i data-lucide="eye"></i>Ver detalle</a>
+                                    <a th:if="${conversation.zohoTicketId == null or conversation.zohoTicketId == ''}"
+                                       th:href="@{/conversations/{id}(id=${conversation.id})}">
+                                        <i data-lucide="ticket-plus"></i>Crear ticket Zoho
+                                    </a>
+                                    <a th:if="${conversation.zohoTicketUrl != null and conversation.zohoTicketUrl != ''}"
+                                       th:href="${conversation.zohoTicketUrl}"
+                                       target="_blank"
+                                       rel="noopener">
+                                        <i data-lucide="external-link"></i>Abrir ticket Zoho
+                                    </a>
                                     <a sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')" th:href="@{/conversations/edit/{id}(id=${conversation.id})}"><i data-lucide="pencil"></i>Editar</a>
                                     <a sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')" th:href="@{/conversations/export/csv}"><i data-lucide="download"></i>Descargar CSV</a>
                                 </div>

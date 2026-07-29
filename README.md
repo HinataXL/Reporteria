@@ -26,6 +26,7 @@ Funcionalidades principales disponibles:
 - Reporte PDF supervisor.
 - Auditoria de acciones del sistema.
 - Monitoreo de uso de Gemini desde panel admin.
+- Sincronizacion de clientes desde Zoho Desk.
 
 ## Tecnologias
 
@@ -97,6 +98,7 @@ src/main/resources
 /admin/dashboard
 /admin/gemini
 /admin/logs
+/admin/zoho
 /users
 /settings/2fa
 /profile
@@ -115,6 +117,7 @@ APIs principales:
 /api/agent-dashboard/status-conversations
 /api/session/keep-alive
 /api/webhooks/qpaypro
+/api/clients/search
 ```
 
 ## Variables de Entorno
@@ -129,6 +132,26 @@ DATABASE_USERNAME=usuario
 DATABASE_PASSWORD=password
 
 GEMINI_API_KEY=tu_api_key
+
+ZOHO_DESK_BASE_URL=https://desk.zoho.com
+ZOHO_ACCOUNTS_URL=https://accounts.zoho.com
+ZOHO_DESK_ORG_ID=tu_org_id
+ZOHO_CLIENT_ID=tu_client_id
+ZOHO_CLIENT_SECRET=tu_client_secret
+ZOHO_REFRESH_TOKEN=tu_refresh_token
+ZOHO_DEFAULT_DEPARTMENT_ID=department_id_de_zoho
+
+MAIL_HOST=smtp.zoho.com
+MAIL_PORT=587
+MAIL_USERNAME=tu_correo_zoho
+MAIL_PASSWORD=tu_password_smtp_o_app_password
+REPORT_MAIL_FROM=tu_correo_zoho
+REPORT_MAIL_TO=destino@zoho.com
+REPORT_MAIL_CC=copia@outlook.com
+
+LOGIN_ALERT_ENABLED=true
+LOGIN_ALERT_USER=pablo.flores@fixss.com
+LOGIN_ALERT_EMAIL_TO=correo_que_recibe_la_alerta@dominio.com
 ```
 
 Configuracion actual en `application.properties`:
@@ -139,6 +162,23 @@ spring.datasource.username=${DATABASE_USERNAME}
 spring.datasource.password=${DATABASE_PASSWORD}
 gemini.api.key=${GEMINI_API_KEY}
 gemini.model=gemini-2.5-flash
+zoho.desk.base-url=${ZOHO_DESK_BASE_URL:}
+zoho.accounts.url=${ZOHO_ACCOUNTS_URL:}
+zoho.desk.org-id=${ZOHO_DESK_ORG_ID:}
+zoho.client-id=${ZOHO_CLIENT_ID:}
+zoho.client-secret=${ZOHO_CLIENT_SECRET:}
+zoho.refresh-token=${ZOHO_REFRESH_TOKEN:}
+zoho.default-department-id=${ZOHO_DEFAULT_DEPARTMENT_ID:}
+spring.mail.host=${MAIL_HOST:smtp.zoho.com}
+spring.mail.port=${MAIL_PORT:587}
+spring.mail.username=${MAIL_USERNAME:}
+spring.mail.password=${MAIL_PASSWORD:}
+report.mail.from=${REPORT_MAIL_FROM:}
+report.mail.to=${REPORT_MAIL_TO:}
+report.mail.cc=${REPORT_MAIL_CC:}
+login.alert.enabled=${LOGIN_ALERT_ENABLED:true}
+login.alert.user=${LOGIN_ALERT_USER:pablo.flores@fixss.com}
+login.alert.to=${LOGIN_ALERT_EMAIL_TO:}
 app.allowed-email-domain=@fixss.com
 server.servlet.session.timeout=10m
 ```
@@ -216,6 +256,7 @@ Tablas principales:
 - `roles`
 - `conversations`
 - `audit_logs`
+- `support_clients`
 - `issue_type`
 - `departments`
 - `rejection_codes`
@@ -241,6 +282,34 @@ Gemini se usa para:
 - Monitoreo desde `/admin/gemini`.
 
 El servicio esta preparado para no bloquear el arranque si Gemini no esta disponible; en ese caso se muestra un fallback operativo.
+
+## Integracion Zoho Desk
+
+Zoho Desk se usa como fuente externa de contactos/clientes. La sincronizacion se ejecuta desde:
+
+```text
+/admin/zoho
+```
+
+La integracion:
+
+- Renueva el access token con `ZOHO_REFRESH_TOKEN`.
+- Consulta contactos de Zoho Desk usando `orgId`.
+- Guarda clientes en la tabla local `support_clients`.
+- Permite busqueda rapida desde el formulario de nueva conversacion mediante `/api/clients/search`.
+- Permite crear tickets en Zoho Desk desde el detalle de una conversacion guardada.
+
+Scopes recomendados en Zoho API Console:
+
+```text
+Desk.contacts.READ,Desk.basic.READ,Desk.tickets.CREATE,Desk.tickets.READ
+```
+
+Si se requiere crear o actualizar contactos desde Reporteria hacia Zoho, agregar:
+
+```text
+Desk.contacts.CREATE,Desk.contacts.UPDATE
+```
 
 ## Auditoria
 
@@ -281,9 +350,12 @@ Topics usados:
 ## Exportaciones y Reportes
 
 - CSV de conversaciones: `/conversations/export/csv`
+- Envio manual de CSV por correo: `/admin/reports/email-csv`
 - PDF supervisor: `/supervisor/report/pdf`
 
-El CSV incluye informacion operativa como fecha de creacion, fecha de finalizacion/guardado y tiempo de gestion cuando esta disponible.
+El CSV incluye solo la informacion solicitada para reporte operativo: cliente, telefono, asunto, fecha de inicio, fecha guardado y observaciones.
+
+El envio manual por correo permite seleccionar un rango de fechas, adjuntar el CSV y enviarlo desde una cuenta Zoho Mail con copia opcional a otra direccion. Para probarlo se deben configurar `MAIL_USERNAME`, `MAIL_PASSWORD`, `REPORT_MAIL_TO` y `REPORT_MAIL_CC`.
 
 ## Despliegue
 

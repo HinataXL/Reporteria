@@ -9,6 +9,7 @@ import com.erick.soporte.repository.UserRepository;
 import com.erick.soporte.security.CustomUserPrincipal;
 import com.erick.soporte.service.AuditLogService;
 import com.erick.soporte.service.DashboardRealtimeService;
+import com.erick.soporte.service.ZohoDeskClientService;
 import com.erick.soporte.entity.IssueType;
 import com.erick.soporte.entity.User;
 import jakarta.servlet.http.HttpServletResponse;
@@ -47,6 +48,7 @@ public class HomeController {
     private final UserRepository userRepository;
     private final AuditLogService auditLogService;
     private final DashboardRealtimeService dashboardRealtimeService;
+    private final ZohoDeskClientService zohoDeskClientService;
 
     public HomeController(
             ConversationRepository conversationRepository,
@@ -55,7 +57,8 @@ public class HomeController {
             DepartmentRepository departmentRepository,
             UserRepository userRepository,
             AuditLogService auditLogService,
-            DashboardRealtimeService dashboardRealtimeService
+            DashboardRealtimeService dashboardRealtimeService,
+            ZohoDeskClientService zohoDeskClientService
     ) {
         this.conversationRepository = conversationRepository;
         this.issueTypeRepository = issueTypeRepository;
@@ -64,6 +67,7 @@ public class HomeController {
         this.userRepository = userRepository;
         this.auditLogService = auditLogService;
         this.dashboardRealtimeService = dashboardRealtimeService;
+        this.zohoDeskClientService = zohoDeskClientService;
     }
 
     @GetMapping("/")
@@ -309,6 +313,52 @@ public class HomeController {
         return "conversations/detail";
     }
 
+    @PostMapping("/conversations/{id}/zoho-ticket")
+    public String createZohoTicket(
+            @PathVariable Long id,
+            Authentication authentication,
+            HttpServletRequest request,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes
+    ) {
+        CustomUserPrincipal user = (CustomUserPrincipal) authentication.getPrincipal();
+        Conversation conversation = conversationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Conversacion no encontrada"));
+
+        if (!canManageConversations(user) && !belongsToAgent(conversation, user)) {
+            throw new RuntimeException("No tienes permisos para crear ticket de esta conversacion");
+        }
+
+        try {
+            Map<String, Object> ticket = zohoDeskClientService.createTicket(conversation);
+            String ticketNumber = String.valueOf(ticket.getOrDefault("ticketNumber", ""));
+            String ticketId = String.valueOf(ticket.getOrDefault("id", ""));
+            String ticketUrl = String.valueOf(ticket.getOrDefault("webUrl", ""));
+            String zohoContactId = String.valueOf(ticket.getOrDefault("zohoContactId", ""));
+
+            conversation.setTicketAperturado(true);
+            conversation.setNumeroTicket(!ticketNumber.isBlank() ? ticketNumber : ticketId);
+            conversation.setZohoTicketId(ticketId);
+            conversation.setZohoTicketUrl(ticketUrl.isBlank() ? null : ticketUrl);
+            conversation.setZohoContactId(zohoContactId.isBlank() ? null : zohoContactId);
+            conversation.setZohoTicketCreatedAt(LocalDateTime.now(ZoneId.of("America/Guatemala")));
+            conversationRepository.save(conversation);
+
+            auditLogService.registrar(
+                    "CREAR_TICKET_ZOHO",
+                    "ZOHO",
+                    "Se creo ticket Zoho " + conversation.getNumeroTicket() + " para " + conversation.getCodigo(),
+                    authentication,
+                    request
+            );
+            dashboardRealtimeService.publishConversationChanged("updated", conversation);
+            redirectAttributes.addFlashAttribute("success", "Ticket Zoho creado: " + conversation.getNumeroTicket());
+        } catch (Exception error) {
+            redirectAttributes.addFlashAttribute("error", error.getMessage());
+        }
+
+        return "redirect:/conversations/" + id;
+    }
+
     @GetMapping("/conversations/edit/{id}")
     public String editConversation(@PathVariable Long id, Model model) {
         Conversation conversation = conversationRepository.findById(id)
@@ -367,24 +417,14 @@ public class HomeController {
 
         PrintWriter writer = response.getWriter();
 
-        writer.println("Codigo,Cliente,Telefono,Correo,Asunto,Canal,Estado,Prioridad,Ticket Aperturado,Numero Ticket,Transferida,Departamento,Tiempo Gestion (minutos),Fecha Inicio,Fecha Finalizacion/Guardado,Observaciones");
+        writer.println("Cliente,Telefono,Asunto,Fecha Inicio,Fecha Guardado,Observaciones");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
         for (Conversation c : conversations) {
             writer.println(
-                    safe(c.getCodigo()) + "," +
-                            safe(c.getClienteNombre()) + "," +
+                    safe(c.getClienteNombre()) + "," +
                             safe(c.getClienteTelefono()) + "," +
-                            safe(c.getClienteCorreo()) + "," +
                             safe(c.getAsunto()) + "," +
-                            safe(channelName(c.getChannelId())) + "," +
-                            safe(statusName(c.getStatusId())) + "," +
-                            safe(priorityName(c.getPriorityId())) + "," +
-                            safe(Boolean.TRUE.equals(c.getTicketAperturado()) ? "Sí" : "No") + "," +
-                            safe(c.getNumeroTicket()) + "," +
-                            safe(Boolean.TRUE.equals(c.getConversacionTransferida()) ? "Sí" : "No") + "," +
-                            safe(departmentName(c.getDepartmentId())) + "," +
-                            safe(c.getTiempoGestionMinutos() != null ? String.valueOf(c.getTiempoGestionMinutos()) : "") + "," +
                             safe(c.getFechaInicio() != null ? c.getFechaInicio().format(formatter) : "") + "," +
                             safe(finalizacionCsv(c, formatter)) + "," +
                             safe(c.getObservaciones())

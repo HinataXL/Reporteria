@@ -3,6 +3,7 @@ package com.erick.soporte.security;
 import com.erick.soporte.entity.User;
 import com.erick.soporte.repository.UserRepository;
 import com.erick.soporte.service.ActiveSessionService;
+import com.erick.soporte.service.LoginAlertMailService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,13 +18,16 @@ public class TwoFactorAuthenticationSuccessHandler implements AuthenticationSucc
 
     private final UserRepository userRepository;
     private final ActiveSessionService activeSessionService;
+    private final LoginAlertMailService loginAlertMailService;
 
     public TwoFactorAuthenticationSuccessHandler(
             UserRepository userRepository,
-            ActiveSessionService activeSessionService
+            ActiveSessionService activeSessionService,
+            LoginAlertMailService loginAlertMailService
     ) {
         this.userRepository = userRepository;
         this.activeSessionService = activeSessionService;
+        this.loginAlertMailService = loginAlertMailService;
     }
 
     @Override
@@ -46,6 +50,7 @@ public class TwoFactorAuthenticationSuccessHandler implements AuthenticationSucc
 
         request.getSession().setAttribute("2FA_VERIFIED", true);
         activeSessionService.register(request.getSession().getId(), principal);
+        loginAlertMailService.notifyIfWatchedUserLoggedIn(principal, request);
         if (principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_SUPERVISOR"))) {
             response.sendRedirect("/supervisor/dashboard");
         } else if (principal.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_AGENTE"))) {

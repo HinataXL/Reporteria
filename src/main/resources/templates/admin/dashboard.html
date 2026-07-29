@@ -98,6 +98,15 @@
             </p>
         </a>
 
+        <a href="/admin/reports/email-csv"
+           class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
+            <h2 class="text-2xl font-black mb-2">Enviar CSV</h2>
+            <p class="text-slate-300 text-sm">
+                Enviar reporte por rango de fechas con copia por correo.
+            </p>
+            <p class="text-[#00d9ff] text-xs font-black mt-4 uppercase tracking-wide">Proceso manual</p>
+        </a>
+
         <a href="/admin/gemini"
            class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
             <h2 class="text-2xl font-black mb-2">Estado IA</h2>
@@ -106,6 +115,15 @@
             </p>
             <p class="text-[#00d9ff] text-xs font-black mt-4 uppercase tracking-wide"
                th:text="${geminiStatus['externalCalls']} + ' llamadas externas'">0 llamadas externas</p>
+        </a>
+
+        <a href="/admin/zoho"
+           class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
+            <h2 class="text-2xl font-black mb-2">Zoho Desk</h2>
+            <p class="text-slate-300 text-sm">
+                Sincronizar contactos para autocompletar clientes.
+            </p>
+            <p class="text-[#00d9ff] text-xs font-black mt-4 uppercase tracking-wide">Clientes externos</p>
         </a>
 
         <a href="/admin/logs"

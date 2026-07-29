@@ -191,10 +191,12 @@ public class AgentDashboardController {
                 ))
                 .map(c -> {
                     Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("id", c.getId());
                     item.put("codigo", c.getCodigo());
                     item.put("cliente", c.getClienteNombre() != null && !c.getClienteNombre().isBlank() ? c.getClienteNombre() : "Sin cliente");
                     item.put("asunto", c.getAsunto() != null && !c.getAsunto().isBlank() ? c.getAsunto() : "Sin asunto");
                     item.put("estado", statusName(c.getStatusId()));
+                    item.put("statusId", c.getStatusId());
                     item.put("canal", channelName(c.getChannelId()));
                     item.put("tiempoGestion", c.getTiempoGestionMinutos() != null ? c.getTiempoGestionMinutos() : 0);
                     item.put("fecha", c.getFechaInicio() != null ? c.getFechaInicio().format(formatter) : "Sin fecha");

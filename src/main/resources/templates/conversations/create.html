@@ -483,6 +483,7 @@
         <section class="form-section grid md:grid-cols-2 gap-4">
             <h2 class="section-title">Cliente</h2>
             <p class="section-copy">Datos basicos para identificar la atencion.</p>
+            <input type="hidden" name="zohoContactId" id="zohoContactId">
 
             <div>
                 <label class="font-black text-sm">
@@ -716,12 +717,12 @@
 
                 <div id="ticketBox" class="hidden mt-4">
                     <label class="font-black text-sm">
-                        Numero de ticket <span class="text-red-400">*</span>
+                        Numero de ticket
                     </label>
 
                     <input name="numeroTicket"
                            id="numeroTicket"
-                           placeholder="Ej. INC-2026-000145"
+                           placeholder="Opcional, Zoho puede generarlo"
                            class="form-input mt-2 w-full px-4 py-3 rounded-2xl outline-none">
                     <p class="field-error-message" data-error-for="numeroTicket"></p>
                 </div>
@@ -845,7 +846,7 @@
 
     ticketCheck.addEventListener('change', () => {
         ticketBox.classList.toggle('hidden', !ticketCheck.checked);
-        numeroTicket.required = ticketCheck.checked;
+        numeroTicket.required = false;
 
         if (!ticketCheck.checked) {
             numeroTicket.value = '';

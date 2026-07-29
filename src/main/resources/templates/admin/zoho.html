@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Zoho Desk Clientes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+
+<main class="max-w-7xl mx-auto p-6">
+    <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
+        <div>
+            <p class="text-[#00d9ff] text-sm font-black uppercase tracking-[0.22em] mb-2">Administracion</p>
+            <h1 class="text-4xl font-black">Clientes Zoho Desk</h1>
+            <p class="text-slate-300 text-sm mt-2">
+                Sincroniza contactos de Zoho Desk hacia la base local de Reporteria.
+            </p>
+        </div>
+
+        <a href="/admin/dashboard"
+           class="bg-[#ffd700] hover:bg-yellow-300 text-black px-5 py-3 rounded-2xl font-black">
+            Volver al panel
+        </a>
+    </header>
+
+    <div th:if="${success}"
+         class="mb-5 bg-[#00ff88]/15 border border-[#00ff88]/30 text-[#00ff88] rounded-2xl px-5 py-4 font-bold"
+         th:text="${success}"></div>
+
+    <div th:if="${error}"
+         class="mb-5 bg-[#ff4d6d]/15 border border-[#ff4d6d]/40 text-[#ff8aa0] rounded-2xl px-5 py-4 font-bold"
+         th:text="${error}"></div>
+
+    <section class="grid md:grid-cols-5 gap-5 mb-6">
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Estado</p>
+            <h2 class="text-3xl font-black mt-3"
+                th:classappend="${zohoStatus['configured']} ? ' text-[#00ff88]' : ' text-[#ff4d6d]'"
+                th:text="${zohoStatus['configured']} ? 'Configurado' : 'Pendiente'">Configurado</h2>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Clientes locales</p>
+            <h2 class="text-5xl font-black text-[#00d9ff] mt-3" th:text="${zohoStatus['localClients']}">0</h2>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Org ID</p>
+            <h2 class="text-3xl font-black mt-3"
+                th:classappend="${zohoStatus['orgIdConfigured']} ? ' text-[#00ff88]' : ' text-[#ff4d6d]'"
+                th:text="${zohoStatus['orgIdConfigured']} ? 'Listo' : 'Falta'">Listo</h2>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Origen</p>
+            <h2 class="text-2xl font-black text-[#ffd700] mt-3">Zoho Desk</h2>
+        </div>
+
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <p class="text-slate-300 font-bold">Departamento</p>
+            <h2 class="text-3xl font-black mt-3"
+                th:classappend="${zohoStatus['defaultDepartmentConfigured']} ? ' text-[#00ff88]' : ' text-[#ff4d6d]'"
+                th:text="${zohoStatus['defaultDepartmentConfigured']} ? 'Listo' : 'Falta'">Listo</h2>
+        </div>
+    </section>
+
+    <section class="grid lg:grid-cols-[1fr_380px] gap-5">
+        <div class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <h2 class="text-2xl font-black mb-4">Configuracion requerida</h2>
+            <dl class="grid gap-3 text-sm">
+                <div class="flex justify-between gap-4 border-b border-white/10 pb-3">
+                    <dt class="text-slate-300">Desk base URL</dt>
+                    <dd class="font-bold text-right" th:text="${zohoStatus['baseUrl'] ?: 'No configurado'}">https://desk.zoho.com</dd>
+                </div>
+                <div class="flex justify-between gap-4 border-b border-white/10 pb-3">
+                    <dt class="text-slate-300">Accounts URL</dt>
+                    <dd class="font-bold text-right" th:text="${zohoStatus['accountsUrl'] ?: 'No configurado'}">https://accounts.zoho.com</dd>
+                </div>
+                <div class="flex justify-between gap-4">
+                    <dt class="text-slate-300">Variables sensibles</dt>
+                    <dd class="font-bold text-right">Se leen desde entorno</dd>
+                </div>
+            </dl>
+            <div class="mt-6 rounded-2xl border border-white/10 bg-[#10231F]/60 p-4 text-xs text-slate-300 leading-5">
+                <p class="font-black text-[#ffd700] mb-2">Errores comunes</p>
+                <p><b>invalid_client:</b> revisa client id, client secret y data center.</p>
+                <p><b>invalid_grant:</b> refresh token vencido, revocado o generado con otro client.</p>
+                <p><b>invalid_scope:</b> agrega Desk.contacts.READ y Desk.basic.READ.</p>
+            </div>
+        </div>
+
+        <form method="post"
+              action="/admin/zoho/sync-clients"
+              class="bg-white/10 border border-white/10 rounded-3xl p-6">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <h2 class="text-2xl font-black mb-4">Sincronizar</h2>
+            <label class="block text-slate-300 text-sm font-bold mb-2">Paginas a procesar</label>
+            <select name="maxPages"
+                    class="w-full bg-[#10231F] border border-white/20 rounded-2xl px-4 py-3 text-white font-bold mb-4">
+                <option value="1">1 pagina - hasta 100 clientes</option>
+                <option value="5" selected>5 paginas - hasta 500 clientes</option>
+                <option value="10">10 paginas - hasta 1000 clientes</option>
+                <option value="25">25 paginas - hasta 2500 clientes</option>
+            </select>
+            <button type="submit"
+                    class="w-full bg-[#00d9ff] hover:bg-cyan-300 text-black px-5 py-3 rounded-2xl font-black">
+                Sincronizar clientes
+            </button>
+            <p class="text-xs text-slate-400 mt-4 leading-5">
+                La busqueda del formulario usa la base local sincronizada para evitar llamadas a Zoho en cada tecla.
+            </p>
+        </form>
+    </section>
+</main>
+
+</body>
+</html>
