@@ -41,9 +41,18 @@ public class ActiveSessionService implements HttpSessionListener {
     public List<Map<String, Object>> activeAgents() {
         LocalDateTime now = LocalDateTime.now(APP_ZONE);
 
-        return activeSessions.values()
+        Map<String, ActiveSession> uniqueAgents = activeSessions.values()
                 .stream()
                 .filter(session -> "AGENTE".equalsIgnoreCase(session.role()))
+                .collect(java.util.stream.Collectors.toMap(
+                        this::agentKey,
+                        session -> session,
+                        this::oldestSession,
+                        LinkedHashMap::new
+                ));
+
+        return uniqueAgents.values()
+                .stream()
                 .sorted(Comparator.comparing(ActiveSession::connectedAt))
                 .map(session -> {
                     Duration connected = Duration.between(session.connectedAt(), now);
@@ -56,6 +65,22 @@ public class ActiveSessionService implements HttpSessionListener {
                     return item;
                 })
                 .toList();
+    }
+
+    private String agentKey(ActiveSession session) {
+        if (session.userId() != null) {
+            return "id:" + session.userId();
+        }
+
+        if (session.email() != null && !session.email().isBlank()) {
+            return "email:" + session.email().trim().toLowerCase();
+        }
+
+        return "name:" + session.name().trim().toLowerCase();
+    }
+
+    private ActiveSession oldestSession(ActiveSession current, ActiveSession candidate) {
+        return candidate.connectedAt().isBefore(current.connectedAt()) ? candidate : current;
     }
 
     @Override

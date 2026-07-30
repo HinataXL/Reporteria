@@ -353,7 +353,18 @@ public class ZohoDeskClientService {
     }
 
     private String ticketDescription(Conversation conversation) {
+        String asunto = firstText(conversation.getAsunto(), "Sin asunto");
+        if (normalized(asunto).contains("aumento limites")) {
+            return ticketTemplateLimitIncrease(conversation);
+        }
+
+        return ticketTemplateDefault(conversation);
+    }
+
+    private String ticketTemplateDefault(Conversation conversation) {
         return """
+                Datos de la conversacion
+                ------------------------
                 Conversacion: %s
                 Cliente: %s
                 Telefono: %s
@@ -361,10 +372,57 @@ public class ZohoDeskClientService {
                 Agente: %s
                 Tiempo de gestion: %s minutos
 
-                Descripcion:
+                Solicitud / descripcion
+                -----------------------
                 %s
 
-                Observaciones:
+                Observaciones internas
+                ----------------------
+                %s
+                """.formatted(
+                firstText(conversation.getCodigo(), "Sin codigo"),
+                firstText(conversation.getClienteNombre(), "Sin cliente"),
+                firstText(conversation.getClienteTelefono(), "Sin telefono"),
+                firstText(conversation.getClienteCorreo(), "Sin correo"),
+                firstText(conversation.getAgenteNombre(), "Sin agente"),
+                conversation.getTiempoGestionMinutos() != null ? conversation.getTiempoGestionMinutos() : 0,
+                firstText(conversation.getDescripcion(), "Sin descripcion"),
+                firstText(conversation.getObservaciones(), "Sin observaciones")
+        );
+    }
+
+    private String ticketTemplateLimitIncrease(Conversation conversation) {
+        return """
+                Plantilla: Aumento de limites por excepcion
+                ------------------------------------------
+
+                Datos de la conversacion
+                ------------------------
+                Conversacion: %s
+                Cliente: %s
+                Telefono: %s
+                Correo: %s
+                Agente: %s
+                Tiempo de gestion: %s minutos
+
+                Requisitos para realizar la gestion
+                -----------------------------------
+                - Nombre de tarjeta habiente:
+                - Primeros 4 digitos de la tarjeta:
+                - Ultimos 4 digitos de la tarjeta:
+                - Monto de la venta:
+                - Contado o cuotas:
+                - Fecha en que se hara la transaccion:
+                - Motivo de la venta:
+                - Afiliacion o NIT:
+                - Cotizacion autorizada por parte del cliente final:
+
+                Detalle recibido en Reporteria
+                ------------------------------
+                %s
+
+                Observaciones internas
+                ----------------------
                 %s
                 """.formatted(
                 firstText(conversation.getCodigo(), "Sin codigo"),
@@ -487,5 +545,15 @@ public class ZohoDeskClientService {
 
     private String safe(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private String normalized(String value) {
+        return safe(value)
+                .toLowerCase()
+                .replace("í", "i")
+                .replace("ó", "o")
+                .replace("á", "a")
+                .replace("é", "e")
+                .replace("ú", "u");
     }
 }
