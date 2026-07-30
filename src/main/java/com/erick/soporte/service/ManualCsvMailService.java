@@ -65,14 +65,16 @@ public class ManualCsvMailService {
             helper.setCc(splitAddresses(ccAddresses));
         }
 
-        helper.setSubject("Reporte CSV Reporteria " + from + " a " + to);
+        helper.setSubject("Reporte Conversaciones " + from + " a " + to);
         helper.setText("""
                 Hola,
 
-                Se adjunta el reporte CSV de conversaciones generado manualmente desde Reporteria.
+                Se adjunta el reporte CSV de conversaciones.
 
                 Rango: %s a %s
                 Registros incluidos: %d
+                
+                Correo enviado automaticamente, no responder.
                 """.formatted(from, to, report.rows()));
         helper.addAttachment(report.filename(), new ByteArrayResource(report.content()), "text/csv");
 
