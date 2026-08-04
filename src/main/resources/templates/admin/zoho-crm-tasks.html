@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tareas CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen bg-[#fbfcff] text-[#060b3f]">
+<main class="mx-auto max-w-7xl px-5 py-6 lg:px-8">
+    <header class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+            <p class="mb-2 text-xs font-black uppercase tracking-[0.22em] text-[#6236ff]">Zoho CRM</p>
+            <h1 class="text-3xl font-black tracking-tight">Modulo de tareas</h1>
+            <p class="mt-2 text-sm text-[#5f6b8a]">Analisis de tareas asignadas, realizadas, tipo de tarea y pais de operacion.</p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+            <a href="/supervisor/dashboard" class="inline-flex h-11 items-center gap-2 rounded-lg border border-[#e3e7f2] bg-white px-4 text-sm font-black text-[#060b3f] shadow-sm">
+                <i data-lucide="layout-dashboard" class="h-4 w-4"></i>Dashboard
+            </a>
+            <a href="/admin/dashboard" class="inline-flex h-11 items-center gap-2 rounded-lg bg-gradient-to-r from-[#6c35ff] to-[#4c22e8] px-4 text-sm font-black text-white shadow-lg shadow-violet-200">
+                <i data-lucide="arrow-left" class="h-4 w-4"></i>Panel admin
+            </a>
+        </div>
+    </header>
+
+    <div th:if="${error}" class="mb-5 rounded-xl border border-[#ff3f66]/25 bg-[#fff0f3] px-5 py-4 text-sm font-bold text-[#ff3f66]" th:text="${error}"></div>
+
+    <section class="mb-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <article class="rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+            <p class="text-xs font-black text-[#5f6b8a]">Estado CRM</p>
+            <h2 th:if="${crmConfigured}" class="mt-3 text-2xl font-black text-[#18bd73]">Configurado</h2>
+            <h2 th:unless="${crmConfigured}" class="mt-3 text-2xl font-black text-[#ff3f66]">Pendiente</h2>
+        </article>
+        <article class="rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+            <p class="text-xs font-black text-[#5f6b8a]">Asignadas</p>
+            <h2 class="mt-3 text-4xl font-black text-[#4078ff]" th:text="${assignedTotal}">0</h2>
+        </article>
+        <article class="rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+            <p class="text-xs font-black text-[#5f6b8a]">Realizadas</p>
+            <h2 class="mt-3 text-4xl font-black text-[#18bd73]" th:text="${completedTotal}">0</h2>
+        </article>
+        <article class="rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+            <p class="text-xs font-black text-[#5f6b8a]">Pendientes</p>
+            <h2 class="mt-3 text-4xl font-black text-[#f6a400]" th:text="${pendingTotal}">0</h2>
+        </article>
+        <article class="rounded-xl border border-[#e3e7f2] bg-gradient-to-br from-[#f4f1ff] to-white p-5 shadow-sm">
+            <p class="text-xs font-black text-[#5f6b8a]">Cumplimiento</p>
+            <h2 class="mt-3 text-4xl font-black text-[#6236ff]" th:text="${complianceText}">0.0%</h2>
+        </article>
+    </section>
+
+    <form method="get" action="/admin/zoho-crm/tasks" class="mb-5 rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+        <div class="mb-4 flex items-center justify-between gap-3">
+            <div>
+                <h2 class="text-sm font-black">Filtros de tareas</h2>
+                <p class="mt-1 text-xs font-semibold text-[#5f6b8a]">Los desgloses se actualizan con el rango y filtros seleccionados.</p>
+            </div>
+            <div class="flex flex-wrap justify-end gap-3">
+                <button type="submit" class="inline-flex h-10 items-center gap-2 rounded-lg border border-[#e3e7f2] bg-white px-4 text-sm font-black text-[#060b3f]">
+                    <i data-lucide="filter" class="h-4 w-4"></i>Filtrar
+                </button>
+                <button type="submit" name="refreshCrm" value="true" class="inline-flex h-10 items-center gap-2 rounded-lg bg-[#6236ff] px-4 text-sm font-black text-white">
+                    <i data-lucide="refresh-cw" class="h-4 w-4"></i>Actualizar CRM
+                </button>
+            </div>
+        </div>
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <label class="grid gap-2">
+                <span class="text-xs font-black uppercase text-[#5f6b8a]">Desde</span>
+                <input type="date" name="from" th:value="${from}" class="h-11 rounded-lg border border-[#d9dfec] px-3 text-sm font-bold outline-none focus:border-[#6236ff]">
+            </label>
+            <label class="grid gap-2">
+                <span class="text-xs font-black uppercase text-[#5f6b8a]">Hasta</span>
+                <input type="date" name="to" th:value="${to}" class="h-11 rounded-lg border border-[#d9dfec] px-3 text-sm font-bold outline-none focus:border-[#6236ff]">
+            </label>
+            <label class="grid gap-2">
+                <span class="text-xs font-black uppercase text-[#5f6b8a]">Tipo de tarea</span>
+                <select name="taskType" class="h-11 rounded-lg border border-[#d9dfec] px-3 text-sm font-bold outline-none focus:border-[#6236ff]">
+                    <option value="">Todos</option>
+                    <option th:each="option : ${taskTypeOptions}" th:value="${option}" th:text="${option}" th:selected="${taskType == option}">Tipo</option>
+                </select>
+            </label>
+            <label class="grid gap-2">
+                <span class="text-xs font-black uppercase text-[#5f6b8a]">Pais de operacion</span>
+                <select name="operationCountry" class="h-11 rounded-lg border border-[#d9dfec] px-3 text-sm font-bold outline-none focus:border-[#6236ff]">
+                    <option value="">Todos</option>
+                    <option th:each="option : ${countryOptions}" th:value="${option}" th:text="${option}" th:selected="${operationCountry == option}">Pais</option>
+                </select>
+            </label>
+            <label class="grid gap-2">
+                <span class="text-xs font-black uppercase text-[#5f6b8a]">Propietario</span>
+                <select name="owner" class="h-11 rounded-lg border border-[#d9dfec] px-3 text-sm font-bold outline-none focus:border-[#6236ff]">
+                    <option value="">Todos</option>
+                    <option th:each="option : ${ownerOptions}" th:value="${option}" th:text="${option}" th:selected="${owner == option}">Propietario</option>
+                </select>
+            </label>
+            <label class="grid gap-2">
+                <span class="text-xs font-black uppercase text-[#5f6b8a]">Estado</span>
+                <select name="status" class="h-11 rounded-lg border border-[#d9dfec] px-3 text-sm font-bold outline-none focus:border-[#6236ff]">
+                    <option value="">Todos</option>
+                    <option th:each="option : ${statusOptions}" th:value="${option}" th:text="${option}" th:selected="${status == option}">Estado</option>
+                </select>
+            </label>
+            <label class="grid gap-2">
+                <span class="text-xs font-black uppercase text-[#5f6b8a]">Mostrar</span>
+                <select name="size" class="h-11 rounded-lg border border-[#d9dfec] px-3 text-sm font-bold outline-none focus:border-[#6236ff]">
+                    <option value="10" th:selected="${size == 10}">10</option>
+                    <option value="25" th:selected="${size == 25}">25</option>
+                    <option value="50" th:selected="${size == 50}">50</option>
+                </select>
+            </label>
+            <div class="flex items-end gap-3">
+                <a href="/admin/zoho-crm/tasks" class="inline-flex h-11 items-center rounded-lg border border-[#e3e7f2] bg-white px-4 text-sm font-black text-[#060b3f]">Limpiar</a>
+            </div>
+        </div>
+    </form>
+
+    <section class="mb-5 grid gap-5 lg:grid-cols-2">
+        <article class="rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+            <h2 class="mb-4 text-sm font-black">Desglose por tipo de tarea</h2>
+            <div class="grid gap-3">
+                <div th:each="row : ${typeRows}" class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                    <span class="truncate text-sm font-black" th:text="${row['label']}">Tipo</span>
+                    <span class="text-sm font-black text-[#6236ff]" th:text="${row['value']}">0</span>
+                    <div class="col-span-2 h-2 overflow-hidden rounded-full bg-[#edf0f7]">
+                        <div class="h-full rounded-full bg-[#6236ff]" th:style="${'width:' + row['width'] + '%'}"></div>
+                    </div>
+                </div>
+                <div th:if="${#lists.isEmpty(typeRows)}" class="rounded-lg bg-[#fbfcff] p-4 text-sm font-bold text-[#5f6b8a]">Sin tipos de tarea para mostrar.</div>
+            </div>
+        </article>
+
+        <article class="rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+            <h2 class="mb-4 text-sm font-black">Desglose por pais de operacion</h2>
+            <div class="grid gap-3">
+                <div th:each="row : ${countryRows}" class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                    <span class="truncate text-sm font-black" th:text="${row['label']}">Pais</span>
+                    <span class="text-sm font-black text-[#18bd73]" th:text="${row['value']}">0</span>
+                    <div class="col-span-2 h-2 overflow-hidden rounded-full bg-[#edf0f7]">
+                        <div class="h-full rounded-full bg-[#18bd73]" th:style="${'width:' + row['width'] + '%'}"></div>
+                    </div>
+                </div>
+                <div th:if="${#lists.isEmpty(countryRows)}" class="rounded-lg bg-[#fbfcff] p-4 text-sm font-bold text-[#5f6b8a]">Sin paises para mostrar.</div>
+            </div>
+        </article>
+    </section>
+
+    <section class="mb-5 rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+        <h2 class="mb-4 text-sm font-black">Desempeno por propietario</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[760px] text-left text-sm">
+                <thead class="text-xs uppercase text-[#5f6b8a]">
+                <tr class="border-b border-[#edf0f7]">
+                    <th class="py-3 pr-4">Propietario</th>
+                    <th class="py-3 pr-4">Asignadas</th>
+                    <th class="py-3 pr-4">Realizadas</th>
+                    <th class="py-3 pr-4">Pendientes</th>
+                    <th class="py-3 pr-4">Cumplimiento</th>
+                    <th class="py-3 pr-4">Estados</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="agent : ${agentRows}" class="border-b border-[#edf0f7]">
+                    <td class="py-3 pr-4 font-black" th:text="${agent['owner']}">Agente</td>
+                    <td class="py-3 pr-4" th:text="${agent['assigned']}">0</td>
+                    <td class="py-3 pr-4 font-black text-[#18bd73]" th:text="${agent['completed']}">0</td>
+                    <td class="py-3 pr-4 font-black text-[#f6a400]" th:text="${agent['pending']}">0</td>
+                    <td class="py-3 pr-4 font-black text-[#6236ff]" th:text="${agent['complianceText']}">0.0%</td>
+                    <td class="py-3 pr-4 text-[#5f6b8a]" th:text="${agent['statusesText']}">Estados</td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(agentRows)}">
+                    <td colspan="6" class="py-6 text-[#5f6b8a]">Sin tareas para mostrar en este rango.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+        <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-sm font-black">Detalle de tareas</h2>
+            <span class="rounded-full bg-[#f4f1ff] px-3 py-1 text-xs font-black text-[#6236ff]" th:text="${'Mostrando ' + #lists.size(taskRows) + ' registro(s)'}">Mostrando 0</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[980px] text-left text-sm">
+                <thead class="text-xs uppercase text-[#5f6b8a]">
+                <tr class="border-b border-[#edf0f7]">
+                    <th class="py-3 pr-4">Asunto</th>
+                    <th class="py-3 pr-4">Tipo</th>
+                    <th class="py-3 pr-4">Pais</th>
+                    <th class="py-3 pr-4">Estado</th>
+                    <th class="py-3 pr-4">Propietario</th>
+                    <th class="py-3 pr-4">Vencimiento</th>
+                    <th class="py-3 pr-4">Creada</th>
+                    <th class="py-3 pr-4">Actualizada</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="task : ${taskRows}" class="border-b border-[#edf0f7]">
+                    <td class="max-w-[260px] truncate py-3 pr-4 font-black" th:text="${task['subject']}">Asunto</td>
+                    <td class="py-3 pr-4" th:text="${task['type']}">Tipo</td>
+                    <td class="py-3 pr-4" th:text="${task['country']}">Pais</td>
+                    <td class="py-3 pr-4"><span class="rounded-full bg-[#f4f1ff] px-3 py-1 text-xs font-black text-[#6236ff]" th:text="${task['status']}">Estado</span></td>
+                    <td class="py-3 pr-4" th:text="${task['owner']}">Propietario</td>
+                    <td class="py-3 pr-4 text-[#5f6b8a]" th:text="${task['dueDate']}">Sin fecha</td>
+                    <td class="py-3 pr-4 text-[#5f6b8a]" th:text="${task['createdTime']}">Sin fecha</td>
+                    <td class="py-3 pr-4 text-[#5f6b8a]" th:text="${task['modifiedTime']}">Sin fecha</td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(taskRows)}">
+                    <td colspan="8" class="py-6 text-[#5f6b8a]">Sin tareas para mostrar con los filtros seleccionados.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+<script>
+    lucide.createIcons();
+</script>
+</body>
+</html>

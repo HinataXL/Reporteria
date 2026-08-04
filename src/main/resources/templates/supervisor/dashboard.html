@@ -70,6 +70,9 @@
                 </label>
                 <button class="rm-btn ghost" type="button" data-dashboard-filter onclick="applyDateFilter()"><i data-lucide="filter"></i>Filtrar</button>
                 <button class="rm-btn ghost" type="button" onclick="clearDateFilter()"><i data-lucide="x"></i>Limpiar</button>
+                <button class="rm-btn ghost" type="button" data-dashboard-refresh onclick="refreshDashboardManual()"><i data-lucide="refresh-cw"></i>Actualizar dashboard</button>
+                <span id="dashboardUpdateNotice" class="update-notice" hidden>Hay cambios nuevos</span>
+                <span id="realtimeStatus" class="pill realtime-pill connected">En vivo</span>
                 <a class="rm-btn primary" th:href="@{/supervisor/report/pdf}"><i data-lucide="download"></i>Exportar</a>
             </div>
         </header>
@@ -318,31 +321,48 @@
                 <div id="topClientsList" class="channel-list"></div>
                 <a class="panel-link" href="#topClientsList">Abrir vista 360 al seleccionar <i data-lucide="arrow-right"></i></a>
             </article>
-            <article class="card section">
-                <h2 class="section-title">Actividad en tiempo real <span id="realtimeStatus" class="pill realtime-pill connected">En vivo</span></h2>
-                <div id="activeAgentList" class="presence-list">
-                    <div class="presence-row" th:each="agent : ${activeAgents}">
-                        <div class="activity-dot" th:text="${#strings.substring(agent.name,0,1)}">A</div>
-                        <div>
-                            <div class="activity-title" th:text="${agent.name}">Agente conectado</div>
-                            <div class="activity-time" th:text="${'Conectado hace ' + agent.connectedFor}">Conectado hace 0 min</div>
-                        </div>
-                        <span class="pill">Activo</span>
-                    </div>
-                    <div class="empty" th:if="${#lists.isEmpty(activeAgents)}">Sin agentes conectados.</div>
+            <article class="card section crm-task-card">
+                <div class="crm-card-header">
+                    <h2 class="section-title">Metricas tareas CRM <span id="crmTaskStatus" class="pill">Zoho CRM</span></h2>
+                    <button class="rm-btn ghost crm-refresh-btn" type="button" onclick="refreshCrmTaskMetrics()" data-crm-refresh>
+                        <i data-lucide="refresh-cw"></i>Actualizar CRM
+                    </button>
                 </div>
-                <div class="activity-divider">Conversaciones recientes</div>
-                <div class="activity-list" id="activityList">
-                    <div class="activity-item" th:each="item : ${recientes}">
-                        <div class="activity-dot" th:text="${#strings.substring(item.canal,0,1)}">W</div>
-                        <div>
-                            <div class="activity-title" th:text="${item.estado + ' - ' + item.cliente}">Nueva conversacion</div>
-                            <div class="activity-time" th:text="${item.canal + ' - ' + item.fecha}">hace 1 min</div>
-                        </div>
-                        <span class="pill" th:text="${item.codigo}">Chat</span>
+                <div class="crm-range">Rango: <span id="crmTaskRange" th:text="${crmTasks['range']}">Ultimos 7 dias</span></div>
+                <div id="crmTaskError"
+                     class="crm-error"
+                     th:style="${crmTasks['error'] == null ? 'display:none' : ''}"
+                     th:text="${crmTasks['error']}">Sin conexion CRM</div>
+                <div class="crm-task-kpis">
+                    <div class="crm-task-kpi">
+                        <span>Asignadas</span>
+                        <strong id="crmTaskAssigned" th:text="${crmTasks['assigned']}">0</strong>
+                    </div>
+                    <div class="crm-task-kpi">
+                        <span>Realizadas</span>
+                        <strong id="crmTaskCompleted" th:text="${crmTasks['completed']}">0</strong>
+                    </div>
+                    <div class="crm-task-kpi">
+                        <span>Pendientes</span>
+                        <strong id="crmTaskPending" th:text="${crmTasks['pending']}">0</strong>
+                    </div>
+                    <div class="crm-task-kpi accent">
+                        <span>Cumplimiento</span>
+                        <strong id="crmTaskCompliance" th:text="${crmTasks['complianceText']}">0.0%</strong>
                     </div>
                 </div>
-                <a class="panel-link" th:href="@{/conversations}">Ver toda la actividad <i data-lucide="arrow-right"></i></a>
+                <div id="crmTaskAgentList" class="crm-agent-list">
+                    <div class="crm-agent-row" th:each="agent : ${crmTasks['agents']}">
+                        <div class="channel-icon" th:text="${#strings.substring(agent['owner'],0,1)}">A</div>
+                        <div>
+                            <div class="activity-title" th:text="${agent['owner']}">Agente</div>
+                            <div class="activity-time" th:text="${agent['completed'] + ' realizadas de ' + agent['assigned']}">0 realizadas de 0</div>
+                        </div>
+                        <span class="pill" th:text="${agent['complianceText']}">0.0%</span>
+                    </div>
+                    <div class="empty" th:if="${#lists.isEmpty(crmTasks['agents'])}">Sin tareas por agente para este rango.</div>
+                </div>
+                <a class="panel-link" th:href="@{/admin/zoho-crm/tasks}">Ver detalle CRM <i data-lucide="arrow-right"></i></a>
             </article>
         </section>
     </main>
@@ -444,8 +464,11 @@
     const initialIssueTrend = /*[[${issueTrend}]]*/ {};
     const initialWeeklyTrend = /*[[${weeklyTrend}]]*/ {};
     const initialActiveAgents = /*[[${activeAgents}]]*/ [];
+    const initialCrmTasks = /*[[${crmTasks}]]*/ {};
     let dashboardStompClient = null;
     let dashboardRealtimeRefreshTimer = null;
+    let dashboardHasPendingChanges = false;
+    let dashboardRefreshInFlight = false;
     let timeChart = null;
 
     function tooltip() {
@@ -768,6 +791,47 @@
         }).join('');
     }
 
+    function renderCrmTaskMetrics(metrics) {
+        const data = metrics || {};
+        const error = document.getElementById('crmTaskError');
+        const status = document.getElementById('crmTaskStatus');
+        const agentList = document.getElementById('crmTaskAgentList');
+
+        document.getElementById('crmTaskRange').innerText = data.range || 'Ultimos 7 dias';
+        document.getElementById('crmTaskAssigned').innerText = data.assigned || 0;
+        document.getElementById('crmTaskCompleted').innerText = data.completed || 0;
+        document.getElementById('crmTaskPending').innerText = data.pending || 0;
+        document.getElementById('crmTaskCompliance').innerText = data.complianceText || '0.0%';
+
+        if (status) {
+            status.innerText = data.available ? 'Sincronizado' : (data.configured ? 'Revisar' : 'Pendiente');
+            status.classList.toggle('connected', Boolean(data.available));
+            status.classList.toggle('fallback', !data.available);
+        }
+
+        if (error) {
+            error.style.display = data.error ? 'block' : 'none';
+            error.innerText = data.error || '';
+        }
+
+        const agents = data.agents || [];
+        if (!agentList) return;
+        if (!agents.length) {
+            agentList.innerHTML = '<div class="empty">Sin tareas por agente para este rango.</div>';
+            return;
+        }
+
+        agentList.innerHTML = agents.map(agent => `
+            <div class="crm-agent-row">
+                <div class="channel-icon">${escapeHtml((agent.owner || 'A').slice(0, 1).toUpperCase())}</div>
+                <div>
+                    <div class="activity-title">${escapeHtml(agent.owner || 'Sin propietario')}</div>
+                    <div class="activity-time">${Number(agent.completed || 0)} realizadas de ${Number(agent.assigned || 0)} - ${Number(agent.pending || 0)} pendientes</div>
+                </div>
+                <span class="pill">${escapeHtml(agent.complianceText || '0.0%')}</span>
+            </div>`).join('');
+    }
+
     function renderChipMap(containerId, values) {
         const container = document.getElementById(containerId);
         if (!container) return;
@@ -1045,14 +1109,21 @@
         modal.setAttribute('aria-hidden', 'true');
     }
 
-    async function refreshDashboardMetrics() {
-        const filterButton = document.querySelector('[data-dashboard-filter]');
-        const originalFilterText = filterButton ? filterButton.innerHTML : '';
+    async function refreshDashboardMetrics(triggerButton = null, loadingLabel = 'Actualizando') {
+        if (dashboardRefreshInFlight) {
+            dashboardHasPendingChanges = true;
+            setDashboardUpdateNotice(true);
+            return;
+        }
+
+        dashboardRefreshInFlight = true;
+        const actionButton = triggerButton;
+        const originalButtonText = actionButton ? actionButton.innerHTML : '';
 
         try {
-            if (filterButton) {
-                filterButton.disabled = true;
-                filterButton.innerHTML = '<i data-lucide="loader-circle"></i>Filtrando';
+            if (actionButton) {
+                actionButton.disabled = true;
+                actionButton.innerHTML = `<i data-lucide="loader-circle"></i>${loadingLabel}`;
                 lucide.createIcons();
             }
 
@@ -1085,14 +1156,52 @@
             setGranularityBadge(data.granularity || 'daily');
             renderIssuesTable('topIssuesList', data.asuntoLabels || [], data.asuntoValues || [], data.issueTrend);
             renderClientList('topClientsList', data.clienteLabels || [], data.clienteValues || [], data.clienteTiempoValues || [], true);
-            renderActivityList(data.recientes || []);
-            renderActiveAgents(data.activeAgents || []);
+            if (data.crmTasks) renderCrmTaskMetrics(data.crmTasks);
+            dashboardHasPendingChanges = false;
+            setDashboardUpdateNotice(false);
         } catch (error) {
             console.error('Error actualizando dashboard', error);
         } finally {
-            if (filterButton) {
-                filterButton.disabled = false;
-                filterButton.innerHTML = originalFilterText;
+            dashboardRefreshInFlight = false;
+            if (actionButton) {
+                actionButton.disabled = false;
+                actionButton.innerHTML = originalButtonText;
+                lucide.createIcons();
+            }
+        }
+    }
+
+    async function refreshCrmTaskMetrics() {
+        const button = document.querySelector('[data-crm-refresh]');
+        const originalText = button ? button.innerHTML : '';
+        const params = new URLSearchParams();
+        const from = document.getElementById('filterFrom').value;
+        const to = document.getElementById('filterTo').value;
+        const granularity = document.getElementById('granularityFilter').value;
+        if (from) params.append('from', from);
+        if (to) params.append('to', to);
+        if (granularity) params.append('granularity', granularity);
+        params.append('refreshCrm', 'true');
+
+        try {
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<i data-lucide="loader-circle"></i>Actualizando';
+                lucide.createIcons();
+            }
+            const response = await fetch('/api/dashboard/metrics?' + params.toString());
+            if (!response.ok) throw new Error('No fue posible actualizar CRM');
+            const data = await response.json();
+            renderCrmTaskMetrics(data.crmTasks);
+        } catch (error) {
+            renderCrmTaskMetrics({
+                error: 'No fue posible actualizar CRM en este momento.',
+                range: document.getElementById('crmTaskRange').innerText
+            });
+        } finally {
+            if (button) {
+                button.disabled = false;
+                button.innerHTML = originalText;
                 lucide.createIcons();
             }
         }
@@ -1132,14 +1241,24 @@
     }
 
     function applyDateFilter() {
-        refreshDashboardMetrics();
+        refreshDashboardMetrics(document.querySelector('[data-dashboard-filter]'), 'Filtrando');
     }
 
     function clearDateFilter() {
         document.getElementById('filterFrom').value = '';
         document.getElementById('filterTo').value = '';
         document.getElementById('granularityFilter').value = 'auto';
-        refreshDashboardMetrics();
+        refreshDashboardMetrics(document.querySelector('[data-dashboard-filter]'), 'Limpiando');
+    }
+
+    function refreshDashboardManual() {
+        refreshDashboardMetrics(document.querySelector('[data-dashboard-refresh]'), 'Actualizando');
+    }
+
+    function setDashboardUpdateNotice(visible) {
+        const notice = document.getElementById('dashboardUpdateNotice');
+        if (!notice) return;
+        notice.hidden = !visible;
     }
 
     function setRealtimeStatus(status, label) {
@@ -1152,7 +1271,12 @@
 
     function scheduleRealtimeRefresh() {
         window.clearTimeout(dashboardRealtimeRefreshTimer);
-        dashboardRealtimeRefreshTimer = window.setTimeout(refreshDashboardMetrics, 300);
+        if (document.hidden) {
+            dashboardHasPendingChanges = true;
+            setDashboardUpdateNotice(true);
+            return;
+        }
+        dashboardRealtimeRefreshTimer = window.setTimeout(() => refreshDashboardMetrics(), 300);
     }
 
     function connectDashboardRealtime() {
@@ -1215,14 +1339,19 @@
         });
     });
 
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && dashboardHasPendingChanges) {
+            refreshDashboardMetrics();
+        }
+    });
+
     renderIssuesTable('topIssuesList', asuntoLabels, asuntoValues, initialIssueTrend);
     renderClientList('topClientsList', clienteLabels, clienteValues, clienteTiempoValues, true);
     renderPeakHours(initialPeakHours);
-    renderActiveAgents(initialActiveAgents);
+    renderCrmTaskMetrics(initialCrmTasks);
     document.getElementById('granularityFilter').value = 'auto';
     setGranularityBadge(initialGranularity);
     connectDashboardRealtime();
-    setInterval(refreshDashboardMetrics, 60000);
     lucide.createIcons();
 </script>
 </body>

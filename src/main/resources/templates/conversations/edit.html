@@ -83,6 +83,23 @@
 
             <div>
                 <label class="font-bold">
+                    Nombre comercio
+                </label>
+
+                <input
+                        th:field="*{nombreComercio}"
+                        type="text"
+                        class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 outline-none">
+            </div>
+
+        </div>
+
+        <!-- CANAL -->
+
+        <div class="grid md:grid-cols-2 gap-5">
+
+            <div>
+                <label class="font-bold">
                     Canal
                 </label>
 
@@ -228,6 +245,42 @@
     </form>
 
 </div>
+
+<script>
+    const editForm = document.querySelector('form');
+    const issueInput = document.querySelector('[name="asunto"]');
+    const descriptionInput = document.querySelector('[name="descripcion"]');
+    const commerceNameInput = document.querySelector('[name="nombreComercio"]');
+
+    function normalizeEditText(value) {
+        return String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim()
+            .toLowerCase();
+    }
+
+    editForm?.addEventListener('submit', (event) => {
+        const isDudasVarias = normalizeEditText(issueInput?.value) === 'dudas varias';
+        const hasDescription = String(descriptionInput?.value || '').trim().length > 0;
+        const hasCommerceName = String(commerceNameInput?.value || '').trim().length > 0;
+
+        if (!hasCommerceName) {
+            event.preventDefault();
+            commerceNameInput?.focus();
+            commerceNameInput?.classList.add('border-red-400');
+            alert('Has olvidado colocar nombre comercio, porfavor coloca un nombre para guardar');
+            return;
+        }
+
+        if (isDudasVarias && !hasDescription) {
+            event.preventDefault();
+            descriptionInput?.focus();
+            descriptionInput?.classList.add('border-red-400');
+            alert('Para Dudas varias, la descripcion de la conversacion es obligatoria.');
+        }
+    });
+</script>
 
 </body>
 </html>

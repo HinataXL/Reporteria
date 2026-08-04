@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -223,6 +224,7 @@ public class HomeController {
 
             conversation.setUserId(user.getId());
             conversation.setAgenteNombre(user.getNombreCompleto());
+            requireNombreComercio(conversation.getNombreComercio());
 
             if (!Boolean.TRUE.equals(conversation.getTicketAperturado())) {
                 conversation.setTicketAperturado(false);
@@ -247,6 +249,8 @@ public class HomeController {
 
                 conversation.setAsunto(issueType.getNombre());
             }
+
+            requireDescriptionForDudasVarias(conversation.getAsunto(), conversation.getDescripcion());
 
             if (conversation.getFechaInicio() == null) {
                 conversation.setFechaInicio(
@@ -383,7 +387,11 @@ public class HomeController {
         conversation.setClienteNombre(form.getClienteNombre());
         conversation.setClienteTelefono(form.getClienteTelefono());
         conversation.setClienteCorreo(form.getClienteCorreo());
+        conversation.setNombreComercio(form.getNombreComercio());
+        requireNombreComercio(form.getNombreComercio());
         conversation.setChannelId(form.getChannelId());
+        conversation.setAsunto(form.getAsunto());
+        requireDescriptionForDudasVarias(conversation.getAsunto(), form.getDescripcion());
         conversation.setIssueTypeId(form.getIssueTypeId());
         conversation.setRejectionCodeId(form.getRejectionCodeId());
         conversation.setDescripcion(form.getDescripcion());
@@ -519,6 +527,29 @@ public class HomeController {
     private String safe(String value) {
         if (value == null) return "";
         return "\"" + value.replace("\"", "\"\"") + "\"";
+    }
+
+    private void requireDescriptionForDudasVarias(String asunto, String descripcion) {
+        if ("dudas varias".equals(normalizedText(asunto)) && (descripcion == null || descripcion.trim().isEmpty())) {
+            throw new IllegalArgumentException("Para Dudas varias, la descripcion de la conversacion es obligatoria.");
+        }
+    }
+
+    private void requireNombreComercio(String nombreComercio) {
+        if (nombreComercio == null || nombreComercio.trim().isEmpty()) {
+            throw new IllegalArgumentException("Has olvidado colocar nombre comercio, porfavor coloca un nombre para guardar");
+        }
+    }
+
+    private String normalizedText(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .trim()
+                .toLowerCase();
     }
 
     private String finalizacionCsv(Conversation conversation, DateTimeFormatter formatter) {

@@ -4,6 +4,7 @@ import com.erick.soporte.entity.Conversation;
 import com.erick.soporte.repository.ConversationRepository;
 import com.erick.soporte.service.ActiveSessionService;
 import com.erick.soporte.service.GeminiReportService;
+import com.erick.soporte.service.ZohoCrmTaskMetricsService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,15 +31,18 @@ public class DashboardApiController {
 
     private final ConversationRepository conversationRepository;
     private final ObjectProvider<GeminiReportService> geminiReportServiceProvider;
+    private final ObjectProvider<ZohoCrmTaskMetricsService> zohoCrmTaskMetricsServiceProvider;
     private final ActiveSessionService activeSessionService;
 
     public DashboardApiController(
             ConversationRepository conversationRepository,
             ObjectProvider<GeminiReportService> geminiReportServiceProvider,
+            ObjectProvider<ZohoCrmTaskMetricsService> zohoCrmTaskMetricsServiceProvider,
             ActiveSessionService activeSessionService
     ) {
         this.conversationRepository = conversationRepository;
         this.geminiReportServiceProvider = geminiReportServiceProvider;
+        this.zohoCrmTaskMetricsServiceProvider = zohoCrmTaskMetricsServiceProvider;
         this.activeSessionService = activeSessionService;
 
     }
@@ -88,7 +92,8 @@ public class DashboardApiController {
     public Map<String, Object> metrics(
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to,
-            @RequestParam(required = false, defaultValue = "auto") String granularity
+            @RequestParam(required = false, defaultValue = "auto") String granularity,
+            @RequestParam(required = false, defaultValue = "false") boolean refreshCrm
     ) {
         List<Conversation> allConversations = conversationRepository.findAll();
         List<Conversation> conversations = allConversations;
@@ -251,8 +256,73 @@ public class DashboardApiController {
                 .toList());
         response.put("recientes", recientes);
         response.put("activeAgents", activeSessionService.activeAgents());
+        if (refreshCrm) {
+            response.put("crmTasks", crmTaskMetrics(from, to, true));
+        }
 
         return response;
+    }
+
+    private Map<String, Object> crmTaskMetrics(String from, String to, boolean refreshCrm) {
+        ZohoCrmTaskMetricsService service = zohoCrmTaskMetricsServiceProvider.getIfAvailable();
+        Map<String, Object> response = emptyCrmTaskMetrics("Servicio Zoho CRM no disponible.");
+        if (service == null) {
+            return response;
+        }
+
+        Map<String, Object> status = service.status();
+        response.put("configured", Boolean.TRUE.equals(status.get("configured")));
+        if (!Boolean.TRUE.equals(status.get("configured"))) {
+            response.put("error", "Configura las variables ZOHO_CRM para consultar tareas.");
+            return response;
+        }
+
+        LocalDate effectiveTo = to != null && !to.isBlank() ? LocalDate.parse(to) : LocalDate.now();
+        LocalDate effectiveFrom = from != null && !from.isBlank() ? LocalDate.parse(from) : effectiveTo.minusDays(7);
+        try {
+            ZohoCrmTaskMetricsService.TaskMetrics metrics = refreshCrm
+                    ? service.metrics(effectiveFrom, effectiveTo, new ZohoCrmTaskMetricsService.TaskFilter(null, null, null, null, 5, true))
+                    : service.cachedMetrics(effectiveFrom, effectiveTo, new ZohoCrmTaskMetricsService.TaskFilter(null, null, null, null, 5, false));
+            response.put("available", true);
+            response.put("error", null);
+            response.put("assigned", metrics.getAssigned());
+            response.put("completed", metrics.getCompleted());
+            response.put("pending", metrics.getPending());
+            response.put("complianceText", percent(metrics.getCompliance()));
+            response.put("range", effectiveFrom + " al " + effectiveTo);
+            response.put("agents", metrics.getAgents().stream()
+                    .limit(5)
+                    .map(agent -> Map.of(
+                            "owner", agent.getOwner(),
+                            "assigned", agent.getAssigned(),
+                            "completed", agent.getCompleted(),
+                            "pending", agent.getPending(),
+                            "complianceText", percent(agent.getCompliance())
+                    ))
+                    .toList());
+        } catch (Exception error) {
+            response.put("error", error.getMessage());
+            response.put("range", effectiveFrom + " al " + effectiveTo);
+        }
+        return response;
+    }
+
+    private Map<String, Object> emptyCrmTaskMetrics(String error) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("configured", false);
+        response.put("available", false);
+        response.put("error", error);
+        response.put("assigned", 0);
+        response.put("completed", 0);
+        response.put("pending", 0);
+        response.put("complianceText", "0.0%");
+        response.put("range", "Ultimos 7 dias");
+        response.put("agents", List.of());
+        return response;
+    }
+
+    private String percent(double value) {
+        return String.format(Locale.US, "%.1f%%", value);
     }
 
     @GetMapping("/api/dashboard/issue-trends")

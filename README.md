@@ -141,6 +141,14 @@ ZOHO_CLIENT_SECRET=tu_client_secret
 ZOHO_REFRESH_TOKEN=tu_refresh_token
 ZOHO_DEFAULT_DEPARTMENT_ID=department_id_de_zoho
 
+ZOHO_CRM_BASE_URL=https://www.zohoapis.com
+ZOHO_CRM_ACCOUNTS_URL=https://accounts.zoho.com
+ZOHO_CRM_CLIENT_ID=tu_client_id_crm
+ZOHO_CRM_CLIENT_SECRET=tu_client_secret_crm
+ZOHO_CRM_REFRESH_TOKEN=tu_refresh_token_crm
+ZOHO_CRM_TASKS_MODULE=Tasks
+ZOHO_CRM_COMPLETED_STATUSES=Completed,Completada,Cerrada,Finalizada
+
 MAIL_HOST=smtp.zoho.com
 MAIL_PORT=587
 MAIL_USERNAME=tu_correo_zoho
@@ -169,6 +177,13 @@ zoho.client-id=${ZOHO_CLIENT_ID:}
 zoho.client-secret=${ZOHO_CLIENT_SECRET:}
 zoho.refresh-token=${ZOHO_REFRESH_TOKEN:}
 zoho.default-department-id=${ZOHO_DEFAULT_DEPARTMENT_ID:}
+zoho.crm.base-url=${ZOHO_CRM_BASE_URL:https://www.zohoapis.com}
+zoho.crm.accounts-url=${ZOHO_CRM_ACCOUNTS_URL:https://accounts.zoho.com}
+zoho.crm.client-id=${ZOHO_CRM_CLIENT_ID:}
+zoho.crm.client-secret=${ZOHO_CRM_CLIENT_SECRET:}
+zoho.crm.refresh-token=${ZOHO_CRM_REFRESH_TOKEN:}
+zoho.crm.tasks-module=${ZOHO_CRM_TASKS_MODULE:Tasks}
+zoho.crm.completed-statuses=${ZOHO_CRM_COMPLETED_STATUSES:Completed,Completada,Cerrada,Finalizada}
 spring.mail.host=${MAIL_HOST:smtp.zoho.com}
 spring.mail.port=${MAIL_PORT:587}
 spring.mail.username=${MAIL_USERNAME:}
@@ -351,11 +366,14 @@ Topics usados:
 
 - CSV de conversaciones: `/conversations/export/csv`
 - Envio manual de CSV por correo: `/admin/reports/email-csv`
+- Tareas Zoho CRM: `/admin/zoho-crm/tasks`
 - PDF supervisor: `/supervisor/report/pdf`
 
 El CSV incluye solo la informacion solicitada para reporte operativo: cliente, telefono, asunto, fecha de inicio, fecha guardado y observaciones.
 
 El envio manual por correo permite seleccionar un rango de fechas, adjuntar el CSV y enviarlo desde una cuenta Zoho Mail con copia opcional a otra direccion. Para probarlo se deben configurar `MAIL_USERNAME`, `MAIL_PASSWORD`, `REPORT_MAIL_TO` y `REPORT_MAIL_CC`.
+
+La vista de Zoho CRM consulta el modulo `Tasks` por `Created_Time` y calcula tareas asignadas, realizadas, pendientes y cumplimiento por propietario. Para tareas realizadas se usan los estados definidos en `ZOHO_CRM_COMPLETED_STATUSES`.
 
 ## Despliegue
 

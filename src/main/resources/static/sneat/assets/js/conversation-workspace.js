@@ -182,6 +182,29 @@ window.ConversationWorkspace = (() => {
         }
     }
 
+    function hideCommerceNamePrompt() {
+        const prompt = document.getElementById("commerceNamePrompt");
+
+        if (prompt) {
+            prompt.classList.add("hidden");
+        }
+
+        const field = getField("nombreComercio");
+        if (field) {
+            field.focus();
+        }
+    }
+
+    function showCommerceNamePrompt() {
+        const prompt = document.getElementById("commerceNamePrompt");
+
+        if (!prompt) {
+            return;
+        }
+
+        prompt.classList.remove("hidden");
+    }
+
     function showSessionPrompt() {
         const prompt = document.getElementById("sessionContinuePrompt");
 
@@ -527,6 +550,22 @@ window.ConversationWorkspace = (() => {
         console.log("Timer cambiado:", tab.running ? "activo" : "pausado");
     }
 
+    function resumeTimerForMissingCommerceName() {
+        const tab = getActiveTab();
+        if (!tab) return;
+
+        normalizeTab(tab);
+
+        if (!tab.running) {
+            tab.running = true;
+            tab.lastResume = Date.now();
+        }
+
+        saveState();
+        renderTabs();
+        startTimer();
+    }
+
     function closeTab(id) {
         const tabToClose = tabs.find(t => t.id === id);
         if (tabToClose && tabToClose.dirty && !tabToClose.saved) {
@@ -589,6 +628,31 @@ window.ConversationWorkspace = (() => {
         return status === "3" || status === "5";
     }
 
+    function normalizedText(value) {
+        return String(value || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim()
+            .toLowerCase();
+    }
+
+    function selectedIssueText() {
+        const issue = getField("issueTypeId");
+        if (!issue || !issue.options || issue.selectedIndex < 0) {
+            return "";
+        }
+
+        return issue.options[issue.selectedIndex].textContent || "";
+    }
+
+    function isMiscQuestionIssue() {
+        return normalizedText(selectedIssueText()) === "dudas varias";
+    }
+
+    function isCommerceNameMissing() {
+        return !valueOf("nombreComercio");
+    }
+
     function validateForm(showErrors = false) {
         let valid = true;
         const requiredFields = [
@@ -605,6 +669,10 @@ window.ConversationWorkspace = (() => {
             valid = valid && !missing;
         });
 
+        const missingCommerceName = isCommerceNameMissing();
+        setFieldError("nombreComercio", missingCommerceName ? "Ingresa el nombre comercio." : "", showErrors);
+        valid = valid && !missingCommerceName;
+
         const rejectionBox = document.getElementById("rejectionCodeBox");
         const requiresRejection = rejectionBox && !rejectionBox.classList.contains("hidden");
         const missingRejection = requiresRejection && !valueOf("rejectionCodeId");
@@ -620,10 +688,18 @@ window.ConversationWorkspace = (() => {
 
         const descriptionLength = valueOf("descripcion").length;
         const observationsLength = valueOf("observaciones").length;
+        const missingMiscQuestionDescription = isMiscQuestionIssue() && descriptionLength === 0;
         const missingClosureDetail = isResolvedOrClosed() && descriptionLength < 30 && observationsLength < 15;
         const closureMessage = "Para resolver o cerrar, agrega una descripcion clara o una observacion interna.";
-        setHint("descriptionHint", missingClosureDetail ? closureMessage : "", showErrors);
+        const descriptionMessage = missingMiscQuestionDescription
+            ? "Para Dudas varias, la descripcion de la conversacion es obligatoria."
+            : (missingClosureDetail ? closureMessage : "");
+        setHint("descriptionHint", descriptionMessage, showErrors);
         setHint("observationsHint", missingClosureDetail ? "Minimo sugerido: descripcion de 30 caracteres u observacion de 15." : "", showErrors);
+        if (descripcion) {
+            descripcion.classList.toggle("field-error", missingMiscQuestionDescription && showErrors);
+        }
+        valid = valid && !missingMiscQuestionDescription;
         valid = valid && !missingClosureDetail;
 
         updateCounters();
@@ -836,6 +912,14 @@ window.ConversationWorkspace = (() => {
             return;
         }
 
+        if (isCommerceNameMissing()) {
+            validationActive = true;
+            validateForm(true);
+            resumeTimerForMissingCommerceName();
+            showCommerceNamePrompt();
+            return;
+        }
+
         if (!validateForm(true)) {
             validationActive = true;
             showToast("Revisa los campos marcados antes de guardar.", true);
@@ -1040,6 +1124,11 @@ window.ConversationWorkspace = (() => {
         const sessionContinueButton = document.getElementById("sessionContinueButton");
         if (sessionContinueButton) {
             sessionContinueButton.addEventListener("click", continueWorking);
+        }
+
+        const commerceNameAcceptButton = document.getElementById("commerceNameAcceptButton");
+        if (commerceNameAcceptButton) {
+            commerceNameAcceptButton.addEventListener("click", hideCommerceNamePrompt);
         }
 
         form.addEventListener("input", () => {

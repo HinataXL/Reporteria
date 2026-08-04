@@ -23,6 +23,9 @@ public class Conversation {
     @Column(name = "cliente_correo")
     private String clienteCorreo;
 
+    @Column(name = "nombre_comercio")
+    private String nombreComercio;
+
     @Column(nullable = false)
     private String asunto;
 
@@ -105,6 +108,14 @@ public class Conversation {
 
     public void setClienteCorreo(String clienteCorreo) {
         this.clienteCorreo = clienteCorreo;
+    }
+
+    public String getNombreComercio() {
+        return nombreComercio;
+    }
+
+    public void setNombreComercio(String nombreComercio) {
+        this.nombreComercio = nombreComercio;
     }
 
     public String getAsunto() {
