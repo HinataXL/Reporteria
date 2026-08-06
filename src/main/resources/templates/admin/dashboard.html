@@ -16,6 +16,9 @@
 
     <header class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-5 mb-8">
         <div>
+            <img th:src="@{/sneat/assets/img/brand/insights-desk-logo.png}"
+                 alt="Insights Desk"
+                 class="w-64 max-w-full rounded-2xl mb-5">
             <p class="text-[#00d9ff] text-sm font-black uppercase tracking-[0.22em] mb-2">
                 Administracion
             </p>
@@ -164,9 +167,9 @@
             return;
         }
 
-        new Notification("Nuevo evento Skill Soporte", {
+        new Notification("Nuevo evento Insights Desk", {
             body: event.description || event.payload || "Se recibio un nuevo evento",
-            icon: "/img/logo.png"
+            icon: "/sneat/assets/img/brand/insights-desk-logo.png"
         });
     }
 

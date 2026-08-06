@@ -97,6 +97,14 @@
             font-size: 18px;
         }
 
+        .login-brand-logo {
+            width: min(430px, 100%);
+            height: auto;
+            display: block;
+            border-radius: 18px;
+            box-shadow: 0 22px 52px rgba(7, 17, 63, .16);
+        }
+
         .logo-box {
             width: 42px;
             height: 42px;
@@ -452,12 +460,9 @@
 <main class="login-shell">
     <section class="brand-panel" aria-label="Bienvenida">
         <div class="brand-mark">
-            <span class="logo-box" aria-hidden="true">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                    <path d="M7 9h10M7 13h6m-8 7 3.2-3.2H17a4 4 0 0 0 4-4V8a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v4.8a4 4 0 0 0 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </span>
-            Insights Desk
+            <img class="login-brand-logo"
+                 th:src="@{/sneat/assets/img/brand/insights-desk-logo.png}"
+                 alt="Insights Desk">
         </div>
 
         <svg class="shape line" viewBox="0 0 430 160" fill="none" aria-hidden="true">
@@ -475,7 +480,7 @@
         </svg>
 
         <div class="welcome-copy">
-            <p class="eyebrow">Skill Soporte</p>
+            <p class="eyebrow">Insights Desk</p>
             <h1>Bienvenido de vuelta</h1>
             <p>Ingresa con tu cuenta para continuar con conversaciones, reportería y métricas operativas.</p>
         </div>

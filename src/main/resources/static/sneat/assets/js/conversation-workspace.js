@@ -23,6 +23,7 @@ window.ConversationWorkspace = (() => {
     const pauseBtnId = "pauseTimerBtn";
     const sessionPromptDelayMs = 8 * 60 * 1000;
     const recentClientsKey = "conversationRecentClients";
+    const workspaceChannelName = "conversation-workspace";
     const sessionAlertTitle = "Sesion por expirar";
     const sessionAlertMessage = "Tu sesion esta por vencer. Vuelve a Reporteria para continuar trabajando.";
 
@@ -37,6 +38,28 @@ window.ConversationWorkspace = (() => {
 
     function getForm() {
         return document.getElementById(formId);
+    }
+
+    function isPopupMode() {
+        return document.body?.dataset?.popupMode === "true";
+    }
+
+    function isPipMode() {
+        return document.body?.dataset?.pipMode === "true";
+    }
+
+    function closeFloatingWindow() {
+        if (isPipMode() && window.parent && window.parent !== window) {
+            window.parent.close();
+            return;
+        }
+
+        window.close();
+        setTimeout(() => {
+            if (!window.closed) {
+                window.location.href = "/conversations";
+            }
+        }, 120);
     }
 
     function getActiveTab() {
@@ -878,6 +901,34 @@ window.ConversationWorkspace = (() => {
         hydrateRecentClientSuggestions();
     }
 
+    function publishWorkspaceEvent(payload) {
+        const message = {
+            ...payload,
+            source: "conversation-popup",
+            sentAt: Date.now()
+        };
+
+        try {
+            if ("BroadcastChannel" in window) {
+                const channel = new BroadcastChannel(workspaceChannelName);
+                channel.postMessage(message);
+                channel.close();
+            }
+        } catch (error) {
+            console.warn("No fue posible publicar evento BroadcastChannel", error);
+        }
+
+        try {
+            localStorage.setItem("conversationWorkspaceEvent", JSON.stringify(message));
+        } catch (error) {
+            console.warn("No fue posible publicar evento localStorage", error);
+        }
+
+        if (window.opener && !window.opener.closed) {
+            window.opener.postMessage(message, window.location.origin);
+        }
+    }
+
     function setFormBusy(isBusy) {
         const form = getForm();
         if (!form) return;
@@ -1003,6 +1054,11 @@ window.ConversationWorkspace = (() => {
             tab.conversationId = data.id;
             tab.saving = false;
             rememberCurrentClient();
+            publishWorkspaceEvent({
+                type: "conversation-saved",
+                id: data.id,
+                codigo: data.codigo
+            });
 
             console.log(
                 "Conversación guardada correctamente:",
@@ -1086,6 +1142,11 @@ window.ConversationWorkspace = (() => {
             );
 
             setTimeout(() => {
+                if (isPopupMode()) {
+                    closeFloatingWindow();
+                    return;
+                }
+
                 window.location.href = "/conversations";
             }, 800);
 
@@ -1265,7 +1326,8 @@ window.ConversationWorkspace = (() => {
         switchTab,
         closeTab,
         toggleTimer,
-        continueWorking
+        continueWorking,
+        closeFloatingWindow
     };
 })();
 

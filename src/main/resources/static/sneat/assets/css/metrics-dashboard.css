@@ -55,6 +55,15 @@ body.metrics-body {
     padding: 0 6px;
 }
 
+.brand-logo {
+    width: 100%;
+    max-width: 210px;
+    height: auto;
+    display: block;
+    border-radius: 10px;
+    object-fit: contain;
+}
+
 .brand-mark {
     width: 40px;
     height: 40px;

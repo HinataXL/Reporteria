@@ -627,6 +627,15 @@
             margin-bottom: 22px;
         }
 
+        .side-brand-logo {
+            width: 100%;
+            max-width: 190px;
+            height: auto;
+            display: block;
+            border-radius: 10px;
+            object-fit: contain;
+        }
+
         .side-brand-mark {
             width: 38px;
             height: 38px;
@@ -1378,8 +1387,9 @@
 <div class="layout">
     <aside class="sidebar" id="sidebar">
         <div class="side-brand">
-            <div class="side-brand-mark">ID</div>
-            <span>Insights Desk</span>
+            <img class="side-brand-logo"
+                 th:src="@{/sneat/assets/img/brand/insights-desk-logo.png}"
+                 alt="Insights Desk">
         </div>
         <div class="user-card">
             <div class="user-avatar" th:text="${#strings.substring(userName,0,1)}">U</div>
@@ -1415,7 +1425,8 @@
                 </a>
             </li>
             <li>
-                <a th:href="@{/conversations/create}">
+                <a th:href="@{/conversations/create(popup=true)}"
+                   onclick="return openConversationPopup(this.href);">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 5v14M5 12h14"></path>
                     </svg>
@@ -1475,7 +1486,7 @@
             <div class="header-actions">
                 <button type="button" class="rm-btn refresh-btn" onclick="window.location.reload()"><i data-lucide="refresh-cw"></i>Actualizar</button>
                 <a class="rm-btn" sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')" th:href="@{/conversations/export/csv}"><i data-lucide="download"></i>Exportar</a>
-                <a class="rm-btn primary" th:href="@{/conversations/create}"><i data-lucide="plus"></i>Nueva conversacion</a>
+                <a class="rm-btn primary" th:href="@{/conversations/create(popup=true)}" onclick="return openConversationPopup(this.href);"><i data-lucide="plus"></i>Nueva conversacion</a>
             </div>
         </header>
 
@@ -1974,5 +1985,6 @@
     };
     lucide.createIcons();
 </script>
+<script th:src="@{/sneat/assets/js/conversation-popup.js}"></script>
 </body>
 </html>

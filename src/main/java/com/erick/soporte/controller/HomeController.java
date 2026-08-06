@@ -201,8 +201,14 @@ public class HomeController {
     }
 
     @GetMapping("/conversations/create")
-    public String createConversation(Model model) {
+    public String createConversation(
+            @RequestParam(required = false, defaultValue = "false") boolean popup,
+            @RequestParam(required = false, defaultValue = "false") boolean pip,
+            Model model
+    ) {
         model.addAttribute("conversation", new Conversation());
+        model.addAttribute("popupMode", popup || pip);
+        model.addAttribute("pipMode", pip);
 
         model.addAttribute("issueTypes", issueTypeRepository.findByActivoTrueOrderByNombreAsc());
         model.addAttribute("rejectionCodes", rejectionCodeRepository.findByActivoTrueOrderByCodigoAsc());

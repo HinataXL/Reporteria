@@ -47,6 +47,9 @@ public class SecurityConfig {
                                 apiRequestMatcher()
                         )
                 )
+                .headers(headers -> headers
+                        .frameOptions(frameOptions -> frameOptions.sameOrigin())
+                )
                 .authenticationProvider(authenticationProvider())
 
                 .authorizeHttpRequests(auth -> auth
