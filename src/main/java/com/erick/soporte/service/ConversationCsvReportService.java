@@ -52,10 +52,11 @@ public class ConversationCsvReportService {
     private String buildCsv(List<Conversation> conversations) {
         StringBuilder csv = new StringBuilder();
         csv.append('\uFEFF');
-        csv.append("Cliente,Telefono,Asunto,Fecha Inicio,Fecha Guardado,Observaciones\n");
+        csv.append("Cliente,Nombre Comercio,Telefono,Asunto,Fecha Inicio,Fecha Guardado,Observaciones\n");
 
         for (Conversation c : conversations) {
             csv.append(safe(c.getClienteNombre())).append(',')
+                    .append(safe(c.getNombreComercio())).append(',')
                     .append(safe(c.getClienteTelefono())).append(',')
                     .append(safe(c.getAsunto())).append(',')
                     .append(safe(c.getFechaInicio() != null ? c.getFechaInicio().format(DATE_TIME_FORMATTER) : "")).append(',')

@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mapa de Arquitectura - Reporteria / Insights Desk</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --ink: #07113f;
+      --muted: #64708f;
+      --line: #dce3f1;
+      --violet: #6236ff;
+      --cyan: #06b6d4;
+      --green: #16c784;
+      --amber: #f59e0b;
+      --rose: #ff4d6d;
+      --blue: #3578ff;
+      --shadow: 0 18px 60px rgba(31, 41, 85, .11);
+      --soft-shadow: 0 10px 28px rgba(31, 41, 85, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(98, 54, 255, .14), transparent 28rem),
+        radial-gradient(circle at 95% 18%, rgba(6, 182, 212, .14), transparent 24rem),
+        var(--bg);
+    }
+
+    .page {
+      width: min(1760px, 100%);
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      margin: 0 0 6px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .18em;
+      color: var(--cyan);
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 3vw, 44px);
+      letter-spacing: 0;
+      line-height: 1.05;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .summary-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, .82);
+      padding: 10px 13px;
+      border-radius: 999px;
+      color: #273154;
+      font-size: 13px;
+      font-weight: 800;
+      box-shadow: var(--soft-shadow);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, .94);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .diagram-card {
+      min-height: 740px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .toolbar h2,
+    .panel-title h2 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .toolbar span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 12px;
+      padding: 10px 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: .16s ease;
+      font-family: inherit;
+    }
+
+    button:hover {
+      border-color: rgba(98, 54, 255, .35);
+      color: var(--violet);
+      transform: translateY(-1px);
+    }
+
+    button.primary,
+    .flow-card.active {
+      color: #fff;
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--violet), var(--blue));
+      box-shadow: 0 14px 34px rgba(98, 54, 255, .24);
+    }
+
+    .graph-wrap {
+      position: relative;
+      min-height: 690px;
+      flex: 1;
+      overflow: auto;
+      padding: 6px;
+      background:
+        linear-gradient(rgba(100, 112, 143, .07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(100, 112, 143, .07) 1px, transparent 1px);
+      background-size: 42px 42px;
+    }
+
+    svg {
+      min-width: 1100px;
+      width: 100%;
+      height: 690px;
+      display: block;
+    }
+
+    .edge {
+      fill: none;
+      stroke: #c8d2e6;
+      stroke-width: 2.2;
+      opacity: .6;
+      transition: .16s ease;
+    }
+
+    .edge-label {
+      font-size: 10px;
+      font-weight: 800;
+      fill: #75809d;
+      paint-order: stroke;
+      stroke: rgba(255, 255, 255, .9);
+      stroke-width: 4px;
+      stroke-linejoin: round;
+    }
+
+    .node rect {
+      stroke: #d8e0ef;
+      stroke-width: 1.4;
+      filter: drop-shadow(0 8px 18px rgba(31, 41, 85, .09));
+      transition: .16s ease;
+    }
+
+    .node text {
+      pointer-events: none;
+      fill: #07113f;
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+
+    .node .node-type {
+      font-size: 9px;
+      fill: #697695;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .node:hover rect {
+      stroke: var(--violet);
+      stroke-width: 2.4;
+    }
+
+    .node.dim rect,
+    .node.dim text,
+    .edge.dim,
+    .edge-label.dim {
+      opacity: .18;
+    }
+
+    .node.active rect {
+      stroke: var(--violet);
+      stroke-width: 3;
+      filter: drop-shadow(0 14px 26px rgba(98, 54, 255, .25));
+    }
+
+    .edge.active {
+      stroke: var(--violet);
+      stroke-width: 4;
+      opacity: 1;
+    }
+
+    .edge-label.active {
+      fill: var(--violet);
+      font-weight: 900;
+    }
+
+    .tooltip {
+      position: absolute;
+      z-index: 8;
+      max-width: 310px;
+      padding: 12px 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: #172044;
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      line-height: 1.45;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity .12s ease, transform .12s ease;
+    }
+
+    .tooltip.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .tooltip strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 740px;
+    }
+
+    .panel-title {
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-title p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .flow-list {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      max-height: 420px;
+      overflow: auto;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .flow-card {
+      text-align: left;
+      border-radius: 14px;
+      padding: 13px;
+      background: #fff;
+    }
+
+    .flow-card span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+
+    .flow-card.active span {
+      color: rgba(255, 255, 255, .84);
+    }
+
+    .details {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+      overflow: auto;
+    }
+
+    .details h3 {
+      margin: 0;
+      font-size: 19px;
+    }
+
+    .details p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .step-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .step-list li {
+      display: grid;
+      grid-template-columns: 26px 1fr;
+      gap: 9px;
+      align-items: start;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #f9fbff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .step-index {
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--violet);
+      font-size: 11px;
+    }
+
+    .file-list {
+      margin: 6px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 5px;
+      color: #5b6684;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 18px 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--violet);
+    }
+
+    .empty-hint {
+      border: 1px dashed #cbd5e1;
+      border-radius: 14px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+
+    @media (max-width: 1180px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .side-panel {
+        min-height: auto;
+      }
+
+      .flow-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page { padding: 14px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .summary-pills { justify-content: flex-start; }
+      .toolbar { align-items: flex-start; flex-direction: column; }
+      .flow-list { grid-template-columns: 1fr; }
+      .graph-wrap { min-height: 560px; }
+      svg { height: 560px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Mapa tecnico operativo</p>
+        <h1>Arquitectura de Reporteria / Insights Desk</h1>
+        <p class="subtitle">Diagrama interactivo basado en controladores, servicios, entidades, templates e integraciones reales del repositorio.</p>
+      </div>
+      <div class="summary-pills" aria-label="Resumen">
+        <span class="pill">Spring Boot 4 + Java 21</span>
+        <span class="pill">Thymeleaf + WebSocket</span>
+        <span class="pill">PostgreSQL + JPA</span>
+        <span class="pill">Zoho Desk/CRM + Gemini</span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="card diagram-card">
+        <div class="toolbar">
+          <div>
+            <h2>Diagrama de componentes</h2>
+            <span>Selecciona un flujo para resaltar la ruta completa. Pasa el cursor sobre un nodo para ver su detalle.</span>
+          </div>
+          <button id="resetFlow" class="primary" type="button">Mapa completo</button>
+        </div>
+        <div class="graph-wrap" id="graphWrap">
+          <svg id="graph" role="img" aria-label="Diagrama interactivo de arquitectura"></svg>
+          <div id="tooltip" class="tooltip" role="tooltip"></div>
+        </div>
+      </section>
+
+      <aside class="card side-panel" aria-label="Panel de flujos">
+        <div class="panel-title">
+          <h2>Flujos del sistema</h2>
+          <p>El panel concentra las rutas principales para agentes IA: entrada, componentes recorridos y dependencias externas.</p>
+        </div>
+        <div id="flowList" class="flow-list"></div>
+        <div id="details" class="details"></div>
+        <div class="legend" id="legend"></div>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const ARCH = {
+      nodes: [
+        { id: "browser", label: "Usuarios", type: "external", x: 72, y: 120, tooltip: "Agentes, supervisores y administradores usan la app desde navegador. Los webhooks externos entran por API.", files: [] },
+        { id: "thymeleaf", label: "Vistas Thymeleaf", type: "frontend", x: 250, y: 92, tooltip: "Plantillas HTML server-side para login, conversaciones, dashboards, administracion, usuarios, perfil y 2FA.", files: ["src/main/resources/templates"] },
+        { id: "static-assets", label: "CSS y JS", type: "frontend", x: 250, y: 198, tooltip: "Estilos, validaciones, timer, borradores locales, filtros, modales y llamadas AJAX.", files: ["static/sneat/assets/css", "static/sneat/assets/js"] },
+        { id: "security", label: "Spring Security", type: "security", x: 442, y: 76, tooltip: "Controla login, logout, permisos por rol, dominio permitido y carga de credenciales desde base de datos.", files: ["security/SecurityConfig.java", "security/CustomUserDetailsService.java"] },
+        { id: "two-factor", label: "2FA TOTP", type: "security", x: 442, y: 170, tooltip: "Genera QR y valida codigos TOTP para doble factor.", files: ["TwoFactorFilter.java", "TotpService.java", "QrCodeService.java"] },
+        { id: "session-control", label: "Sesion Keep-alive", type: "security", x: 442, y: 264, tooltip: "Mantiene viva la sesion bajo accion del usuario y registra presencia activa.", files: ["SessionController.java", "ActiveSessionService.java"] },
+        { id: "auth-controller", label: "AuthController", type: "controller", x: 442, y: 358, tooltip: "Expone /login y entrega la vista de autenticacion.", files: ["controller/AuthController.java"] },
+        { id: "home-controller", label: "HomeController", type: "controller", x: 442, y: 452, tooltip: "Listado, creacion, edicion, detalle, acciones masivas, CSV y tickets Zoho Desk.", files: ["controller/HomeController.java"] },
+        { id: "dashboard-controller", label: "Dashboards", type: "controller", x: 442, y: 546, tooltip: "Dashboard supervisor/agente, metricas, filtros, estados, top clientes, horas pico, CRM e IA.", files: ["SupervisorDashboardController.java", "AgentDashboardController.java", "DashboardApiController.java"] },
+        { id: "admin-controller", label: "Admin", type: "controller", x: 442, y: 640, tooltip: "Panel administrador, usuarios, auditoria, estado IA, perfil y contrasena.", files: ["AdminController.java", "UserController.java", "ProfileController.java"] },
+        { id: "report-controller", label: "Reportes", type: "controller", x: 626, y: 640, tooltip: "Exportacion CSV por rango, envio por correo y PDF supervisor.", files: ["AdminCsvMailController.java", "SupervisorReportController.java"] },
+        { id: "zoho-desk-controller", label: "Zoho Desk UI/API", type: "controller", x: 626, y: 452, tooltip: "Sincronizacion de contactos, busqueda de clientes y accion de crear ticket.", files: ["ZohoClientController.java", "HomeController.java"] },
+        { id: "zoho-crm-controller", label: "Zoho CRM Tareas", type: "controller", x: 626, y: 546, tooltip: "Modulo y card de tareas CRM con consulta manual por Actualizar CRM.", files: ["ZohoCrmTaskController.java", "DashboardApiController.java"] },
+        { id: "webhook-controller", label: "Webhooks", type: "controller", x: 626, y: 76, tooltip: "Recibe eventos Qpaypro y los guarda con payload y metadata.", files: ["QpayproWebhookController.java"] },
+        { id: "conversation-domain", label: "Conversaciones", type: "domain", x: 790, y: 452, tooltip: "Modelo central: cliente, comercio, asunto, estado, prioridad, agente, tiempo, fechas, ticket y Zoho.", files: ["entity/Conversation.java", "repository/ConversationRepository.java"] },
+        { id: "catalog-domain", label: "Catalogos", type: "domain", x: 790, y: 358, tooltip: "Asuntos, rechazos, departamentos, canales, estados y prioridades.", files: ["IssueType.java", "RejectionCode.java", "Department.java"] },
+        { id: "user-domain", label: "Usuarios y Roles", type: "domain", x: 790, y: 170, tooltip: "Usuarios, roles, estado, password, telefono y configuracion TOTP.", files: ["User.java", "Role.java", "UserRepository.java"] },
+        { id: "support-client-domain", label: "Clientes Zoho", type: "domain", x: 790, y: 264, tooltip: "Cache local de contactos sincronizados desde Zoho Desk.", files: ["SupportClient.java", "SupportClientRepository.java"] },
+        { id: "audit-service", label: "Auditoria", type: "service", x: 790, y: 640, tooltip: "Registra acciones relevantes: usuarios, conversaciones, Zoho, reportes y seguridad.", files: ["AuditLogService.java", "AuditLog.java"] },
+        { id: "realtime-service", label: "WebSocket", type: "service", x: 790, y: 76, tooltip: "STOMP/SockJS en /ws con broker /topic para dashboard, presencia y webhooks.", files: ["WebSocketConfig.java", "DashboardRealtimeService.java"] },
+        { id: "gemini-service", label: "Gemini IA", type: "service", x: 958, y: 546, tooltip: "Resumen IA, tendencia por asuntos y snapshot de uso/cache.", files: ["GeminiReportService.java"] },
+        { id: "zoho-desk-service", label: "Zoho Desk Service", type: "service", x: 958, y: 358, tooltip: "OAuth, contactos, tickets y plantillas por asunto.", files: ["ZohoDeskClientService.java"] },
+        { id: "zoho-crm-service", label: "Zoho CRM Service", type: "service", x: 958, y: 452, tooltip: "COQL de tareas, agrupacion por Tipo_Tarea y Pa_s_Operaci_n, cache anti-consumo.", files: ["ZohoCrmTaskMetricsService.java"] },
+        { id: "report-services", label: "CSV PDF Mail", type: "service", x: 958, y: 640, tooltip: "CSV reducido, email, PDF supervisor y alerta de login vigilado.", files: ["ConversationCsvReportService.java", "ManualCsvMailService.java", "PdfReportService.java", "LoginAlertMailService.java"] },
+        { id: "repositories", label: "Repositorios JPA", type: "data", x: 958, y: 170, tooltip: "Acceso a datos para conversaciones, usuarios, roles, clientes, auditoria, catalogos y webhooks.", files: ["src/main/java/com/erick/soporte/repository"] },
+        { id: "postgres", label: "PostgreSQL", type: "database", x: 958, y: 264, tooltip: "Base relacional por DATABASE_URL. Hibernate ddl-auto=update.", files: ["application.properties"] },
+        { id: "zoho-desk-api", label: "Zoho Desk API", type: "external", x: 1114, y: 358, tooltip: "API externa para contactos y tickets con OAuth refresh token.", files: [] },
+        { id: "zoho-crm-api", label: "Zoho CRM API", type: "external", x: 1114, y: 452, tooltip: "API externa consultada via COQL para metricas de tareas CRM.", files: [] },
+        { id: "gemini-api", label: "Gemini API", type: "external", x: 1114, y: 546, tooltip: "Servicio IA externo usado con modelo gemini-2.5-flash.", files: [] },
+        { id: "smtp", label: "SMTP Zoho Mail", type: "external", x: 1114, y: 640, tooltip: "Correo saliente para reportes CSV y alertas.", files: [] },
+        { id: "qpaypro", label: "Qpaypro", type: "external", x: 1114, y: 76, tooltip: "Sistema externo que envia eventos al webhook.", files: [] }
+      ],
+      edges: [
+        ["browser", "thymeleaf", "HTTP vistas"], ["thymeleaf", "static-assets", "assets"], ["browser", "security", "login/permisos"],
+        ["security", "auth-controller", "/login"], ["security", "two-factor", "TOTP"], ["security", "user-domain", "credenciales"],
+        ["user-domain", "repositories", "JPA"], ["thymeleaf", "home-controller", "conversaciones"], ["thymeleaf", "dashboard-controller", "dashboard"],
+        ["thymeleaf", "admin-controller", "admin"], ["home-controller", "conversation-domain", "CRUD"], ["home-controller", "catalog-domain", "listas"],
+        ["dashboard-controller", "conversation-domain", "metricas"], ["admin-controller", "user-domain", "usuarios"], ["admin-controller", "audit-service", "logs"],
+        ["report-controller", "report-services", "CSV/PDF/email"], ["report-services", "conversation-domain", "consulta datos"], ["report-services", "smtp", "envio"],
+        ["dashboard-controller", "gemini-service", "analisis IA"], ["gemini-service", "gemini-api", "generateContent"],
+        ["zoho-desk-controller", "zoho-desk-service", "clientes/tickets"], ["zoho-desk-service", "zoho-desk-api", "OAuth + Desk"],
+        ["zoho-desk-service", "support-client-domain", "sync cache"], ["zoho-desk-service", "conversation-domain", "ticket id/url"],
+        ["zoho-crm-controller", "zoho-crm-service", "metricas tareas"], ["dashboard-controller", "zoho-crm-service", "card CRM"], ["zoho-crm-service", "zoho-crm-api", "COQL"],
+        ["conversation-domain", "repositories", "JPA"], ["catalog-domain", "repositories", "JPA"], ["support-client-domain", "repositories", "JPA"],
+        ["audit-service", "repositories", "JPA"], ["repositories", "postgres", "SQL"], ["home-controller", "audit-service", "acciones"],
+        ["home-controller", "realtime-service", "evento guardado"], ["dashboard-controller", "realtime-service", "suscripcion"], ["session-control", "realtime-service", "presencia"],
+        ["static-assets", "session-control", "keep-alive"], ["browser", "realtime-service", "/ws /topic"], ["qpaypro", "webhook-controller", "POST webhook"],
+        ["webhook-controller", "realtime-service", "notifica"], ["webhook-controller", "repositories", "payload"], ["admin-controller", "report-controller", "reporteria"],
+        ["admin-controller", "zoho-desk-controller", "Zoho Desk"], ["admin-controller", "zoho-crm-controller", "Zoho CRM"]
+      ].map((edge, index) => ({ id: "edge-" + index, source: edge[0], target: edge[1], label: edge[2] })),
+      flows: [
+        { id: "login-2fa", title: "Login, permisos y 2FA", description: "Spring Security carga usuario desde base de datos, aplica permisos por rol y valida TOTP cuando corresponde.", entrypoints: ["GET /login", "POST /login", "GET/POST /2fa/verify"], steps: ["browser", "security", "auth-controller", "user-domain", "repositories", "postgres", "two-factor", "session-control", "realtime-service"] },
+        { id: "create-conversation", title: "Nueva conversacion y guardado", description: "El agente captura datos, el JS valida, maneja timer/borrador y HomeController persiste la conversacion.", entrypoints: ["GET /conversations/create", "POST /api/conversations/save"], steps: ["browser", "thymeleaf", "static-assets", "home-controller", "catalog-domain", "conversation-domain", "repositories", "postgres", "audit-service", "realtime-service"] },
+        { id: "conversation-list", title: "Listado, filtros y acciones masivas", description: "Listado con filtros, ordenamiento, paginacion, exportacion, reasignacion y vista rapida por rol.", entrypoints: ["GET /conversations", "POST /conversations/bulk/*"], steps: ["browser", "thymeleaf", "static-assets", "home-controller", "conversation-domain", "user-domain", "repositories", "postgres", "audit-service", "realtime-service"] },
+        { id: "status-modal", title: "Cambio de estado desde modal", description: "Cards de pendientes, escaladas y cerradas abren modal y actualizan estado desde el dashboard.", entrypoints: ["GET /api/dashboard/status-conversations", "POST /api/conversations/{id}/status"], steps: ["browser", "thymeleaf", "static-assets", "dashboard-controller", "conversation-domain", "repositories", "postgres", "audit-service", "realtime-service"] },
+        { id: "supervisor-dashboard", title: "Dashboard supervisor", description: "Resumen ejecutivo, tendencia semanal, tops, horas pico, card CRM, IA y modales filtrados por rango.", entrypoints: ["GET /supervisor/dashboard", "GET /api/dashboard/metrics"], steps: ["browser", "thymeleaf", "static-assets", "dashboard-controller", "conversation-domain", "repositories", "postgres", "gemini-service", "gemini-api", "zoho-crm-service", "realtime-service"] },
+        { id: "agent-dashboard", title: "Dashboard agente", description: "Metricas y modales limitados a conversaciones asignadas al agente autenticado.", entrypoints: ["GET /agent/dashboard", "GET /api/agent-dashboard/status-conversations"], steps: ["browser", "thymeleaf", "static-assets", "dashboard-controller", "conversation-domain", "user-domain", "repositories", "postgres", "realtime-service"] },
+        { id: "zoho-desk-ticket", title: "Apertura de ticket Zoho Desk", description: "Crea ticket desde conversacion guardada, aplica plantilla por asunto y guarda id/numero/url/contacto Zoho.", entrypoints: ["POST /conversations/{id}/zoho-ticket"], steps: ["browser", "thymeleaf", "home-controller", "zoho-desk-controller", "zoho-desk-service", "zoho-desk-api", "conversation-domain", "repositories", "postgres", "audit-service", "realtime-service"] },
+        { id: "zoho-desk-clients", title: "Sincronizacion de clientes Zoho Desk", description: "Admin sincroniza contactos hacia cache local y el formulario los usa para sugerencias.", entrypoints: ["POST /admin/zoho/sync-clients", "GET /api/clients/search"], steps: ["browser", "thymeleaf", "zoho-desk-controller", "zoho-desk-service", "zoho-desk-api", "support-client-domain", "repositories", "postgres", "static-assets"] },
+        { id: "zoho-crm-tasks", title: "Metricas de tareas Zoho CRM", description: "Consulta COQL manual con Actualizar CRM y luego reutiliza cache local por rango para dashboard y modulo.", entrypoints: ["GET /admin/zoho-crm/tasks?refreshCrm=true", "GET /api/dashboard/metrics?refreshCrm=true"], steps: ["browser", "thymeleaf", "zoho-crm-controller", "dashboard-controller", "zoho-crm-service", "zoho-crm-api"] },
+        { id: "csv-mail", title: "CSV manual y envio por correo", description: "Genera CSV reducido por rango de fechas y lo envia por SMTP a destinatario y copia.", entrypoints: ["GET/POST /admin/reports/email-csv", "GET /conversations/export/csv"], steps: ["browser", "thymeleaf", "report-controller", "report-services", "conversation-domain", "repositories", "postgres", "smtp", "audit-service"] },
+        { id: "pdf-report", title: "Reporte PDF supervisor", description: "Genera PDF con metricas del dashboard e IA para un rango.", entrypoints: ["GET /supervisor/report/pdf"], steps: ["browser", "thymeleaf", "report-controller", "report-services", "dashboard-controller", "conversation-domain", "repositories", "postgres", "gemini-service", "gemini-api"] },
+        { id: "login-alert", title: "Alerta de login vigilado", description: "Al iniciar sesion el usuario configurado, envia correo de notificacion.", entrypoints: ["POST /login"], steps: ["browser", "security", "user-domain", "repositories", "postgres", "report-services", "smtp"] },
+        { id: "webhook-qpaypro", title: "Webhook Qpaypro", description: "Guarda eventos externos de Qpaypro y notifica por WebSocket.", entrypoints: ["POST /api/webhooks/qpaypro"], steps: ["qpaypro", "webhook-controller", "repositories", "postgres", "realtime-service", "browser"] }
+      ]
+    };
+
+    const typeStyles = {
+      frontend: { fill: "#eefbff", stroke: "#06b6d4", dot: "#06b6d4", label: "Presentacion" },
+      security: { fill: "#f3f0ff", stroke: "#6236ff", dot: "#6236ff", label: "Seguridad" },
+      controller: { fill: "#eef4ff", stroke: "#3578ff", dot: "#3578ff", label: "Controlador" },
+      domain: { fill: "#effdf6", stroke: "#16c784", dot: "#16c784", label: "Dominio" },
+      service: { fill: "#fff7ed", stroke: "#f59e0b", dot: "#f59e0b", label: "Servicio" },
+      data: { fill: "#f8fafc", stroke: "#64708f", dot: "#64708f", label: "Datos" },
+      database: { fill: "#f1f5f9", stroke: "#475569", dot: "#475569", label: "Base de datos" },
+      external: { fill: "#fff1f3", stroke: "#ff4d6d", dot: "#ff4d6d", label: "Externo" }
+    };
+
+    const svg = document.getElementById("graph");
+    const flowList = document.getElementById("flowList");
+    const details = document.getElementById("details");
+    const tooltip = document.getElementById("tooltip");
+    const resetFlow = document.getElementById("resetFlow");
+    const legend = document.getElementById("legend");
+    const nodeById = Object.fromEntries(ARCH.nodes.map(node => [node.id, node]));
+    let activeFlowId = null;
+
+    function edgeKey(source, target) {
+      return source + "->" + target;
+    }
+
+    function pathFor(sourceNode, targetNode) {
+      const startX = sourceNode.x + 68;
+      const startY = sourceNode.y;
+      const endX = targetNode.x - 68;
+      const endY = targetNode.y;
+      const midX = (startX + endX) / 2;
+      return `M ${startX} ${startY} C ${midX} ${startY}, ${midX} ${endY}, ${endX} ${endY}`;
+    }
+
+    function render() {
+      svg.setAttribute("viewBox", "0 0 1200 720");
+      svg.innerHTML = `
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#c8d2e6"></path>
+          </marker>
+          <marker id="arrowActive" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6236ff"></path>
+          </marker>
+        </defs>
+      `;
+
+      const edgeLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      edgeLayer.setAttribute("id", "edges");
+      svg.appendChild(edgeLayer);
+
+      ARCH.edges.forEach(edge => {
+        const source = nodeById[edge.source];
+        const target = nodeById[edge.target];
+        if (!source || !target) return;
+
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("class", "edge");
+        path.setAttribute("data-key", edgeKey(edge.source, edge.target));
+        path.setAttribute("d", pathFor(source, target));
+        path.setAttribute("marker-end", "url(#arrow)");
+        edgeLayer.appendChild(path);
+
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("class", "edge-label");
+        label.setAttribute("data-key", edgeKey(edge.source, edge.target));
+        label.setAttribute("x", String((source.x + target.x) / 2));
+        label.setAttribute("y", String((source.y + target.y) / 2 - 8));
+        label.setAttribute("text-anchor", "middle");
+        label.textContent = edge.label;
+        edgeLayer.appendChild(label);
+      });
+
+      const nodeLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      nodeLayer.setAttribute("id", "nodes");
+      svg.appendChild(nodeLayer);
+
+      ARCH.nodes.forEach(node => {
+        const style = typeStyles[node.type] || typeStyles.controller;
+        const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        group.setAttribute("class", "node");
+        group.setAttribute("data-node", node.id);
+        group.setAttribute("transform", `translate(${node.x - 70}, ${node.y - 28})`);
+        group.innerHTML = `
+          <rect width="140" height="56" rx="13" fill="${style.fill}" stroke="${style.stroke}"></rect>
+          <circle cx="18" cy="18" r="5" fill="${style.dot}"></circle>
+          <text x="31" y="21">${escapeXml(node.label)}</text>
+          <text class="node-type" x="14" y="43">${escapeXml(style.label)}</text>
+        `;
+        group.addEventListener("mouseenter", event => showTooltip(event, node));
+        group.addEventListener("mousemove", event => moveTooltip(event));
+        group.addEventListener("mouseleave", hideTooltip);
+        group.addEventListener("click", () => showNodeDetails(node));
+        nodeLayer.appendChild(group);
+      });
+
+      renderFlows();
+      renderLegend();
+      showOverview();
+    }
+
+    function renderFlows() {
+      flowList.innerHTML = "";
+      ARCH.flows.forEach(flow => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "flow-card";
+        button.dataset.flow = flow.id;
+        button.innerHTML = `${escapeHtml(flow.title)}<span>${escapeHtml(flow.description)}</span>`;
+        button.addEventListener("click", () => selectFlow(flow.id));
+        flowList.appendChild(button);
+      });
+    }
+
+    function renderLegend() {
+      legend.innerHTML = Object.entries(typeStyles).map(([, style]) => `
+        <span class="legend-item"><span class="dot" style="background:${style.dot}"></span>${escapeHtml(style.label)}</span>
+      `).join("");
+    }
+
+    function selectFlow(flowId) {
+      activeFlowId = flowId;
+      const flow = ARCH.flows.find(item => item.id === flowId);
+      if (!flow) return;
+
+      const activeNodes = new Set(flow.steps);
+      const activeEdges = new Set();
+      for (let index = 0; index < flow.steps.length - 1; index += 1) {
+        activeEdges.add(edgeKey(flow.steps[index], flow.steps[index + 1]));
+      }
+      ARCH.edges.forEach(edge => {
+        if (activeNodes.has(edge.source) && activeNodes.has(edge.target)) {
+          activeEdges.add(edgeKey(edge.source, edge.target));
+        }
+      });
+
+      document.querySelectorAll(".node").forEach(element => {
+        const isActive = activeNodes.has(element.dataset.node);
+        element.classList.toggle("active", isActive);
+        element.classList.toggle("dim", !isActive);
+      });
+
+      document.querySelectorAll(".edge").forEach(element => {
+        const isActive = activeEdges.has(element.dataset.key);
+        element.classList.toggle("active", isActive);
+        element.classList.toggle("dim", !isActive);
+        element.setAttribute("marker-end", isActive ? "url(#arrowActive)" : "url(#arrow)");
+      });
+
+      document.querySelectorAll(".edge-label").forEach(element => {
+        const isActive = activeEdges.has(element.dataset.key);
+        element.classList.toggle("active", isActive);
+        element.classList.toggle("dim", !isActive);
+      });
+
+      document.querySelectorAll(".flow-card").forEach(button => {
+        button.classList.toggle("active", button.dataset.flow === flowId);
+      });
+
+      details.innerHTML = `
+        <div>
+          <h3>${escapeHtml(flow.title)}</h3>
+          <p>${escapeHtml(flow.description)}</p>
+        </div>
+        <div>
+          <p><strong>Entradas:</strong> ${flow.entrypoints.map(escapeHtml).join(" · ")}</p>
+        </div>
+        <ol class="step-list">
+          ${flow.steps.map((step, index) => {
+            const node = nodeById[step];
+            return `<li><span class="step-index">${index + 1}</span><span>${escapeHtml(node ? node.label : step)}</span></li>`;
+          }).join("")}
+        </ol>
+      `;
+    }
+
+    function showOverview() {
+      activeFlowId = null;
+      document.querySelectorAll(".node, .edge, .edge-label").forEach(element => {
+        element.classList.remove("active", "dim");
+      });
+      document.querySelectorAll(".edge").forEach(element => element.setAttribute("marker-end", "url(#arrow)"));
+      document.querySelectorAll(".flow-card").forEach(button => button.classList.remove("active"));
+      details.innerHTML = `
+        <div class="empty-hint">
+          <h3>Mapa completo</h3>
+          <p>Este diagrama resume la app como una cadena operativa: navegador y templates, seguridad, controladores Spring MVC/REST, servicios de negocio, JPA/PostgreSQL e integraciones externas. Selecciona un flujo para reducir el ruido visual y seguir una ruta concreta.</p>
+        </div>
+        <div>
+          <p><strong>Componentes:</strong> ${ARCH.nodes.length}</p>
+          <p><strong>Conexiones:</strong> ${ARCH.edges.length}</p>
+          <p><strong>Flujos documentados:</strong> ${ARCH.flows.length}</p>
+        </div>
+      `;
+    }
+
+    function showNodeDetails(node) {
+      const style = typeStyles[node.type] || typeStyles.controller;
+      details.innerHTML = `
+        <div>
+          <h3>${escapeHtml(node.label)}</h3>
+          <p>${escapeHtml(node.tooltip)}</p>
+        </div>
+        <p><strong>Tipo:</strong> ${escapeHtml(style.label)}</p>
+        ${node.files && node.files.length ? `
+          <div>
+            <p><strong>Archivos clave:</strong></p>
+            <ul class="file-list">${node.files.map(file => `<li>${escapeHtml(file)}</li>`).join("")}</ul>
+          </div>
+        ` : ""}
+      `;
+    }
+
+    function showTooltip(event, node) {
+      tooltip.innerHTML = `<strong>${escapeHtml(node.label)}</strong>${escapeHtml(node.tooltip)}`;
+      tooltip.classList.add("visible");
+      moveTooltip(event);
+    }
+
+    function moveTooltip(event) {
+      const wrapRect = document.getElementById("graphWrap").getBoundingClientRect();
+      tooltip.style.left = `${event.clientX - wrapRect.left + 16}px`;
+      tooltip.style.top = `${event.clientY - wrapRect.top + 16}px`;
+    }
+
+    function hideTooltip() {
+      tooltip.classList.remove("visible");
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function escapeXml(value) {
+      return escapeHtml(value);
+    }
+
+    resetFlow.addEventListener("click", showOverview);
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,904 @@
+{
+  "metadata": {
+    "project": "Reporteria / Insights Desk",
+    "generatedAt": "2026-08-04",
+    "sourceRoot": "C:/Users/erick/IdeaProjects/Reporteria",
+    "summary": "Aplicacion Spring Boot para registro de conversaciones de soporte, dashboards operativos, integraciones Zoho Desk/CRM, reporteria CSV/PDF, IA con Gemini, seguridad 2FA y actualizacion en tiempo real por WebSocket."
+  },
+  "nodes": [
+    {
+      "id": "browser",
+      "label": "Usuarios",
+      "type": "external",
+      "layer": "cliente",
+      "files": [],
+      "tooltip": "Agentes, supervisores y administradores usan la app desde navegador. Los webhooks externos entran por API."
+    },
+    {
+      "id": "thymeleaf",
+      "label": "Vistas Thymeleaf",
+      "type": "frontend",
+      "layer": "presentacion",
+      "files": [
+        "src/main/resources/templates"
+      ],
+      "tooltip": "Plantillas HTML server-side para login, conversaciones, dashboards, administracion, usuarios, perfil y 2FA."
+    },
+    {
+      "id": "static-assets",
+      "label": "CSS y JS",
+      "type": "frontend",
+      "layer": "presentacion",
+      "files": [
+        "src/main/resources/static/sneat/assets/css/metrics-dashboard.css",
+        "src/main/resources/static/sneat/assets/js/conversation-workspace.js"
+      ],
+      "tooltip": "Estilos del dashboard, componentes visuales, validaciones, timer, borradores locales, filtros, modales y llamadas AJAX."
+    },
+    {
+      "id": "security",
+      "label": "Spring Security",
+      "type": "security",
+      "layer": "seguridad",
+      "files": [
+        "src/main/java/com/erick/soporte/security/SecurityConfig.java",
+        "src/main/java/com/erick/soporte/security/CustomUserDetailsService.java"
+      ],
+      "tooltip": "Controla login, logout, permisos por rol, usuarios activos, dominio permitido y carga de credenciales desde base de datos."
+    },
+    {
+      "id": "two-factor",
+      "label": "2FA TOTP",
+      "type": "security",
+      "layer": "seguridad",
+      "files": [
+        "src/main/java/com/erick/soporte/security/TwoFactorFilter.java",
+        "src/main/java/com/erick/soporte/security/TotpService.java",
+        "src/main/java/com/erick/soporte/security/QrCodeService.java",
+        "src/main/java/com/erick/soporte/controller/TwoFactorController.java",
+        "src/main/java/com/erick/soporte/controller/TwoFactorVerificationController.java"
+      ],
+      "tooltip": "Configura, genera QR y valida codigos TOTP para doble factor de autenticacion."
+    },
+    {
+      "id": "session-control",
+      "label": "Sesion y Keep-alive",
+      "type": "security",
+      "layer": "seguridad",
+      "files": [
+        "src/main/java/com/erick/soporte/controller/SessionController.java",
+        "src/main/java/com/erick/soporte/service/ActiveSessionService.java"
+      ],
+      "tooltip": "Mantiene viva la sesion bajo accion del usuario, registra presencia y publica cambios de actividad."
+    },
+    {
+      "id": "auth-controller",
+      "label": "AuthController",
+      "type": "controller",
+      "layer": "controladores",
+      "files": [
+        "src/main/java/com/erick/soporte/controller/AuthController.java"
+      ],
+      "tooltip": "Expone /login y entrega la vista de autenticacion."
+    },
+    {
+      "id": "home-controller",
+      "label": "HomeController",
+      "type": "controller",
+      "layer": "controladores",
+      "files": [
+        "src/main/java/com/erick/soporte/controller/HomeController.java"
+      ],
+      "tooltip": "Controlador principal de conversaciones: listado, creacion, edicion, detalle, CSV, acciones masivas y tickets Zoho Desk."
+    },
+    {
+      "id": "dashboard-controller",
+      "label": "Dashboards",
+      "type": "controller",
+      "layer": "controladores",
+      "files": [
+        "src/main/java/com/erick/soporte/controller/SupervisorDashboardController.java",
+        "src/main/java/com/erick/soporte/controller/AgentDashboardController.java",
+        "src/main/java/com/erick/soporte/controller/DashboardApiController.java",
+        "src/main/java/com/erick/soporte/controller/ConversationStatusApiController.java"
+      ],
+      "tooltip": "Dashboard supervisor y agente, metricas, filtros, estados, modales, top asuntos/clientes, horas pico y datos CRM."
+    },
+    {
+      "id": "admin-controller",
+      "label": "Admin",
+      "type": "controller",
+      "layer": "controladores",
+      "files": [
+        "src/main/java/com/erick/soporte/controller/AdminController.java",
+        "src/main/java/com/erick/soporte/controller/UserController.java",
+        "src/main/java/com/erick/soporte/controller/ProfileController.java"
+      ],
+      "tooltip": "Panel administrador, usuarios, auditoria, estado IA, perfil y cambio de contrasena."
+    },
+    {
+      "id": "report-controller",
+      "label": "Reportes",
+      "type": "controller",
+      "layer": "controladores",
+      "files": [
+        "src/main/java/com/erick/soporte/controller/AdminCsvMailController.java",
+        "src/main/java/com/erick/soporte/controller/SupervisorReportController.java"
+      ],
+      "tooltip": "Exportacion manual de CSV por rango de fechas, envio por correo y generacion PDF del dashboard supervisor."
+    },
+    {
+      "id": "zoho-desk-controller",
+      "label": "Zoho Desk UI/API",
+      "type": "controller",
+      "layer": "controladores",
+      "files": [
+        "src/main/java/com/erick/soporte/controller/ZohoClientController.java",
+        "src/main/java/com/erick/soporte/controller/HomeController.java"
+      ],
+      "tooltip": "Pantalla de sincronizacion de contactos, busqueda de clientes y accion de crear ticket desde una conversacion."
+    },
+    {
+      "id": "zoho-crm-controller",
+      "label": "Zoho CRM Tareas",
+      "type": "controller",
+      "layer": "controladores",
+      "files": [
+        "src/main/java/com/erick/soporte/controller/ZohoCrmTaskController.java",
+        "src/main/java/com/erick/soporte/controller/DashboardApiController.java",
+        "src/main/java/com/erick/soporte/controller/SupervisorDashboardController.java"
+      ],
+      "tooltip": "Modulo y card de metricas de tareas CRM. Usa cache local y consulta Zoho solo al presionar Actualizar CRM."
+    },
+    {
+      "id": "webhook-controller",
+      "label": "Webhooks",
+      "type": "controller",
+      "layer": "controladores",
+      "files": [
+        "src/main/java/com/erick/soporte/controller/QpayproWebhookController.java"
+      ],
+      "tooltip": "Recibe eventos Qpaypro en /api/webhooks/qpaypro, registra payload y publica notificaciones."
+    },
+    {
+      "id": "conversation-domain",
+      "label": "Dominio Conversaciones",
+      "type": "domain",
+      "layer": "dominio",
+      "files": [
+        "src/main/java/com/erick/soporte/entity/Conversation.java",
+        "src/main/java/com/erick/soporte/repository/ConversationRepository.java"
+      ],
+      "tooltip": "Modelo central: cliente, comercio, asunto, descripcion, estado, prioridad, agente, tiempo de gestion, fechas, ticket y Zoho."
+    },
+    {
+      "id": "catalog-domain",
+      "label": "Catalogos",
+      "type": "domain",
+      "layer": "dominio",
+      "files": [
+        "src/main/java/com/erick/soporte/entity/IssueType.java",
+        "src/main/java/com/erick/soporte/entity/RejectionCode.java",
+        "src/main/java/com/erick/soporte/entity/Department.java"
+      ],
+      "tooltip": "Catalogos de asunto, rechazo, departamento, canal, estado y prioridad usados por formularios y filtros."
+    },
+    {
+      "id": "user-domain",
+      "label": "Usuarios y Roles",
+      "type": "domain",
+      "layer": "dominio",
+      "files": [
+        "src/main/java/com/erick/soporte/entity/User.java",
+        "src/main/java/com/erick/soporte/entity/Role.java",
+        "src/main/java/com/erick/soporte/repository/UserRepository.java",
+        "src/main/java/com/erick/soporte/repository/RoleRepository.java"
+      ],
+      "tooltip": "Usuarios del sistema, roles, estado, password, telefono y configuracion de TOTP."
+    },
+    {
+      "id": "support-client-domain",
+      "label": "Clientes Zoho",
+      "type": "domain",
+      "layer": "dominio",
+      "files": [
+        "src/main/java/com/erick/soporte/entity/SupportClient.java",
+        "src/main/java/com/erick/soporte/repository/SupportClientRepository.java"
+      ],
+      "tooltip": "Cache local de contactos sincronizados desde Zoho Desk para sugerencias y prellenado."
+    },
+    {
+      "id": "audit-service",
+      "label": "Auditoria",
+      "type": "service",
+      "layer": "servicios",
+      "files": [
+        "src/main/java/com/erick/soporte/service/AuditLogService.java",
+        "src/main/java/com/erick/soporte/entity/AuditLog.java",
+        "src/main/java/com/erick/soporte/repository/AuditLogRepository.java"
+      ],
+      "tooltip": "Registra acciones relevantes del sistema: usuarios, conversaciones, Zoho, reportes y seguridad."
+    },
+    {
+      "id": "realtime-service",
+      "label": "WebSocket Realtime",
+      "type": "service",
+      "layer": "servicios",
+      "files": [
+        "src/main/java/com/erick/soporte/config/WebSocketConfig.java",
+        "src/main/java/com/erick/soporte/service/DashboardRealtimeService.java",
+        "src/main/java/com/erick/soporte/service/ActiveSessionService.java"
+      ],
+      "tooltip": "STOMP/SockJS en /ws con broker /topic. Publica cambios de dashboard, actividad y webhooks."
+    },
+    {
+      "id": "gemini-service",
+      "label": "Gemini IA",
+      "type": "service",
+      "layer": "servicios",
+      "files": [
+        "src/main/java/com/erick/soporte/service/GeminiReportService.java"
+      ],
+      "tooltip": "Genera resumen IA del dashboard, tendencia por asuntos y snapshot de uso/cache."
+    },
+    {
+      "id": "zoho-desk-service",
+      "label": "Zoho Desk Service",
+      "type": "service",
+      "layer": "servicios",
+      "files": [
+        "src/main/java/com/erick/soporte/service/ZohoDeskClientService.java"
+      ],
+      "tooltip": "Renueva token OAuth, sincroniza contactos, crea tickets y aplica plantillas por asunto."
+    },
+    {
+      "id": "zoho-crm-service",
+      "label": "Zoho CRM Service",
+      "type": "service",
+      "layer": "servicios",
+      "files": [
+        "src/main/java/com/erick/soporte/service/ZohoCrmTaskMetricsService.java"
+      ],
+      "tooltip": "Consulta tareas por COQL, agrupa por estado, usuario, Tipo_Tarea y Pa_s_Operaci_n. Usa cache para reducir consumo API."
+    },
+    {
+      "id": "report-services",
+      "label": "CSV/PDF/Mail",
+      "type": "service",
+      "layer": "servicios",
+      "files": [
+        "src/main/java/com/erick/soporte/service/ConversationCsvReportService.java",
+        "src/main/java/com/erick/soporte/service/ManualCsvMailService.java",
+        "src/main/java/com/erick/soporte/service/PdfReportService.java",
+        "src/main/java/com/erick/soporte/service/LoginAlertMailService.java"
+      ],
+      "tooltip": "Genera CSV reducido, envia reportes por Zoho Mail/SMTP, crea PDF supervisor y envia alerta de login vigilado."
+    },
+    {
+      "id": "repositories",
+      "label": "Repositorios JPA",
+      "type": "data",
+      "layer": "persistencia",
+      "files": [
+        "src/main/java/com/erick/soporte/repository"
+      ],
+      "tooltip": "Capa de acceso a datos para conversaciones, usuarios, roles, clientes Zoho, auditoria, catalogos y webhooks."
+    },
+    {
+      "id": "postgres",
+      "label": "PostgreSQL",
+      "type": "database",
+      "layer": "persistencia",
+      "files": [
+        "src/main/resources/application.properties"
+      ],
+      "tooltip": "Base relacional configurada por DATABASE_URL, DATABASE_USERNAME y DATABASE_PASSWORD. Hibernate actualiza esquema."
+    },
+    {
+      "id": "zoho-desk-api",
+      "label": "Zoho Desk API",
+      "type": "external",
+      "layer": "externo",
+      "files": [],
+      "tooltip": "API externa para contactos y tickets. Usa ZOHO_DESK_ORG_ID, client id/secret, refresh token y department id."
+    },
+    {
+      "id": "zoho-crm-api",
+      "label": "Zoho CRM API",
+      "type": "external",
+      "layer": "externo",
+      "files": [],
+      "tooltip": "API externa consultada via COQL para metricas de tareas CRM."
+    },
+    {
+      "id": "gemini-api",
+      "label": "Gemini API",
+      "type": "external",
+      "layer": "externo",
+      "files": [],
+      "tooltip": "Servicio IA externo usado por GeminiReportService con modelo gemini-2.5-flash."
+    },
+    {
+      "id": "smtp",
+      "label": "SMTP Zoho Mail",
+      "type": "external",
+      "layer": "externo",
+      "files": [],
+      "tooltip": "Salida de correo para CSV y alertas. Configurado por spring.mail.* y report.mail.*."
+    },
+    {
+      "id": "qpaypro",
+      "label": "Qpaypro",
+      "type": "external",
+      "layer": "externo",
+      "files": [],
+      "tooltip": "Sistema externo que envia eventos hacia el webhook /api/webhooks/qpaypro."
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-browser-thymeleaf",
+      "source": "browser",
+      "target": "thymeleaf",
+      "label": "HTTP vistas",
+      "type": "ui"
+    },
+    {
+      "id": "e-thymeleaf-static",
+      "source": "thymeleaf",
+      "target": "static-assets",
+      "label": "assets",
+      "type": "ui"
+    },
+    {
+      "id": "e-browser-security",
+      "source": "browser",
+      "target": "security",
+      "label": "login/permisos",
+      "type": "security"
+    },
+    {
+      "id": "e-security-auth",
+      "source": "security",
+      "target": "auth-controller",
+      "label": "/login",
+      "type": "security"
+    },
+    {
+      "id": "e-security-2fa",
+      "source": "security",
+      "target": "two-factor",
+      "label": "TOTP",
+      "type": "security"
+    },
+    {
+      "id": "e-security-user",
+      "source": "security",
+      "target": "user-domain",
+      "label": "credenciales",
+      "type": "data"
+    },
+    {
+      "id": "e-user-repos",
+      "source": "user-domain",
+      "target": "repositories",
+      "label": "JPA",
+      "type": "data"
+    },
+    {
+      "id": "e-thymeleaf-home",
+      "source": "thymeleaf",
+      "target": "home-controller",
+      "label": "conversaciones",
+      "type": "mvc"
+    },
+    {
+      "id": "e-thymeleaf-dashboard",
+      "source": "thymeleaf",
+      "target": "dashboard-controller",
+      "label": "dashboard",
+      "type": "mvc"
+    },
+    {
+      "id": "e-thymeleaf-admin",
+      "source": "thymeleaf",
+      "target": "admin-controller",
+      "label": "admin",
+      "type": "mvc"
+    },
+    {
+      "id": "e-home-conversation",
+      "source": "home-controller",
+      "target": "conversation-domain",
+      "label": "CRUD",
+      "type": "domain"
+    },
+    {
+      "id": "e-home-catalog",
+      "source": "home-controller",
+      "target": "catalog-domain",
+      "label": "listas",
+      "type": "domain"
+    },
+    {
+      "id": "e-dashboard-conversation",
+      "source": "dashboard-controller",
+      "target": "conversation-domain",
+      "label": "metricas",
+      "type": "domain"
+    },
+    {
+      "id": "e-admin-user",
+      "source": "admin-controller",
+      "target": "user-domain",
+      "label": "usuarios",
+      "type": "domain"
+    },
+    {
+      "id": "e-admin-audit",
+      "source": "admin-controller",
+      "target": "audit-service",
+      "label": "logs",
+      "type": "service"
+    },
+    {
+      "id": "e-report-controller-services",
+      "source": "report-controller",
+      "target": "report-services",
+      "label": "CSV/PDF/email",
+      "type": "service"
+    },
+    {
+      "id": "e-report-conversation",
+      "source": "report-services",
+      "target": "conversation-domain",
+      "label": "consulta datos",
+      "type": "domain"
+    },
+    {
+      "id": "e-report-smtp",
+      "source": "report-services",
+      "target": "smtp",
+      "label": "envio",
+      "type": "external"
+    },
+    {
+      "id": "e-dashboard-gemini",
+      "source": "dashboard-controller",
+      "target": "gemini-service",
+      "label": "analisis IA",
+      "type": "service"
+    },
+    {
+      "id": "e-gemini-api",
+      "source": "gemini-service",
+      "target": "gemini-api",
+      "label": "generateContent",
+      "type": "external"
+    },
+    {
+      "id": "e-zoho-desk-controller-service",
+      "source": "zoho-desk-controller",
+      "target": "zoho-desk-service",
+      "label": "clientes/tickets",
+      "type": "service"
+    },
+    {
+      "id": "e-zoho-desk-service-api",
+      "source": "zoho-desk-service",
+      "target": "zoho-desk-api",
+      "label": "OAuth + Desk",
+      "type": "external"
+    },
+    {
+      "id": "e-zoho-desk-client-cache",
+      "source": "zoho-desk-service",
+      "target": "support-client-domain",
+      "label": "sync cache",
+      "type": "domain"
+    },
+    {
+      "id": "e-zoho-desk-conversation",
+      "source": "zoho-desk-service",
+      "target": "conversation-domain",
+      "label": "ticket id/url",
+      "type": "domain"
+    },
+    {
+      "id": "e-zoho-crm-controller-service",
+      "source": "zoho-crm-controller",
+      "target": "zoho-crm-service",
+      "label": "metricas tareas",
+      "type": "service"
+    },
+    {
+      "id": "e-dashboard-crm",
+      "source": "dashboard-controller",
+      "target": "zoho-crm-service",
+      "label": "card CRM",
+      "type": "service"
+    },
+    {
+      "id": "e-zoho-crm-api",
+      "source": "zoho-crm-service",
+      "target": "zoho-crm-api",
+      "label": "COQL",
+      "type": "external"
+    },
+    {
+      "id": "e-conversation-repos",
+      "source": "conversation-domain",
+      "target": "repositories",
+      "label": "JPA",
+      "type": "data"
+    },
+    {
+      "id": "e-catalog-repos",
+      "source": "catalog-domain",
+      "target": "repositories",
+      "label": "JPA",
+      "type": "data"
+    },
+    {
+      "id": "e-client-repos",
+      "source": "support-client-domain",
+      "target": "repositories",
+      "label": "JPA",
+      "type": "data"
+    },
+    {
+      "id": "e-audit-repos",
+      "source": "audit-service",
+      "target": "repositories",
+      "label": "JPA",
+      "type": "data"
+    },
+    {
+      "id": "e-repos-postgres",
+      "source": "repositories",
+      "target": "postgres",
+      "label": "SQL",
+      "type": "data"
+    },
+    {
+      "id": "e-home-audit",
+      "source": "home-controller",
+      "target": "audit-service",
+      "label": "acciones",
+      "type": "service"
+    },
+    {
+      "id": "e-user-audit",
+      "source": "admin-controller",
+      "target": "audit-service",
+      "label": "admin logs",
+      "type": "service"
+    },
+    {
+      "id": "e-home-realtime",
+      "source": "home-controller",
+      "target": "realtime-service",
+      "label": "evento guardado",
+      "type": "realtime"
+    },
+    {
+      "id": "e-dashboard-realtime",
+      "source": "dashboard-controller",
+      "target": "realtime-service",
+      "label": "suscripcion",
+      "type": "realtime"
+    },
+    {
+      "id": "e-session-realtime",
+      "source": "session-control",
+      "target": "realtime-service",
+      "label": "presencia",
+      "type": "realtime"
+    },
+    {
+      "id": "e-static-session",
+      "source": "static-assets",
+      "target": "session-control",
+      "label": "keep-alive",
+      "type": "security"
+    },
+    {
+      "id": "e-browser-ws",
+      "source": "browser",
+      "target": "realtime-service",
+      "label": "/ws /topic",
+      "type": "realtime"
+    },
+    {
+      "id": "e-qpaypro-webhook",
+      "source": "qpaypro",
+      "target": "webhook-controller",
+      "label": "POST webhook",
+      "type": "external"
+    },
+    {
+      "id": "e-webhook-realtime",
+      "source": "webhook-controller",
+      "target": "realtime-service",
+      "label": "notifica",
+      "type": "realtime"
+    },
+    {
+      "id": "e-webhook-repos",
+      "source": "webhook-controller",
+      "target": "repositories",
+      "label": "payload",
+      "type": "data"
+    }
+  ],
+  "flows": [
+    {
+      "id": "login-2fa",
+      "title": "Login, permisos y 2FA",
+      "description": "El usuario ingresa, Spring Security carga credenciales desde PostgreSQL, aplica reglas por rol y, si corresponde, valida TOTP antes de permitir acceso.",
+      "entrypoints": [
+        "GET /login",
+        "POST /login",
+        "GET/POST /2fa/verify",
+        "GET/POST /settings/2fa"
+      ],
+      "steps": [
+        "browser",
+        "security",
+        "auth-controller",
+        "user-domain",
+        "repositories",
+        "postgres",
+        "two-factor",
+        "session-control",
+        "realtime-service"
+      ]
+    },
+    {
+      "id": "create-conversation",
+      "title": "Nueva conversacion y guardado",
+      "description": "El agente captura datos, el JS valida campos, timer y borrador local. HomeController guarda conversacion, fechas, estado, prioridad, agente, comercio y notas.",
+      "entrypoints": [
+        "GET /conversations/create",
+        "POST /api/conversations/save"
+      ],
+      "steps": [
+        "browser",
+        "thymeleaf",
+        "static-assets",
+        "home-controller",
+        "catalog-domain",
+        "conversation-domain",
+        "repositories",
+        "postgres",
+        "audit-service",
+        "realtime-service"
+      ]
+    },
+    {
+      "id": "conversation-list",
+      "title": "Listado, filtros y acciones masivas",
+      "description": "La pantalla de conversaciones consulta datos filtrados por rol, permite ordenar, paginar, exportar seleccionados, reasignar, cambiar estado/prioridad y abrir vista rapida.",
+      "entrypoints": [
+        "GET /conversations",
+        "POST /conversations/bulk/status",
+        "POST /conversations/bulk/priority",
+        "POST /conversations/bulk/assign",
+        "POST /conversations/bulk/export"
+      ],
+      "steps": [
+        "browser",
+        "thymeleaf",
+        "static-assets",
+        "home-controller",
+        "conversation-domain",
+        "user-domain",
+        "repositories",
+        "postgres",
+        "audit-service",
+        "realtime-service"
+      ]
+    },
+    {
+      "id": "status-modal",
+      "title": "Cambio de estado desde modal dashboard",
+      "description": "Las cards de pendientes, escaladas y cerradas abren un modal de conversaciones y permiten actualizar estado desde ahi.",
+      "entrypoints": [
+        "GET /api/dashboard/status-conversations",
+        "GET /api/agent-dashboard/status-conversations",
+        "POST /api/conversations/{id}/status"
+      ],
+      "steps": [
+        "browser",
+        "thymeleaf",
+        "static-assets",
+        "dashboard-controller",
+        "conversation-domain",
+        "repositories",
+        "postgres",
+        "audit-service",
+        "realtime-service"
+      ]
+    },
+    {
+      "id": "supervisor-dashboard",
+      "title": "Dashboard supervisor",
+      "description": "El dashboard supervisor carga resumen ejecutivo, tendencia semanal, top asuntos/clientes, horas pico, card CRM, IA y modales filtrados por rango de fechas.",
+      "entrypoints": [
+        "GET /supervisor/dashboard",
+        "GET /api/dashboard/metrics",
+        "GET /api/dashboard/ai-report",
+        "GET /api/dashboard/issue-trends",
+        "GET /api/dashboard/client-360",
+        "GET /api/dashboard/peak-hour"
+      ],
+      "steps": [
+        "browser",
+        "thymeleaf",
+        "static-assets",
+        "dashboard-controller",
+        "conversation-domain",
+        "repositories",
+        "postgres",
+        "gemini-service",
+        "gemini-api",
+        "zoho-crm-service",
+        "realtime-service"
+      ]
+    },
+    {
+      "id": "agent-dashboard",
+      "title": "Dashboard agente",
+      "description": "Vista operativa para el agente con metricas limitadas a conversaciones asignadas a su usuario y cambio de estado en modales.",
+      "entrypoints": [
+        "GET /agent/dashboard",
+        "GET /api/agent-dashboard/status-conversations"
+      ],
+      "steps": [
+        "browser",
+        "thymeleaf",
+        "static-assets",
+        "dashboard-controller",
+        "conversation-domain",
+        "user-domain",
+        "repositories",
+        "postgres",
+        "realtime-service"
+      ]
+    },
+    {
+      "id": "zoho-desk-ticket",
+      "title": "Apertura de ticket Zoho Desk",
+      "description": "Desde una conversacion guardada se crea ticket en Zoho Desk. La descripcion usa plantilla por asunto y se guarda numero, id, URL y contacto Zoho.",
+      "entrypoints": [
+        "POST /conversations/{id}/zoho-ticket"
+      ],
+      "steps": [
+        "browser",
+        "thymeleaf",
+        "home-controller",
+        "zoho-desk-controller",
+        "zoho-desk-service",
+        "zoho-desk-api",
+        "conversation-domain",
+        "repositories",
+        "postgres",
+        "audit-service",
+        "realtime-service"
+      ]
+    },
+    {
+      "id": "zoho-desk-clients",
+      "title": "Sincronizacion y sugerencia de clientes Zoho Desk",
+      "description": "El administrador sincroniza contactos de Zoho Desk hacia support_clients. El formulario de conversacion consulta /api/clients/search para prellenado.",
+      "entrypoints": [
+        "GET /admin/zoho",
+        "POST /admin/zoho/sync-clients",
+        "GET /api/clients/search"
+      ],
+      "steps": [
+        "browser",
+        "thymeleaf",
+        "zoho-desk-controller",
+        "zoho-desk-service",
+        "zoho-desk-api",
+        "support-client-domain",
+        "repositories",
+        "postgres",
+        "static-assets"
+      ]
+    },
+    {
+      "id": "zoho-crm-tasks",
+      "title": "Metricas de tareas Zoho CRM",
+      "description": "El modulo CRM y el dashboard consultan tareas por COQL solo al presionar Actualizar CRM. Luego trabajan contra cache local por rango.",
+      "entrypoints": [
+        "GET /admin/zoho-crm/tasks?refreshCrm=true",
+        "GET /api/dashboard/metrics?refreshCrm=true"
+      ],
+      "steps": [
+        "browser",
+        "thymeleaf",
+        "zoho-crm-controller",
+        "dashboard-controller",
+        "zoho-crm-service",
+        "zoho-crm-api"
+      ]
+    },
+    {
+      "id": "csv-mail",
+      "title": "CSV manual y envio por correo",
+      "description": "El administrador elige rango de fechas, genera CSV reducido y lo envia a destinatarios principales y copia mediante SMTP.",
+      "entrypoints": [
+        "GET /admin/reports/email-csv",
+        "POST /admin/reports/email-csv/send",
+        "GET /conversations/export/csv"
+      ],
+      "steps": [
+        "browser",
+        "thymeleaf",
+        "report-controller",
+        "report-services",
+        "conversation-domain",
+        "repositories",
+        "postgres",
+        "smtp",
+        "audit-service"
+      ]
+    },
+    {
+      "id": "pdf-report",
+      "title": "Reporte PDF supervisor",
+      "description": "El supervisor genera PDF con metricas, graficos y resumen IA para un rango de fechas.",
+      "entrypoints": [
+        "GET /supervisor/report/pdf"
+      ],
+      "steps": [
+        "browser",
+        "thymeleaf",
+        "report-controller",
+        "report-services",
+        "dashboard-controller",
+        "conversation-domain",
+        "repositories",
+        "postgres",
+        "gemini-service",
+        "gemini-api"
+      ]
+    },
+    {
+      "id": "login-alert",
+      "title": "Alerta de login vigilado",
+      "description": "Cuando el usuario configurado inicia sesion, se envia correo de notificacion sin alterar el seguimiento principal de sesiones.",
+      "entrypoints": [
+        "POST /login"
+      ],
+      "steps": [
+        "browser",
+        "security",
+        "user-domain",
+        "repositories",
+        "postgres",
+        "report-services",
+        "smtp"
+      ]
+    },
+    {
+      "id": "webhook-qpaypro",
+      "title": "Webhook Qpaypro",
+      "description": "Qpaypro envia eventos al endpoint publico; el sistema guarda payload, metadatos y notifica por WebSocket.",
+      "entrypoints": [
+        "POST /api/webhooks/qpaypro",
+        "GET /api/webhooks/qpaypro/health"
+      ],
+      "steps": [
+        "qpaypro",
+        "webhook-controller",
+        "repositories",
+        "postgres",
+        "realtime-service",
+        "browser"
+      ]
+    }
+  ]
+}
