@@ -1,0 +1,145 @@
+body.insights-light {
+    min-height: 100vh;
+    background:
+            radial-gradient(circle at top left, rgba(64, 120, 255, .12), transparent 34rem),
+            radial-gradient(circle at top right, rgba(98, 54, 255, .10), transparent 30rem),
+            #f5f7fb !important;
+    color: #060b3f !important;
+}
+
+body.insights-light ::selection {
+    background: rgba(98, 54, 255, .18);
+    color: #060b3f;
+}
+
+body.insights-light ::-webkit-scrollbar-track {
+    background: #edf1f8 !important;
+}
+
+body.insights-light ::-webkit-scrollbar-thumb {
+    background: #cfd8ea !important;
+}
+
+body.insights-light main,
+body.insights-light .max-w-7xl,
+body.insights-light .max-w-5xl {
+    color: #060b3f !important;
+}
+
+body.insights-light h1,
+body.insights-light h2,
+body.insights-light h3,
+body.insights-light h4,
+body.insights-light .font-black,
+body.insights-light .font-bold {
+    letter-spacing: 0 !important;
+}
+
+body.insights-light h1,
+body.insights-light h2 {
+    color: #060b3f !important;
+}
+
+body.insights-light a[href="/admin/dashboard"],
+body.insights-light a[href="/conversations"],
+body.insights-light a[href="/users/create"],
+body.insights-light a[href="/supervisor/dashboard"],
+body.insights-light a[href="/settings/2fa"],
+body.insights-light button[type="submit"] {
+    border-radius: 12px !important;
+}
+
+body.insights-light [class*="bg-[#10231F]"],
+body.insights-light [class*="bg-darkBg"],
+body.insights-light [class*="bg-darkBg/"],
+body.insights-light [class*="bg-qCard"],
+body.insights-light [class*="bg-white/10"],
+body.insights-light [class*="bg-white/15"],
+body.insights-light [class*="bg-black/20"],
+body.insights-light [class*="from-darkCard"],
+body.insights-light [class*="to-[#0f1d1a]"] {
+    background: #ffffff !important;
+}
+
+body.insights-light [class*="bg-gradient-to-br"][class*="from-darkCard"],
+body.insights-light [class*="bg-gradient-to-br"][class*="from-qDark"] {
+    background: #ffffff !important;
+}
+
+body.insights-light [class*="border-white/10"],
+body.insights-light [class*="border-white/20"],
+body.insights-light [class*="border-darkBorder"],
+body.insights-light [class*="border-qCyan/20"] {
+    border-color: #dbe3f1 !important;
+}
+
+body.insights-light [class*="shadow-"] {
+    box-shadow: 0 16px 40px rgba(15, 23, 42, .07) !important;
+}
+
+body.insights-light [class*="text-[#F4F0E6]"],
+body.insights-light [class*="text-textMain"],
+body.insights-light [class*="text-white"] {
+    color: #060b3f !important;
+}
+
+body.insights-light [class*="text-slate-300"],
+body.insights-light [class*="text-slate-400"],
+body.insights-light [class*="text-gray-300"],
+body.insights-light [class*="text-gray-400"],
+body.insights-light [class*="text-gray-500"],
+body.insights-light [class*="opacity-70"] {
+    color: #64708f !important;
+    opacity: 1 !important;
+}
+
+body.insights-light .text-transparent {
+    color: #060b3f !important;
+    -webkit-text-fill-color: #060b3f !important;
+}
+
+body.insights-light input,
+body.insights-light select,
+body.insights-light textarea {
+    background: #ffffff !important;
+    color: #060b3f !important;
+    border-color: #d7dfed !important;
+    box-shadow: none !important;
+}
+
+body.insights-light input:focus,
+body.insights-light select:focus,
+body.insights-light textarea:focus {
+    border-color: rgba(98, 54, 255, .62) !important;
+    box-shadow: 0 0 0 4px rgba(98, 54, 255, .10) !important;
+}
+
+body.insights-light table thead,
+body.insights-light [class*="bg-darkBg/30"] {
+    background: #f3f6fb !important;
+}
+
+body.insights-light tbody tr {
+    border-color: #e7ecf5 !important;
+}
+
+body.insights-light tbody tr:hover {
+    background: #f8faff !important;
+}
+
+body.insights-light .rounded-3xl,
+body.insights-light .rounded-[2rem],
+body.insights-light .rounded-[24px],
+body.insights-light .rounded-[20px] {
+    border-radius: 16px !important;
+}
+
+body.insights-light .rounded-2xl {
+    border-radius: 12px !important;
+}
+
+body.insights-light .brand-shell,
+body.insights-light .page-shell {
+    background: #ffffff !important;
+    border: 1px solid #dbe3f1 !important;
+}

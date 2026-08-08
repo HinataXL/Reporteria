@@ -6,11 +6,12 @@
     <meta charset="UTF-8">
     <title>Panel Administrador</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" th:href="@{/sneat/assets/css/insights-light.css}">
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 </head>
 
-<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+<body class="insights-light bg-[#10231F] text-[#F4F0E6] min-h-screen">
 
 <div class="max-w-7xl mx-auto p-6">
 
@@ -32,10 +33,16 @@
             </p>
         </div>
 
-        <a href="/conversations"
-           class="bg-[#ffd700] hover:bg-yellow-300 text-black px-5 py-3 rounded-2xl font-black">
-            Volver a conversaciones
-        </a>
+        <div class="flex flex-wrap items-center gap-3">
+            <a href="/supervisor/dashboard"
+               class="bg-[#00d9ff] hover:bg-cyan-300 text-[#060b3f] px-5 py-3 rounded-2xl font-black">
+                Dashboard supervisor
+            </a>
+            <a href="/conversations"
+               class="bg-[#ffd700] hover:bg-yellow-300 text-black px-5 py-3 rounded-2xl font-black">
+                Volver a conversaciones
+            </a>
+        </div>
     </header>
 
     <section class="grid md:grid-cols-4 gap-5 mb-8">
@@ -129,13 +136,13 @@
             <p class="text-[#00d9ff] text-xs font-black mt-4 uppercase tracking-wide">Clientes externos</p>
         </a>
 
-        <a href="/admin/zoho-crm/tasks"
+        <a href="/admin/zoho-crm/tasks/dashboard"
            class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
             <h2 class="text-2xl font-black mb-2">Tareas CRM</h2>
             <p class="text-slate-300 text-sm">
-                Medir tareas por propietario, tipo y pais de operacion.
+                Dashboard beta para tareas por propietario, tipo y pais de operacion.
             </p>
-            <p class="text-[#00d9ff] text-xs font-black mt-4 uppercase tracking-wide">Metricas de tareas</p>
+            <p class="text-[#00d9ff] text-xs font-black mt-4 uppercase tracking-wide">Beta admin</p>
         </a>
 
         <a href="/admin/logs"

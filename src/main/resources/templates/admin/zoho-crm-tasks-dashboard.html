@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Tareas CRM Beta</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen bg-[#f5f7fb] text-[#060b3f]">
+<main class="mx-auto max-w-7xl px-5 py-6 lg:px-8">
+    <header class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+            <div class="mb-3 flex flex-wrap items-center gap-2">
+                <span class="rounded-full bg-[#f4f1ff] px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-[#6236ff]">Beta admin</span>
+                <span class="rounded-full bg-white px-3 py-1 text-xs font-black text-[#5f6b8a] ring-1 ring-[#e3e7f2]">Zoho CRM</span>
+            </div>
+            <h1 class="text-3xl font-black tracking-tight">Dashboard de tareas CRM</h1>
+            <p class="mt-2 max-w-2xl text-sm font-semibold text-[#5f6b8a]">
+                Vista ejecutiva para medir asignacion, cumplimiento, carga por propietario, tipo de tarea y pais de operacion.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+            <a href="/admin/zoho-crm/tasks"
+               class="inline-flex h-11 items-center gap-2 rounded-lg border border-[#e3e7f2] bg-white px-4 text-sm font-black text-[#060b3f] shadow-sm">
+                <i data-lucide="table-2" class="h-4 w-4"></i>Vista detalle
+            </a>
+            <a href="/admin/dashboard"
+               class="inline-flex h-11 items-center gap-2 rounded-lg bg-gradient-to-r from-[#6c35ff] to-[#4c22e8] px-4 text-sm font-black text-white shadow-lg shadow-violet-200">
+                <i data-lucide="arrow-left" class="h-4 w-4"></i>Panel admin
+            </a>
+        </div>
+    </header>
+
+    <div th:if="${error}" class="mb-5 rounded-xl border border-[#ff3f66]/25 bg-[#fff0f3] px-5 py-4 text-sm font-bold text-[#ff3f66]" th:text="${error}"></div>
+    <div th:if="${success}" class="mb-5 rounded-xl border border-[#18bd73]/25 bg-[#effaf5] px-5 py-4 text-sm font-bold text-[#12824f]" th:text="${success}"></div>
+
+    <section class="mb-5 rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+        <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 class="text-sm font-black">Solicitudes de actualizacion CRM</h2>
+                <p class="text-xs font-semibold text-[#5f6b8a]">Autoriza consultas puntuales de agentes para cuidar el consumo del API de Zoho.</p>
+            </div>
+            <span class="w-max rounded-full bg-[#f4f1ff] px-3 py-1 text-xs font-black text-[#6236ff]" th:text="${#lists.size(crmRefreshRequests) + ' pendiente(s)'}">0 pendiente(s)</span>
+        </div>
+        <div class="grid gap-3" th:if="${!#lists.isEmpty(crmRefreshRequests)}">
+            <article th:each="crmRequest : ${crmRefreshRequests}" class="grid gap-3 rounded-xl border border-[#edf0f7] bg-[#fbfcff] p-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                <div>
+                    <h3 class="font-black" th:text="${crmRequest.agentName}">Agente</h3>
+                    <p class="mt-1 text-xs font-bold text-[#5f6b8a]">
+                        <span th:text="${crmRequest.from + ' al ' + crmRequest.to}">Rango</span>
+                        <span> | Tipo: </span><span th:text="${crmRequest.taskType ?: 'Todos'}">Todos</span>
+                        <span> | Pais: </span><span th:text="${crmRequest.operationCountry ?: 'Todos'}">Todos</span>
+                        <span> | Estado: </span><span th:text="${crmRequest.statusFilter ?: 'Todos'}">Todos</span>
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <form method="post" th:action="@{/admin/zoho-crm/tasks/refresh-requests/{id}/approve(id=${crmRequest.id})}">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="inline-flex h-10 items-center gap-2 rounded-lg bg-[#6236ff] px-4 text-sm font-black text-white">
+                            <i data-lucide="shield-check" class="h-4 w-4"></i>Autorizar
+                        </button>
+                    </form>
+                    <form method="post" th:action="@{/admin/zoho-crm/tasks/refresh-requests/{id}/reject(id=${crmRequest.id})}">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="inline-flex h-10 items-center gap-2 rounded-lg border border-[#e3e7f2] bg-white px-4 text-sm font-black text-[#060b3f]">
+                            <i data-lucide="x" class="h-4 w-4"></i>Rechazar
+                        </button>
+                    </form>
+                </div>
+            </article>
+        </div>
+        <div th:if="${#lists.isEmpty(crmRefreshRequests)}" class="rounded-xl bg-[#fbfcff] p-4 text-sm font-bold text-[#5f6b8a]">
+            No hay solicitudes pendientes de agentes.
+        </div>
+    </section>
+
+    <form method="get" action="/admin/zoho-crm/tasks/dashboard" class="mb-5 rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+        <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+                <h2 class="text-sm font-black">Filtros del dashboard</h2>
+                <p class="mt-1 text-xs font-semibold text-[#5f6b8a]">Por defecto usa datos cacheados; solo consulta Zoho al presionar Actualizar CRM.</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <button type="submit" class="inline-flex h-10 items-center gap-2 rounded-lg border border-[#e3e7f2] bg-white px-4 text-sm font-black text-[#060b3f]">
+                    <i data-lucide="filter" class="h-4 w-4"></i>Filtrar
+                </button>
+                <button type="submit" name="refreshCrm" value="true" class="inline-flex h-10 items-center gap-2 rounded-lg bg-[#6236ff] px-4 text-sm font-black text-white">
+                    <i data-lucide="refresh-cw" class="h-4 w-4"></i>Actualizar CRM
+                </button>
+            </div>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+            <label class="grid gap-2">
+                <span class="text-xs font-black uppercase text-[#5f6b8a]">Desde</span>
+                <input type="date" name="from" th:value="${from}" class="h-11 rounded-lg border border-[#d9dfec] px-3 text-sm font-bold outline-none focus:border-[#6236ff]">
+            </label>
+            <label class="grid gap-2">
+                <span class="text-xs font-black uppercase text-[#5f6b8a]">Hasta</span>
+                <input type="date" name="to" th:value="${to}" class="h-11 rounded-lg border border-[#d9dfec] px-3 text-sm font-bold outline-none focus:border-[#6236ff]">
+            </label>
+            <label class="grid gap-2">
+                <span class="text-xs font-black uppercase text-[#5f6b8a]">Tipo</span>
+                <select name="taskType" class="h-11 rounded-lg border border-[#d9dfec] px-3 text-sm font-bold outline-none focus:border-[#6236ff]">
+                    <option value="">Todos</option>
+                    <option th:each="option : ${taskTypeOptions}" th:value="${option}" th:text="${option}" th:selected="${taskType == option}">Tipo</option>
+                </select>
+            </label>
+            <label class="grid gap-2">
+                <span class="text-xs font-black uppercase text-[#5f6b8a]">Pais</span>
+                <select name="operationCountry" class="h-11 rounded-lg border border-[#d9dfec] px-3 text-sm font-bold outline-none focus:border-[#6236ff]">
+                    <option value="">Todos</option>
+                    <option th:each="option : ${countryOptions}" th:value="${option}" th:text="${option}" th:selected="${operationCountry == option}">Pais</option>
+                </select>
+            </label>
+            <label class="grid gap-2">
+                <span class="text-xs font-black uppercase text-[#5f6b8a]">Propietario</span>
+                <select name="owner" class="h-11 rounded-lg border border-[#d9dfec] px-3 text-sm font-bold outline-none focus:border-[#6236ff]">
+                    <option value="">Todos</option>
+                    <option th:each="option : ${ownerOptions}" th:value="${option}" th:text="${option}" th:selected="${owner == option}">Propietario</option>
+                </select>
+            </label>
+            <label class="grid gap-2">
+                <span class="text-xs font-black uppercase text-[#5f6b8a]">Estado</span>
+                <select name="status" class="h-11 rounded-lg border border-[#d9dfec] px-3 text-sm font-bold outline-none focus:border-[#6236ff]">
+                    <option value="">Todos</option>
+                    <option th:each="option : ${statusOptions}" th:value="${option}" th:text="${option}" th:selected="${status == option}">Estado</option>
+                </select>
+            </label>
+        </div>
+    </form>
+
+    <section class="mb-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <article class="rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+            <p class="text-xs font-black text-[#5f6b8a]">Asignadas</p>
+            <h2 class="mt-3 text-4xl font-black text-[#4078ff]" th:text="${assignedTotal}">0</h2>
+        </article>
+        <article class="rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+            <p class="text-xs font-black text-[#5f6b8a]">Realizadas</p>
+            <h2 class="mt-3 text-4xl font-black text-[#18bd73]" th:text="${completedTotal}">0</h2>
+        </article>
+        <article class="rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+            <p class="text-xs font-black text-[#5f6b8a]">Pendientes</p>
+            <h2 class="mt-3 text-4xl font-black text-[#f6a400]" th:text="${pendingTotal}">0</h2>
+        </article>
+        <article class="rounded-xl border border-[#e3e7f2] bg-gradient-to-br from-[#f4f1ff] to-white p-5 shadow-sm">
+            <p class="text-xs font-black text-[#5f6b8a]">Cumplimiento</p>
+            <h2 class="mt-3 text-4xl font-black text-[#6236ff]" th:text="${complianceText}">0.0%</h2>
+        </article>
+        <article class="rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+            <p class="text-xs font-black text-[#5f6b8a]">Rango</p>
+            <h2 class="mt-3 text-lg font-black text-[#060b3f]" th:text="${from + ' al ' + to}">Rango</h2>
+            <p class="mt-2 text-xs font-bold text-[#5f6b8a]" th:text="${refreshCrm ? 'Actualizado desde CRM' : 'Usando cache local'}">Cache local</p>
+        </article>
+    </section>
+
+    <section class="mb-5 rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+        <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 class="text-sm font-black">Card de alertas</h2>
+                <p class="text-xs font-semibold text-[#5f6b8a]">Senales rapidas para detectar carga, atraso e incrementos relevantes.</p>
+            </div>
+            <span class="w-max rounded-full bg-[#fff7e6] px-3 py-1 text-xs font-black text-[#b77800]">Beta</span>
+        </div>
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <article th:each="alert : ${alertCards}" class="rounded-xl border border-[#edf0f7] bg-[#fbfcff] p-4">
+                <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#f4f1ff] text-[#6236ff]">
+                    <i th:attr="data-lucide=${alert['icon']}" class="h-5 w-5"></i>
+                </div>
+                <p class="text-xs font-black uppercase tracking-wide text-[#5f6b8a]" th:text="${alert['title']}">Alerta</p>
+                <h3 class="mt-2 min-h-[52px] text-lg font-black leading-tight text-[#060b3f]" th:text="${alert['value']}">Sin alerta</h3>
+                <p class="mt-3 text-xs font-bold text-[#5f6b8a]" th:text="${alert['detail']}">Detalle</p>
+            </article>
+            <div th:if="${#lists.isEmpty(alertCards)}" class="rounded-xl bg-[#fbfcff] p-4 text-sm font-bold text-[#5f6b8a]">
+                Sin alertas disponibles para el rango seleccionado.
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5 grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+        <article class="rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-sm font-black">Desempeno por propietario</h2>
+                <span class="rounded-full bg-[#f4f1ff] px-3 py-1 text-xs font-black text-[#6236ff]" th:text="${#lists.size(agentRows) + ' propietario(s)'}">0 propietarios</span>
+            </div>
+            <div class="grid gap-3">
+                <div th:each="agent : ${agentRows}" class="rounded-xl border border-[#edf0f7] p-4">
+                    <div class="mb-3 flex items-center justify-between gap-3">
+                        <div>
+                            <h3 class="font-black" th:text="${agent['owner']}">Propietario</h3>
+                            <p class="text-xs font-bold text-[#5f6b8a]" th:text="${agent['completed'] + ' realizadas de ' + agent['assigned']}">0 realizadas</p>
+                        </div>
+                        <span class="rounded-full bg-[#f4f1ff] px-3 py-1 text-xs font-black text-[#6236ff]" th:text="${agent['complianceText']}">0%</span>
+                    </div>
+                    <div class="h-2 overflow-hidden rounded-full bg-[#edf0f7]">
+                        <div class="h-full rounded-full bg-[#6236ff]"
+                             th:style="${'width:' + agent['complianceWidth'] + '%'}"></div>
+                    </div>
+                </div>
+                <div th:if="${#lists.isEmpty(agentRows)}" class="rounded-lg bg-[#fbfcff] p-4 text-sm font-bold text-[#5f6b8a]">Sin propietarios para mostrar.</div>
+            </div>
+        </article>
+
+        <aside class="grid gap-5">
+            <article class="rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+                <h2 class="mb-4 text-sm font-black">Top tipo de tarea</h2>
+                <div class="grid gap-3">
+                    <div th:each="row : ${typeRows}" class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                        <span class="truncate text-sm font-black" th:text="${row['label']}">Tipo</span>
+                        <span class="text-sm font-black text-[#6236ff]" th:text="${row['value']}">0</span>
+                        <div class="col-span-2 h-2 overflow-hidden rounded-full bg-[#edf0f7]">
+                            <div class="h-full rounded-full bg-[#6236ff]" th:style="${'width:' + row['width'] + '%'}"></div>
+                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(typeRows)}" class="text-sm font-bold text-[#5f6b8a]">Sin datos.</div>
+                </div>
+            </article>
+
+            <article class="rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+                <h2 class="mb-4 text-sm font-black">Top pais de operacion</h2>
+                <div class="grid gap-3">
+                    <div th:each="row : ${countryRows}" class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                        <span class="truncate text-sm font-black" th:text="${row['label']}">Pais</span>
+                        <span class="text-sm font-black text-[#18bd73]" th:text="${row['value']}">0</span>
+                        <div class="col-span-2 h-2 overflow-hidden rounded-full bg-[#edf0f7]">
+                            <div class="h-full rounded-full bg-[#18bd73]" th:style="${'width:' + row['width'] + '%'}"></div>
+                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(countryRows)}" class="text-sm font-bold text-[#5f6b8a]">Sin datos.</div>
+                </div>
+            </article>
+        </aside>
+    </section>
+
+    <section class="rounded-xl border border-[#e3e7f2] bg-white p-5 shadow-sm">
+        <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-sm font-black">Tareas recientes</h2>
+            <span class="rounded-full bg-[#eef5ff] px-3 py-1 text-xs font-black text-[#4078ff]" th:text="${#lists.size(taskRows) + ' registro(s)'}">0 registros</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[920px] text-left text-sm">
+                <thead class="text-xs uppercase text-[#5f6b8a]">
+                <tr class="border-b border-[#edf0f7]">
+                    <th class="py-3 pr-4">Asunto</th>
+                    <th class="py-3 pr-4">Propietario</th>
+                    <th class="py-3 pr-4">Tipo</th>
+                    <th class="py-3 pr-4">Pais</th>
+                    <th class="py-3 pr-4">Estado</th>
+                    <th class="py-3 pr-4">Creada</th>
+                    <th class="py-3 pr-4">Actualizada</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="task : ${taskRows}" class="border-b border-[#edf0f7]">
+                    <td class="max-w-[280px] truncate py-3 pr-4 font-black" th:text="${task['subject']}">Asunto</td>
+                    <td class="py-3 pr-4" th:text="${task['owner']}">Propietario</td>
+                    <td class="py-3 pr-4" th:text="${task['type']}">Tipo</td>
+                    <td class="py-3 pr-4" th:text="${task['country']}">Pais</td>
+                    <td class="py-3 pr-4"><span class="rounded-full bg-[#f4f1ff] px-3 py-1 text-xs font-black text-[#6236ff]" th:text="${task['status']}">Estado</span></td>
+                    <td class="py-3 pr-4 text-[#5f6b8a]" th:text="${task['createdTime']}">Sin fecha</td>
+                    <td class="py-3 pr-4 text-[#5f6b8a]" th:text="${task['modifiedTime']}">Sin fecha</td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(taskRows)}">
+                    <td colspan="7" class="py-6 text-[#5f6b8a]">Sin tareas para mostrar. Presiona Actualizar CRM si no hay cache para este rango.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+<script>
+    lucide.createIcons();
+</script>
+</body>
+</html>

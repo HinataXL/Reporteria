@@ -7,6 +7,7 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" th:href="@{/sneat/assets/css/insights-light.css}">
 
   <script>
     tailwind.config = {
@@ -55,7 +56,7 @@
   </style>
 </head>
 
-<body class="bg-darkBg text-textMain min-h-screen font-sans selection:bg-brandCyan selection:text-black py-12 px-4 sm:px-6">
+<body class="insights-light bg-darkBg text-textMain min-h-screen font-sans selection:bg-brandCyan selection:text-black py-12 px-4 sm:px-6">
 
 <div class="max-w-7xl mx-auto">
 
@@ -88,6 +89,14 @@
     </div>
   </div>
 
+  <div th:if="${error}" class="mb-6 bg-red-500/10 border border-red-500/30 rounded-2xl p-4 flex items-start gap-4 animate-fade-in-up" style="animation-delay: 0.15s;">
+    <div class="bg-red-500/20 p-2 rounded-full mt-0.5"><i class="fas fa-triangle-exclamation text-red-400"></i></div>
+    <div>
+      <h4 class="text-red-400 font-bold">Accion no completada</h4>
+      <p class="text-red-300/80 text-sm mt-1" th:text="${error}"></p>
+    </div>
+  </div>
+
   <div class="bg-gradient-to-br from-darkCard to-[#0f1d1a] border border-darkBorder rounded-3xl p-1 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_15px_40px_rgba(0,0,0,0.6)] backdrop-blur animate-fade-in-up" style="animation-delay: 0.2s;">
 
     <div class="overflow-x-auto w-full no-scrollbar rounded-3xl">
@@ -104,8 +113,11 @@
           <th class="py-4 px-6 text-center">
             <i class="fas fa-shield-alt mr-1 text-gray-500"></i> Rol
           </th>
-          <th class="py-4 px-6 text-center rounded-tr-2xl">
+          <th class="py-4 px-6 text-center">
             <i class="fas fa-signal mr-1 text-gray-500"></i> Estado
+          </th>
+          <th class="py-4 px-6 text-right rounded-tr-2xl">
+            <i class="fas fa-sliders mr-1 text-gray-500"></i> Acciones
           </th>
         </tr>
         </thead>
@@ -127,12 +139,12 @@
           </td>
 
           <td class="py-4 px-6 text-center">
-                            <span th:if="${user.role.nombre == 'ADMIN'}" class="inline-flex items-center gap-1.5 bg-brandGold/10 border border-brandGold/20 text-brandGold px-3 py-1 rounded-lg text-xs font-bold tracking-wide">
+                            <span th:if="${user.role != null and user.role.nombre == 'ADMIN'}" class="inline-flex items-center gap-1.5 bg-brandGold/10 border border-brandGold/20 text-brandGold px-3 py-1 rounded-lg text-xs font-bold tracking-wide">
                                 <i class="fas fa-crown text-[10px]"></i> <span th:text="${user.role.nombre}">ADMIN</span>
                             </span>
 
-            <span th:unless="${user.role.nombre == 'ADMIN'}" class="inline-flex items-center gap-1.5 bg-gray-500/10 border border-gray-500/20 text-gray-300 px-3 py-1 rounded-lg text-xs font-bold tracking-wide">
-                                <span th:text="${user.role.nombre}">USER</span>
+            <span th:unless="${user.role != null and user.role.nombre == 'ADMIN'}" class="inline-flex items-center gap-1.5 bg-gray-500/10 border border-gray-500/20 text-gray-300 px-3 py-1 rounded-lg text-xs font-bold tracking-wide">
+                                <span th:text="${user.role != null ? user.role.nombre : 'SIN ROL'}">USER</span>
                             </span>
           </td>
 
@@ -150,10 +162,53 @@
                             </span>
           </td>
 
+          <td class="py-4 px-6">
+            <div class="flex flex-wrap justify-end items-center gap-2">
+              <form th:action="@{/users/{id}/role(id=${user.id})}" method="post" class="flex items-center gap-2">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <select name="roleId"
+                        th:disabled="${user.id == currentUserId}"
+                        class="bg-darkBg border border-darkBorder text-gray-200 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:border-brandCyan">
+                  <option th:each="role : ${roles}"
+                          th:value="${role.id}"
+                          th:text="${role.nombre}"
+                          th:selected="${user.role != null and user.role.id == role.id}">ROL</option>
+                </select>
+                <button type="submit"
+                        th:disabled="${user.id == currentUserId}"
+                        class="w-9 h-9 rounded-xl border border-brandCyan/30 bg-brandCyan/10 text-brandCyan hover:bg-brandCyan hover:text-black transition disabled:opacity-40 disabled:pointer-events-none"
+                        title="Guardar rol">
+                  <i class="fas fa-check"></i>
+                </button>
+              </form>
+
+              <form th:action="@{/users/{id}/password(id=${user.id})}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit"
+                        onclick="return confirm('Se generara una nueva contrasena temporal y se enviara al correo del usuario. Continuar?')"
+                        class="w-9 h-9 rounded-xl border border-yellow-400/30 bg-yellow-400/10 text-yellow-300 hover:bg-yellow-400 hover:text-black transition"
+                        title="Enviar nueva contrasena">
+                  <i class="fas fa-key"></i>
+                </button>
+              </form>
+
+              <form th:action="@{/users/{id}/delete(id=${user.id})}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit"
+                        th:disabled="${user.id == currentUserId or user.estado == 0}"
+                        onclick="return confirm('Esta accion desactivara el usuario y ya no podra ingresar. Continuar?')"
+                        class="w-9 h-9 rounded-xl border border-red-400/30 bg-red-500/10 text-red-300 hover:bg-red-500 hover:text-white transition disabled:opacity-40 disabled:pointer-events-none"
+                        title="Eliminar usuario">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+
         </tr>
 
         <tr th:if="${users == null or users.empty}">
-          <td colspan="4" class="py-12 text-center text-gray-500">
+          <td colspan="5" class="py-12 text-center text-gray-500">
             <div class="flex flex-col items-center justify-center">
               <i class="fas fa-users-slash text-4xl mb-3 opacity-50"></i>
               <p>No hay usuarios registrados en el sistema.</p>

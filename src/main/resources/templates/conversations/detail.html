@@ -6,6 +6,7 @@
     <title>Detalle de Conversación </title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" th:href="@{/sneat/assets/css/insights-light.css}">
     <style>
         :root {
             --primary: #1ba0c8;
@@ -255,7 +256,7 @@
         }
     </style>
 </head>
-<body class="bg-[#10231F] text-[#F4F0E6] min-h-screen">
+<body class="insights-light bg-[#10231F] text-[#F4F0E6] min-h-screen">
 
 <div class="max-w-6xl mx-auto p-6">
     <div th:if="${success}"

@@ -53,13 +53,14 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/css/**", "/js/**", "/img/**").permitAll()
+                        .requestMatchers("/login", "/css/**", "/js/**", "/img/**", "/sneat/**").permitAll()
                         .requestMatchers("/api/webhooks/qpaypro", "/api/webhooks/qpaypro/**").permitAll()
 
                         .requestMatchers("/2fa/**").authenticated()
                         .requestMatchers("/settings/2fa/**").authenticated()
 
                         .requestMatchers("/users/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/zoho-crm/tasks").hasAnyRole("ADMIN", "SUPERVISOR")
 
                         .requestMatchers("/conversations/export/**").hasAnyRole("ADMIN", "SUPERVISOR")
                         .requestMatchers("/conversations/bulk/**").hasAnyRole("ADMIN", "SUPERVISOR")

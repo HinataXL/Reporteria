@@ -11,6 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/sneat/assets/css/insights-light.css}">
 
     <!-- Tailwind Config -->
     <script>
@@ -74,7 +75,7 @@
     </style>
 </head>
 
-<body class="bg-darkBg text-textMain min-h-screen font-sans selection:bg-brandCyan selection:text-black pb-12">
+<body class="insights-light bg-darkBg text-textMain min-h-screen font-sans selection:bg-brandCyan selection:text-black pb-12">
 
 <!-- Toast Notification Container -->
 <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-darkCard border border-brandCyan/50 shadow-[0_5px_20px_rgba(0,217,255,0.2)] text-textMain px-6 py-3 rounded-full flex items-center gap-3 z-50 hidden opacity-0 transition-opacity duration-300">

@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi CRM | Tareas</title>
+    <link rel="stylesheet" th:href="@{/sneat/assets/css/metrics-dashboard.css}">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .filter-field { display: grid; gap: 7px; }
+        .filter-field span { color: #5f6b8a; font-size: 11px; font-weight: 900; text-transform: uppercase; }
+        .filter-field input,
+        .filter-field select {
+            width: 100%;
+            height: 42px;
+            border: 1px solid #d9dfec;
+            border-radius: 10px;
+            padding: 0 12px;
+            color: #060b3f;
+            background: #fff;
+            font-weight: 800;
+            outline: none;
+        }
+        .filter-field input:focus,
+        .filter-field select:focus {
+            border-color: #6236ff;
+            box-shadow: 0 0 0 4px rgba(98, 54, 255, .1);
+        }
+        .table-wrap { overflow-x: auto; }
+        .data-table { width: 100%; min-width: 860px; border-collapse: collapse; font-size: 13px; }
+        .data-table th {
+            padding: 12px 14px;
+            border-bottom: 1px solid #e7ecf5;
+            color: #5f6b8a;
+            font-size: 11px;
+            text-align: left;
+            text-transform: uppercase;
+        }
+        .data-table td { padding: 14px; border-bottom: 1px solid #edf0f7; font-weight: 700; }
+        .data-table tbody tr:hover { background: #f8faff; }
+        .permission-banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 18px;
+            border: 1px solid #e3e7f2;
+            border-radius: 14px;
+            background: #fff;
+            padding: 14px 16px;
+            box-shadow: 0 10px 26px rgba(43, 58, 103, .06);
+        }
+        .permission-banner i { color: #6236ff; }
+        .permission-banner strong { display: block; color: #060b3f; font-size: 14px; }
+        .permission-banner span { color: #5f6b8a; font-size: 13px; font-weight: 700; }
+        .permission-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 80;
+            display: none;
+            place-items: center;
+            background: rgba(6, 11, 63, .36);
+            padding: 18px;
+        }
+        .permission-modal.is-visible { display: grid; }
+        .permission-dialog {
+            width: min(420px, 100%);
+            border: 1px solid #e3e7f2;
+            border-radius: 18px;
+            background: #fff;
+            padding: 22px;
+            box-shadow: 0 24px 70px rgba(6, 11, 63, .2);
+        }
+        .permission-dialog h3 { margin: 12px 0 8px; color: #060b3f; font-size: 20px; }
+        .permission-dialog p { color: #5f6b8a; font-weight: 700; line-height: 1.5; }
+        @media (max-width: 1100px) {
+            .filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+        }
+        @media (max-width: 680px) {
+            .filter-grid,
+            .stats-grid { grid-template-columns: 1fr !important; }
+        }
+    </style>
+</head>
+<body class="metrics-body">
+<div class="metrics-shell">
+    <aside class="metrics-sidebar">
+        <div class="brand">
+            <img class="brand-logo"
+                 th:src="@{/sneat/assets/img/brand/insights-desk-logo.png}"
+                 alt="Insights Desk">
+        </div>
+
+        <nav class="side-nav">
+            <a class="side-link" th:href="@{/agent/dashboard}"><i data-lucide="layout-dashboard"></i>Resumen</a>
+            <a class="side-link active" th:href="@{/agent/zoho-crm/tasks/dashboard}"><i data-lucide="briefcase"></i>Mi CRM</a>
+            <a class="side-link" th:href="@{/conversations}"><i data-lucide="messages-square"></i>Conversaciones</a>
+            <a class="side-link" th:href="@{/conversations/create(popup=true)}" onclick="return openConversationPopup(this.href);"><i data-lucide="plus-circle"></i>Nuevo chat</a>
+            <a class="side-link" th:href="@{/profile}"><i data-lucide="user-round"></i>Mi perfil</a>
+        </nav>
+
+        <div class="side-footer">
+            <div class="user-mini">
+                <div class="avatar" th:text="${#strings.substring(userName,0,1)}">A</div>
+                <div>
+                    <div class="user-name" th:text="${userName}">Agente</div>
+                    <div class="user-role" th:text="${userRole}">AGENTE</div>
+                </div>
+            </div>
+            <div class="build-note">V1.7 desarrollado por<br>Erick Pedroza</div>
+        </div>
+    </aside>
+
+    <main class="metrics-main">
+        <header class="topbar">
+            <div>
+                <h1 class="page-title">Mi CRM</h1>
+                <p class="page-subtitle">Seguimiento personal de tareas asignadas en Zoho CRM</p>
+            </div>
+            <div class="topbar-actions">
+                <a class="rm-btn ghost" th:href="@{/agent/dashboard}"><i data-lucide="layout-dashboard"></i>Mi resumen</a>
+                <a class="rm-btn primary" th:href="@{/conversations/create(popup=true)}" onclick="return openConversationPopup(this.href);"><i data-lucide="plus"></i>Nueva conversacion</a>
+            </div>
+        </header>
+
+        <div th:if="${error}" class="crm-error" th:text="${error}">Sin datos CRM</div>
+        <div th:if="${crmPermissionStatus == 'requested'}" class="permission-banner">
+            <i data-lucide="send"></i>
+            <div>
+                <strong>Solicitud enviada al administrador</strong>
+                <span>Cuando sea autorizada, veras disponible una actualizacion CRM para este mismo rango y filtros.</span>
+            </div>
+        </div>
+        <div th:if="${crmPermissionStatus == 'approved'}" class="permission-banner">
+            <i data-lucide="shield-check"></i>
+            <div>
+                <strong>Actualizacion CRM autorizada y ejecutada</strong>
+                <span>La autorizacion fue de un solo uso para proteger el consumo del API.</span>
+            </div>
+        </div>
+
+        <form method="get" th:action="@{/agent/zoho-crm/tasks/dashboard}" class="card section" style="margin-bottom:18px">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Filtros de mis tareas</h2>
+                    <p class="section-subtitle">Propietario fijo: <strong th:text="${agentOwner}">Agente</strong>. El CRM solo se actualiza con autorizacion admin.</p>
+                </div>
+                <div class="topbar-actions">
+                    <button type="submit" class="rm-btn ghost"><i data-lucide="filter"></i>Filtrar</button>
+                    <button type="submit" name="refreshCrm" value="true" class="rm-btn primary" th:if="${crmRefreshApproved}">
+                        <i data-lucide="shield-check"></i>Usar autorizacion
+                    </button>
+                    <button type="submit" class="rm-btn primary" form="crmRefreshRequestForm" th:if="${!crmRefreshApproved}">
+                        <i data-lucide="lock-keyhole"></i>Solicitar actualizacion
+                    </button>
+                </div>
+            </div>
+            <div class="filter-grid" style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px">
+                <label class="filter-field">
+                    <span>Desde</span>
+                    <input type="date" name="from" th:value="${from}">
+                </label>
+                <label class="filter-field">
+                    <span>Hasta</span>
+                    <input type="date" name="to" th:value="${to}">
+                </label>
+                <label class="filter-field">
+                    <span>Tipo</span>
+                    <select name="taskType">
+                        <option value="">Todos</option>
+                        <option th:each="option : ${taskTypeOptions}" th:value="${option}" th:text="${option}" th:selected="${taskType == option}">Tipo</option>
+                    </select>
+                </label>
+                <label class="filter-field">
+                    <span>Pais</span>
+                    <select name="operationCountry">
+                        <option value="">Todos</option>
+                        <option th:each="option : ${countryOptions}" th:value="${option}" th:text="${option}" th:selected="${operationCountry == option}">Pais</option>
+                    </select>
+                </label>
+                <label class="filter-field">
+                    <span>Estado</span>
+                    <select name="status">
+                        <option value="">Todos</option>
+                        <option th:each="option : ${statusOptions}" th:value="${option}" th:text="${option}" th:selected="${status == option}">Estado</option>
+                    </select>
+                </label>
+            </div>
+        </form>
+        <form id="crmRefreshRequestForm" method="post" th:action="@{/agent/zoho-crm/tasks/refresh-request}" hidden>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <input type="hidden" name="from" th:value="${from}">
+            <input type="hidden" name="to" th:value="${to}">
+            <input type="hidden" name="taskType" th:value="${taskType}">
+            <input type="hidden" name="operationCountry" th:value="${operationCountry}">
+            <input type="hidden" name="status" th:value="${status}">
+            <input type="hidden" name="size" th:value="${size}">
+        </form>
+
+        <section class="card section state-grid state-panel">
+            <div>
+                <h2 class="section-title">Mis tareas por estado</h2>
+                <div class="kpi-row">
+                    <article class="kpi" style="--accent:#4078ff;--soft:#eef5ff">
+                        <div class="icon-bubble"><i data-lucide="clipboard-list"></i></div>
+                        <div class="kpi-label">Asignadas</div>
+                        <div class="kpi-value" th:text="${assignedTotal}">0</div>
+                        <div class="kpi-note">Tareas CRM</div>
+                    </article>
+                    <article class="kpi" style="--accent:#18b26b;--soft:#effaf5">
+                        <div class="icon-bubble"><i data-lucide="check-circle-2"></i></div>
+                        <div class="kpi-label">Realizadas</div>
+                        <div class="kpi-value" th:text="${completedTotal}">0</div>
+                        <div class="kpi-note">Completadas</div>
+                    </article>
+                    <article class="kpi" style="--accent:#f59f00;--soft:#fff8eb">
+                        <div class="icon-bubble"><i data-lucide="clock-3"></i></div>
+                        <div class="kpi-label">Pendientes</div>
+                        <div class="kpi-value" th:text="${pendingTotal}">0</div>
+                        <div class="kpi-note">Por gestionar</div>
+                    </article>
+                    <article class="kpi" style="--accent:#6236ff;--soft:#f4f1ff">
+                        <div class="icon-bubble"><i data-lucide="gauge"></i></div>
+                        <div class="kpi-label">Cumplimiento</div>
+                        <div class="kpi-value" th:text="${complianceText}">0.0%</div>
+                        <div class="kpi-note" th:text="${refreshCrm ? 'Actualizado desde CRM' : 'Cache local'}">Cache local</div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="card section" style="margin-top:18px">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Alertas personales CRM</h2>
+                    <p class="section-subtitle">Senales rapidas sobre mis pendientes, pais, tipo e incremento semanal.</p>
+                </div>
+            </div>
+            <div class="stats-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+                <article th:each="alert : ${alertCards}" class="ai-card">
+                    <div class="metric-icon"><i th:attr="data-lucide=${alert['icon']}"></i></div>
+                    <span th:text="${alert['title']}">Alerta</span>
+                    <strong th:text="${alert['value']}">Sin alerta</strong>
+                    <small th:text="${alert['detail']}">Detalle</small>
+                </article>
+            </div>
+        </section>
+
+        <section class="dashboard-grid bottom-grid" style="margin-top:18px">
+            <article class="card section">
+                <h2 class="section-title">Mis tareas por tipo</h2>
+                <div class="channel-list">
+                    <div th:each="row : ${typeRows}" class="channel-row">
+                        <div class="channel-icon" th:text="${#strings.substring(row['label'],0,1)}">T</div>
+                        <div class="channel-main">
+                            <span th:text="${row['label']}">Tipo</span>
+                            <div class="bar"><span th:style="${'width:' + row['width'] + '%'}"></span></div>
+                        </div>
+                        <strong th:text="${row['value']}">0</strong>
+                    </div>
+                    <div class="empty" th:if="${#lists.isEmpty(typeRows)}">Sin tipos para mostrar.</div>
+                </div>
+            </article>
+
+            <article class="card section">
+                <h2 class="section-title">Mis tareas por pais</h2>
+                <div class="channel-list">
+                    <div th:each="row : ${countryRows}" class="channel-row">
+                        <div class="channel-icon" th:text="${#strings.substring(row['label'],0,1)}">P</div>
+                        <div class="channel-main">
+                            <span th:text="${row['label']}">Pais</span>
+                            <div class="bar"><span th:style="${'width:' + row['width'] + '%'}"></span></div>
+                        </div>
+                        <strong th:text="${row['value']}">0</strong>
+                    </div>
+                    <div class="empty" th:if="${#lists.isEmpty(countryRows)}">Sin paises para mostrar.</div>
+                </div>
+            </article>
+        </section>
+
+        <section class="card section" style="margin-top:18px">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Mis tareas recientes</h2>
+                    <p class="section-subtitle" th:text="${'Rango: ' + from + ' al ' + to}">Rango</p>
+                </div>
+                <span class="pill" th:text="${#lists.size(taskRows) + ' registro(s)'}">0 registros</span>
+            </div>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>Asunto</th>
+                        <th>Tipo</th>
+                        <th>Pais</th>
+                        <th>Estado</th>
+                        <th>Creada</th>
+                        <th>Actualizada</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="task : ${taskRows}">
+                        <td th:text="${task['subject']}">Asunto</td>
+                        <td th:text="${task['type']}">Tipo</td>
+                        <td th:text="${task['country']}">Pais</td>
+                        <td><span class="pill" th:text="${task['status']}">Estado</span></td>
+                        <td th:text="${task['createdTime']}">Sin fecha</td>
+                        <td th:text="${task['modifiedTime']}">Sin fecha</td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(taskRows)}">
+                        <td colspan="6">Sin tareas para mostrar. Puedes solicitar autorizacion admin si no hay cache para este rango.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+<div id="crmPermissionModal" class="permission-modal" th:classappend="${crmPermissionStatus == 'denied'} ? ' is-visible' : ''">
+    <div class="permission-dialog">
+        <div class="metric-icon"><i data-lucide="shield-alert"></i></div>
+        <h3>Sin permisos para actualizar CRM</h3>
+        <p>Esta accion consume API de Zoho CRM y necesita autorizacion de un usuario administrador.</p>
+        <button type="button" class="rm-btn primary" onclick="document.getElementById('crmPermissionModal').classList.remove('is-visible')">Aceptar</button>
+    </div>
+</div>
+<script th:src="@{/sneat/assets/js/conversation-popup.js}"></script>
+<script>
+    lucide.createIcons();
+</script>
+</body>
+</html>

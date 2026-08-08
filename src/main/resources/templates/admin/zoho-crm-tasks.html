@@ -1,5 +1,7 @@
 <!doctype html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,10 +18,17 @@
             <p class="mt-2 text-sm text-[#5f6b8a]">Analisis de tareas asignadas, realizadas, tipo de tarea y pais de operacion.</p>
         </div>
         <div class="flex flex-wrap gap-3">
+            <a href="/admin/zoho-crm/tasks/dashboard"
+               sec:authorize="hasRole('ADMIN')"
+               class="inline-flex h-11 items-center gap-2 rounded-lg border border-[#e3e7f2] bg-white px-4 text-sm font-black text-[#060b3f] shadow-sm">
+                <i data-lucide="layout-template" class="h-4 w-4"></i>Dashboard beta
+            </a>
             <a href="/supervisor/dashboard" class="inline-flex h-11 items-center gap-2 rounded-lg border border-[#e3e7f2] bg-white px-4 text-sm font-black text-[#060b3f] shadow-sm">
                 <i data-lucide="layout-dashboard" class="h-4 w-4"></i>Dashboard
             </a>
-            <a href="/admin/dashboard" class="inline-flex h-11 items-center gap-2 rounded-lg bg-gradient-to-r from-[#6c35ff] to-[#4c22e8] px-4 text-sm font-black text-white shadow-lg shadow-violet-200">
+            <a href="/admin/dashboard"
+               sec:authorize="hasRole('ADMIN')"
+               class="inline-flex h-11 items-center gap-2 rounded-lg bg-gradient-to-r from-[#6c35ff] to-[#4c22e8] px-4 text-sm font-black text-white shadow-lg shadow-violet-200">
                 <i data-lucide="arrow-left" class="h-4 w-4"></i>Panel admin
             </a>
         </div>

@@ -1,0 +1,334 @@
+CHANGELOG - Insights Desk / Reporteria
+======================================
+
+Proyecto: Reporteria operativa de soporte multicanal
+Repositorio: HinataXL/Reporteria
+Version actual: v1.12.0
+Generado: 2026-08-06
+
+Formato:
+- Added: nuevas funcionalidades.
+- Changed: cambios visuales, estructurales o de comportamiento.
+- Fixed: correcciones de errores.
+- Security: ajustes de seguridad.
+- Docs: documentacion y entregables tecnicos.
+
+
+[v1.12.0] - 2026-08-06
+----------------------
+Branding, ventana flotante y experiencia de nueva conversacion.
+
+Added:
+- Se agrego el logo oficial de Insights Desk como asset estatico del proyecto.
+- Se incorporo apertura de nueva conversacion en ventana flotante tipo Picture-in-Picture cuando el navegador lo soporta.
+- Se agrego fallback automatico a popup normal si Document Picture-in-Picture no esta disponible.
+- Se agrego comunicacion entre ventana flotante/popup y ventana principal para refrescar la data despues de guardar.
+
+Changed:
+- Se actualizo el branding en dashboard supervisor, dashboard agente, login, index/listado de conversaciones, panel admin y layout legacy.
+- Se adapto la vista de nueva conversacion para modo flotante compacto.
+- Se reemplazaron referencias visuales antiguas de Skill Soporte por Insights Desk.
+
+Security:
+- Se cambio X-Frame-Options de DENY a SAMEORIGIN para permitir que la propia aplicacion cargue la vista de nueva conversacion dentro del Picture-in-Picture, sin permitir embebido desde dominios externos.
+
+Commits:
+- 9043329 feat: agregar ventana flotante y actualizar branding
+
+
+[v1.11.0] - 2026-08-05
+----------------------
+Login renovado, reporte semanal y documentacion de arquitectura.
+
+Added:
+- Se agrego archivo HTML autocontenido con mapa interactivo de arquitectura.
+- Se agrego JSON estructurado de arquitectura para agentes IA.
+- Se agrego columna Nombre Comercio al CSV del reporte semanal enviado por correo.
+
+Changed:
+- Se rediseño el login con estilo claro, profesional y alineado con la paleta del dashboard.
+- Se quitaron elementos no funcionales del login, como recordar usuario, recuperar password o crear cuenta.
+- Se actualizo la descripcion visual de columnas incluidas en el envio manual de CSV.
+
+Commits:
+- c80dc4f feat: actualizar login y reporte semanal
+
+
+[v1.10.0] - 2026-08-04
+----------------------
+Dashboard ampliado y modulo Zoho CRM.
+
+Added:
+- Se integro Zoho CRM para metricas de tareas.
+- Se agrego modulo exclusivo de tareas CRM.
+- Se agregaron filtros para Tipo_Tarea y Pa_s_Operaci_n.
+- Se agrego boton Actualizar CRM para evitar consumo automatico de API.
+- Se incorporaron metricas CRM dentro del dashboard.
+
+Changed:
+- Se elimino auto-refresh del CRM para reducir consumo de API.
+- Se adapto el dashboard para trabajar con WebSocket como via principal y refresco manual.
+- Se mejoro la logica de cache de tareas CRM por rango.
+
+Fixed:
+- Se corrigieron errores de template y formatos de fecha/hora usados por consultas COQL.
+
+Commits:
+- b12af63 feat: ampliar dashboard y modulo crm
+
+
+[v1.9.0] - 2026-07-29
+---------------------
+Zoho Desk, tickets, correo CSV y sesiones activas.
+
+Added:
+- Se agrego soporte para Zoho Desk.
+- Se agrego apertura de tickets Zoho Desk desde conversaciones.
+- Se agrego sincronizacion/busqueda de clientes desde Zoho Desk.
+- Se agrego envio manual de CSV por correo.
+- Se agrego notificacion por correo cuando un usuario configurado inicia sesion.
+- Se agrego seguimiento de sesiones activas para actividad en tiempo real.
+
+Changed:
+- Se ajusto el texto del correo CSV.
+- Se actualizaron plantillas para tickets segun asunto.
+- Se redujo informacion interna enviada al cliente en tickets Zoho.
+
+Fixed:
+- Se corrigieron bugs de tickets Zoho.
+- Se corrigio duplicidad visual de sesiones activas.
+- Se corrigieron problemas menores de integracion y sesiones.
+
+Commits:
+- ef0c6ef Ajusta texto de correo CSV
+- e1e0e93 Fix tickets Zoho y sesiones activas
+- 8305613 Añadido soporte zohodesk, notificacion x correo, reparacion de bugs
+
+
+[v1.8.0] - 2026-07-28
+---------------------
+Robustez de sesion y notificaciones.
+
+Added:
+- Se agrego notificacion de escritorio cuando la sesion esta por expirar.
+- Se agrego cambio de titulo de pestaña para alertar renovacion pendiente.
+- Se agrego modal/toast para continuar trabajando y enviar keep-alive.
+
+Fixed:
+- Se corrigio bug donde una sesion expirada provocaba bucle infinito y bloqueaba el guardado.
+
+Commits:
+- 5161bd3 FIX reparación bug sesión expirada, se añadio notificación en escritorio
+
+
+[v1.7.0] - 2026-07-27
+---------------------
+Rediseño operativo de conversaciones, dashboard e index.
+
+Added:
+- Se agregaron mejoras funcionales al formulario de nueva conversacion.
+- Se agregaron validaciones en tiempo real.
+- Se agrego autoguardado local mas visible.
+- Se agregaron plantillas rapidas.
+- Se agregaron campos dependientes para ticket aperturado y conversacion transferida.
+- Se agrego campo Nombre Comercio en nueva conversacion y edicion.
+- Se agrego validacion obligatoria de descripcion cuando el asunto es Dudas varias.
+- Se agrego modal obligatorio si falta Nombre Comercio al guardar.
+
+Changed:
+- Se rediseño visualmente la pantalla de nueva conversacion.
+- Se hizo mas compacta la pantalla de nueva conversacion.
+- Se rediseño el index/listado de conversaciones al estilo claro del dashboard.
+- Se agregaron filtros avanzados colapsables.
+- Se agrego vista rapida de conversaciones.
+
+Fixed:
+- Se corrigio bug de fecha inicio y fecha guardado en vista rapida.
+- Se corrigieron bugs visuales en dashboard e index.
+- Se corrigio nuevamente el flujo de guardado tras expiracion de sesion.
+
+Commits:
+- ab05155 Feature... Cambios en pantalla create, mejoras en logica general, reparación menor de bugs
+- fcfd95c Fix.. reparacion al bug que no dejaba guardar conversacion al expirar sesion, adicional cambios visuales en dashboard e index
+
+
+[v1.6.0] - 2026-07-21
+---------------------
+Metricas avanzadas del dashboard.
+
+Added:
+- Se agregaron nuevas metricas al dashboard.
+- Se agrego tendencia semanal.
+- Se agregaron horas pico de atencion.
+- Se agrego Top 10 asuntos.
+- Se agrego Top 10 clientes con tiempo de gestion.
+- Se agrego vista 360 de cliente desde el top.
+- Se agregaron modales para ver conversaciones por estado.
+- Se agrego cambio de estado desde modales de pendientes, escaladas y cerradas.
+
+Changed:
+- Se ajustaron graficos para evitar ruido visual con el paso del tiempo.
+- Se conectaron filtros del dashboard con tarjetas y tops.
+- Se reemplazo actividad en tiempo real por metricas CRM posteriormente en v1.10.0.
+
+Fixed:
+- Se corrigio congelamiento relacionado con API polling.
+- Se corrigieron filtros del dashboard.
+
+Commits:
+- ddba78f Feat Añadido nuevas metricas al dashboar fix en el api polling se congelaba fix filtros
+
+
+[v1.5.0] - 2026-07-20
+---------------------
+Dashboard v2 y control de sesiones.
+
+Added:
+- Se agrego Dashboard v2.
+- Se agregaron nuevas cards para conversaciones por estado.
+- Se agrego dashboard de agente.
+- Se agrego comparativa y salud operativa inicial del dashboard.
+
+Changed:
+- Se rediseño dashboard supervisor y agente siguiendo linea visual clara.
+- Se ajusto el espacio de Chats por asunto para Top asuntos y Top clientes.
+- Se cambio el nombre visual de Reach Metrics a Insights Desk.
+
+Fixed:
+- Se corrigieron rutas del dashboard supervisor.
+- Se corrigieron problemas de control de sesiones.
+
+Commits:
+- 40e7ea2 Feature: Dashboard v2, cambios en cards, mejoras en logica, fix en control de sesiones
+
+
+[v1.4.0] - 2026-07-04 a 2026-07-15
+----------------------------------
+Workspace de conversaciones, multiples chats y CSV.
+
+Added:
+- Se agrego boton Pausa al timer de conversacion.
+- Se agrego soporte para multiples chats abiertos mediante tabs.
+- Se mejoro el timer de gestion.
+
+Fixed:
+- Se corrigio bug donde abrir una nueva conversacion podia duplicar registros en base de datos.
+- Se corrigio CSV.
+
+Commits:
+- 962936a FIX: Se corrigió bug al momento de abrir una conversación nueva, guardado se duplicaba el registro en la bd
+- 033ec4b añadido boton pausa, añadido soporte para multiples chats
+- 4dcfb05 Fix CSV
+
+
+[v1.3.0] - 2026-06-24
+---------------------
+Preparacion v2 y despliegue.
+
+Added:
+- Se preparo el proyecto para despliegue.
+- Se consolidaron cambios rumbo a la version 2.
+
+Fixed:
+- Se corrigieron bugs generales previos al deploy.
+
+Commits:
+- b7de3a8 deploy
+- 8ef31c3 preparacion para la v2, correccion de bugs
+
+
+[v1.2.0] - 2026-06-12 a 2026-06-19
+----------------------------------
+Webhooks, dashboard Sneat y notificaciones.
+
+Added:
+- Se agrego webhook para recibir eventos de Qpaypro.
+- Se agrego dashboard basado en Sneat.
+- Se agregaron notificaciones de nuevos eventos.
+- Se agregaron logs del sistema.
+
+Changed:
+- Se corrigio productividad diaria.
+- Se mejoraron visuales y comportamiento de dashboards.
+
+Commits:
+- dd9ae02 Notificación evento nuevos, corrección de bugs visuales
+- c793ef7 Agregar webhook para recibir eventos de Qpaypro
+- 2c0316c Dashboard Sneat, Corrección productividad diaria
+
+
+[v1.1.0] - 2026-05-24 a 2026-06-07
+----------------------------------
+Seguridad, usuarios, administracion e IA.
+
+Added:
+- Se agrego 2FA en login.
+- Se agrego mejora de 2FA y configuracion de autenticacion.
+- Se agrego creacion de usuarios.
+- Se agregaron roles y nuevos hashes.
+- Se agrego modulo admin.
+- Se agrego Mi Perfil para cambio de password.
+- Se agrego generacion de reportes con IA.
+- Se integro Gemini como proveedor de IA para reportes.
+- Se agrego monitoreo de metricas en tiempo real.
+- Se agrego tiempo automatico en conversaciones.
+- Se agrego validacion de login solo con correo del dominio fixss.
+
+Changed:
+- Se mejoraron dashboards visualmente.
+- Se mejoro create.html.
+- Se actualizaron pantallas y reporterias con IA.
+- Se reemplazo recurso IA anterior por Gemini.
+
+Docs:
+- Se actualizo README con detalles y funcionalidades del proyecto.
+
+Commits:
+- ed5ce28 Se añadio tiempo automatico en conversaciones, mejoras en 2fa, mejora visuales, logs del sistema
+- b0bdf09 Añadido validación unicamente con correo fixss
+- 94a5282 mejorado el create html
+- bd8d2a4 Cambios en reportería con IA, cambios visuales en screens
+- d4230d3 Construccion modulo admin, añadido MI PERFIL para cambios de password y autenticacion
+- 0b6eff0 Prompt IA funcionando
+- c7cce3f Se cambio recurso por Gemini para generacion de reportes
+- 0ffb1d3 Revise README with updated project details and features
+- fd80fa6 Actualizado metricas en tiempo real, servicio de ia con OpenIA para analisis de metricas
+- 6e4268b Cambios visuales en los dashboard
+- a1c5b96 Cambio de vistas, mejorado el factor 2FA
+- 630dbe6 2FA activo en el login, dashboard rol sup en construccion
+- b5c4ade se añadio creacion de usuarios
+- fe0e0f2 se añadio roles, y nuevos hash
+
+
+[v1.0.0] - 2026-05-20 a 2026-05-23
+----------------------------------
+Base inicial del sistema.
+
+Added:
+- Se creo proyecto inicial Spring Boot soporte.
+- Se agregaron dependencias en pom.xml para hotreload.
+- Se agrego dashboard provisional en index.
+- Se agrego backend inicial.
+- Se agrego conexion SQL y primeras vistas.
+- Se agrego exportacion provisional CSV.
+- Se agrego conexion con Supabase para base de datos en la nube.
+- Se agrego login con Spring Security.
+- Se agregaron mejoras en edicion de conversaciones.
+
+Fixed:
+- Se reparo login.
+- Se corrigieron mensajes de consola en realtime.
+
+Docs:
+- Se agrego README inicial con detalles del proyecto.
+
+Commits:
+- 8223514 Proyecto inicial Spring Boot soporte
+- cfe4e9c Se agrego Dashboard provisional al index
+- ff75303 Se agrego dependencias en el pom.xml para hotreload
+- f09044a Add initial README with project details
+- 7c688c5 Se añade backend, conexion SQL y nuevas vistas
+- f70ac10 se añadio provisional exportar en CSV
+- e9ef2b2 conexion con supabase para bd en la nube
+- 6749ae3 Se agrego login con springsecurity, y mejoras dentros de los edits de conversaciones
+- 0896f0f reparado login, mensajes en consola en realtime
