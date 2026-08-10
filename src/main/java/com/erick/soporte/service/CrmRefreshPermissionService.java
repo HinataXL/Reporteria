@@ -133,7 +133,7 @@ public class CrmRefreshPermissionService {
         event.put("message", request.agentName() + " solicita actualizar metricas CRM.");
         event.put("approveUrl", "/admin/zoho-crm/tasks/refresh-requests/" + request.id() + "/approve");
         event.put("rejectUrl", "/admin/zoho-crm/tasks/refresh-requests/" + request.id() + "/reject");
-        messagingTemplate.convertAndSend("/topic/crm-refresh-requests", event);
+        messagingTemplate.convertAndSend("/topic/crm-refresh-requests", (Object) event);
     }
 
     private void publishRequestResolved(RefreshRequest request) {
@@ -147,7 +147,7 @@ public class CrmRefreshPermissionService {
                 ? "Ya puedes actualizar CRM para el rango solicitado."
                 : "Tu solicitud para actualizar CRM fue rechazada.");
         event.put("refreshUrl", agentRefreshUrl(request));
-        messagingTemplate.convertAndSend("/topic/crm-refresh-authorizations", event);
+        messagingTemplate.convertAndSend("/topic/crm-refresh-authorizations", (Object) event);
     }
 
     private Map<String, Object> requestEvent(RefreshRequest request) {
