@@ -4,6 +4,7 @@ import com.erick.soporte.service.ZohoCrmTaskMetricsService;
 import com.erick.soporte.security.CustomUserPrincipal;
 import com.erick.soporte.service.CrmRefreshPermissionService;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -166,6 +168,18 @@ public class ZohoCrmTaskController {
         return "redirect:/admin/zoho-crm/tasks/dashboard";
     }
 
+    @PostMapping("/admin/zoho-crm/tasks/refresh-requests/{id}/approve/async")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> approveRefreshRequestAsync(@PathVariable long id) {
+        boolean approved = refreshPermissionService.approve(id);
+        return ResponseEntity.ok(Map.of(
+                "success", approved,
+                "message", approved
+                        ? "Solicitud CRM autorizada para el agente."
+                        : "No fue posible autorizar la solicitud CRM."
+        ));
+    }
+
     @PostMapping("/admin/zoho-crm/tasks/refresh-requests/{id}/reject")
     public String rejectRefreshRequest(@PathVariable long id, RedirectAttributes redirectAttributes) {
         if (refreshPermissionService.reject(id)) {
@@ -174,6 +188,18 @@ public class ZohoCrmTaskController {
             redirectAttributes.addFlashAttribute("error", "No fue posible rechazar la solicitud CRM.");
         }
         return "redirect:/admin/zoho-crm/tasks/dashboard";
+    }
+
+    @PostMapping("/admin/zoho-crm/tasks/refresh-requests/{id}/reject/async")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> rejectRefreshRequestAsync(@PathVariable long id) {
+        boolean rejected = refreshPermissionService.reject(id);
+        return ResponseEntity.ok(Map.of(
+                "success", rejected,
+                "message", rejected
+                        ? "Solicitud CRM rechazada."
+                        : "No fue posible rechazar la solicitud CRM."
+        ));
     }
 
     @GetMapping("/agent/zoho-crm/tasks/dashboard")

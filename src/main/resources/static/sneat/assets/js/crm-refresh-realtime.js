@@ -111,11 +111,18 @@
     async function postAction(url, modal) {
         const response = await fetch(url, {
             method: "POST",
-            headers: getCsrfHeaders(),
+            headers: {
+                ...getCsrfHeaders(),
+                "X-Requested-With": "XMLHttpRequest"
+            },
             credentials: "same-origin"
         });
         if (!response.ok) {
             throw new Error("No fue posible procesar la solicitud.");
+        }
+        const payload = await response.json().catch(() => ({ success: true }));
+        if (payload.success === false) {
+            throw new Error(payload.message || "No fue posible procesar la solicitud.");
         }
         closeModal(modal);
     }
@@ -181,6 +188,11 @@
         `;
         document.body.appendChild(modal);
         modal.querySelector("[data-close]").addEventListener("click", () => closeModal(modal));
+        if (approved && window.location.pathname === "/agent/zoho-crm/tasks/dashboard") {
+            setTimeout(() => {
+                window.location.href = event.refreshUrl || "/agent/zoho-crm/tasks/dashboard";
+            }, 1200);
+        }
     }
 
     function escapeHtml(value) {
@@ -197,7 +209,9 @@
             return;
         }
         await ensureSocketLibraries();
-        const socket = new SockJS("/ws");
+        const socket = new SockJS("/ws", null, {
+            transports: ["websocket", "xhr-streaming", "xhr-polling"]
+        });
         state.stompClient = Stomp.over(socket);
         state.stompClient.debug = null;
         state.stompClient.connect({}, function () {

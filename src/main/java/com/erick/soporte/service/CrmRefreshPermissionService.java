@@ -131,8 +131,8 @@ public class CrmRefreshPermissionService {
         event.put("type", "crm_refresh_request_created");
         event.put("title", "Solicitud de actualizacion CRM");
         event.put("message", request.agentName() + " solicita actualizar metricas CRM.");
-        event.put("approveUrl", "/admin/zoho-crm/tasks/refresh-requests/" + request.id() + "/approve");
-        event.put("rejectUrl", "/admin/zoho-crm/tasks/refresh-requests/" + request.id() + "/reject");
+        event.put("approveUrl", "/admin/zoho-crm/tasks/refresh-requests/" + request.id() + "/approve/async");
+        event.put("rejectUrl", "/admin/zoho-crm/tasks/refresh-requests/" + request.id() + "/reject/async");
         messagingTemplate.convertAndSend("/topic/crm-refresh-requests", (Object) event);
     }
 
