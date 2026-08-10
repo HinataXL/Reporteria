@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
+  <meta name="app-role" content="ADMIN">
   <title>Usuarios | Sistema</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -244,5 +247,6 @@
   });
 </script>
 
+<script th:src="@{/sneat/assets/js/crm-refresh-realtime.js}"></script>
 </body>
 </html>

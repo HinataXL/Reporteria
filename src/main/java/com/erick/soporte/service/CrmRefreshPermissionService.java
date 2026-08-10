@@ -1,11 +1,15 @@
 package com.erick.soporte.service;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
@@ -13,8 +17,13 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 public class CrmRefreshPermissionService {
 
+    private final SimpMessagingTemplate messagingTemplate;
     private final AtomicLong sequence = new AtomicLong(1);
     private final List<RefreshRequest> requests = new CopyOnWriteArrayList<>();
+
+    public CrmRefreshPermissionService(SimpMessagingTemplate messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
+    }
 
     public RefreshRequest request(
             String agentName,
@@ -41,6 +50,7 @@ public class CrmRefreshPermissionService {
                 null
         );
         requests.add(request);
+        publishRequestCreated(request);
         return request;
     }
 
@@ -52,11 +62,21 @@ public class CrmRefreshPermissionService {
     }
 
     public boolean approve(long id) {
-        return updateStatus(id, RequestStatus.APPROVED);
+        RefreshRequest request = updateStatus(id, RequestStatus.APPROVED);
+        if (request != null) {
+            publishRequestResolved(request);
+            return true;
+        }
+        return false;
     }
 
     public boolean reject(long id) {
-        return updateStatus(id, RequestStatus.REJECTED);
+        RefreshRequest request = updateStatus(id, RequestStatus.REJECTED);
+        if (request != null) {
+            publishRequestResolved(request);
+            return true;
+        }
+        return false;
     }
 
     public boolean hasApproved(
@@ -94,15 +114,75 @@ public class CrmRefreshPermissionService {
         return false;
     }
 
-    private boolean updateStatus(long id, RequestStatus status) {
+    private RefreshRequest updateStatus(long id, RequestStatus status) {
         for (int i = 0; i < requests.size(); i++) {
             RefreshRequest request = requests.get(i);
             if (request.id() == id) {
-                requests.set(i, request.withStatus(status));
-                return true;
+                RefreshRequest updated = request.withStatus(status);
+                requests.set(i, updated);
+                return updated;
             }
         }
-        return false;
+        return null;
+    }
+
+    private void publishRequestCreated(RefreshRequest request) {
+        Map<String, Object> event = requestEvent(request);
+        event.put("type", "crm_refresh_request_created");
+        event.put("title", "Solicitud de actualizacion CRM");
+        event.put("message", request.agentName() + " solicita actualizar metricas CRM.");
+        event.put("approveUrl", "/admin/zoho-crm/tasks/refresh-requests/" + request.id() + "/approve");
+        event.put("rejectUrl", "/admin/zoho-crm/tasks/refresh-requests/" + request.id() + "/reject");
+        messagingTemplate.convertAndSend("/topic/crm-refresh-requests", event);
+    }
+
+    private void publishRequestResolved(RefreshRequest request) {
+        Map<String, Object> event = requestEvent(request);
+        event.put("type", "crm_refresh_request_resolved");
+        event.put("approved", request.status() == RequestStatus.APPROVED);
+        event.put("title", request.status() == RequestStatus.APPROVED
+                ? "Actualizacion CRM autorizada"
+                : "Actualizacion CRM rechazada");
+        event.put("message", request.status() == RequestStatus.APPROVED
+                ? "Ya puedes actualizar CRM para el rango solicitado."
+                : "Tu solicitud para actualizar CRM fue rechazada.");
+        event.put("refreshUrl", agentRefreshUrl(request));
+        messagingTemplate.convertAndSend("/topic/crm-refresh-authorizations", event);
+    }
+
+    private Map<String, Object> requestEvent(RefreshRequest request) {
+        Map<String, Object> event = new LinkedHashMap<>();
+        event.put("id", request.id());
+        event.put("agentName", request.agentName());
+        event.put("agentEmail", request.agentEmail());
+        event.put("from", request.from() != null ? request.from().toString() : null);
+        event.put("to", request.to() != null ? request.to().toString() : null);
+        event.put("taskType", request.taskType());
+        event.put("operationCountry", request.operationCountry());
+        event.put("status", request.statusFilter());
+        event.put("size", request.size());
+        event.put("requestedAt", request.requestedAt().toString());
+        event.put("resolvedAt", request.resolvedAt() != null ? request.resolvedAt().toString() : null);
+        return event;
+    }
+
+    private String agentRefreshUrl(RefreshRequest request) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/agent/zoho-crm/tasks/dashboard")
+                .queryParam("from", request.from())
+                .queryParam("to", request.to())
+                .queryParam("size", request.size())
+                .queryParam("refreshCrm", "true")
+                .queryParam("crmPermissionStatus", "approved");
+        if (request.taskType() != null && !request.taskType().isBlank()) {
+            builder.queryParam("taskType", request.taskType());
+        }
+        if (request.operationCountry() != null && !request.operationCountry().isBlank()) {
+            builder.queryParam("operationCountry", request.operationCountry());
+        }
+        if (request.statusFilter() != null && !request.statusFilter().isBlank()) {
+            builder.queryParam("status", request.statusFilter());
+        }
+        return builder.build().toUriString();
     }
 
     private boolean matches(

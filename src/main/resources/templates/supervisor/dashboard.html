@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <meta name="app-role" th:content="${userRole}">
+    <meta name="app-email" th:content="${userEmail}">
+    <meta name="app-user" th:content="${userName}">
     <title>Resumen General</title>
     <link rel="stylesheet" th:href="@{/sneat/assets/css/metrics-dashboard.css}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1355,6 +1358,11 @@
     setGranularityBadge(initialGranularity);
     connectDashboardRealtime();
     lucide.createIcons();
+    if (typeof window.crmRefreshRealtimeLoaded === 'undefined') {
+        const crmRealtimeScript = document.createElement('script');
+        crmRealtimeScript.src = '/sneat/assets/js/crm-refresh-realtime.js';
+        document.body.appendChild(crmRealtimeScript);
+    }
 </script>
 </body>
 </html>

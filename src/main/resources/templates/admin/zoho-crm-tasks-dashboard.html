@@ -5,6 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <meta name="app-role" content="ADMIN">
     <title>Dashboard Tareas CRM Beta</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -274,5 +277,6 @@
 <script>
     lucide.createIcons();
 </script>
+<script th:src="@{/sneat/assets/js/crm-refresh-realtime.js}"></script>
 </body>
 </html>

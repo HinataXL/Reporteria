@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Estado IA Gemini</title>
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <meta name="app-role" content="ADMIN">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" th:href="@{/sneat/assets/css/insights-light.css}">
 </head>
@@ -108,5 +111,6 @@
     </section>
 </main>
 
+<script th:src="@{/sneat/assets/js/crm-refresh-realtime.js}"></script>
 </body>
 </html>

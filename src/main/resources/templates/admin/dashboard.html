@@ -5,6 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Panel Administrador</title>
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <meta name="app-role" content="ADMIN">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" th:href="@{/sneat/assets/css/insights-light.css}">
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
@@ -158,6 +161,7 @@
     </section>
 
 </div>
+<script th:src="@{/sneat/assets/js/crm-refresh-realtime.js}"></script>
 <script>
     function requestNotificationPermission() {
         if (!("Notification" in window)) {

@@ -2,9 +2,11 @@ package com.erick.soporte.controller;
 
 import com.erick.soporte.entity.Conversation;
 import com.erick.soporte.repository.ConversationRepository;
+import com.erick.soporte.security.CustomUserPrincipal;
 import com.erick.soporte.service.ActiveSessionService;
 import com.erick.soporte.service.ZohoCrmTaskMetricsService;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,7 +42,12 @@ public class SupervisorDashboardController {
     }
 
     @GetMapping("/supervisor/dashboard")
-    public String dashboard(Model model) {
+    public String dashboard(Model model, Authentication authentication) {
+        if (authentication != null && authentication.getPrincipal() instanceof CustomUserPrincipal user) {
+            model.addAttribute("userName", user.getNombreCompleto());
+            model.addAttribute("userRole", user.getRol());
+            model.addAttribute("userEmail", user.getCorreo());
+        }
         List<Conversation> conversations = conversationRepository.findAll();
 
         long total = conversations.size();

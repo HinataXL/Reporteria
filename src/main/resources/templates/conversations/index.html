@@ -5,6 +5,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <meta name="app-role" th:content="${userRole}">
+    <meta name="app-email" th:content="${userEmail}">
+    <meta name="app-user" th:content="${userName}">
     <title>Conversaciones - Dashboard</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -2008,5 +2013,6 @@
     lucide.createIcons();
 </script>
 <script th:src="@{/sneat/assets/js/conversation-popup.js}"></script>
+<script th:src="@{/sneat/assets/js/crm-refresh-realtime.js}"></script>
 </body>
 </html>
