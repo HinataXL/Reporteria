@@ -440,6 +440,7 @@ window.ConversationWorkspace = (() => {
 
         Array.from(form.elements).forEach(el => {
             if (!el.name) return;
+            if (el.name === "_csrf") return;
 
             if (el.type === "checkbox") {
                 data[el.name] = el.checked;
@@ -475,6 +476,7 @@ window.ConversationWorkspace = (() => {
 
         Array.from(form.elements).forEach(el => {
             if (!el.name) return;
+            if (el.name === "_csrf") return;
 
             if (el.type === "checkbox") {
                 el.checked = Boolean(data[el.name]);
