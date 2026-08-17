@@ -10,6 +10,7 @@
     <meta name="app-role" content="ADMIN">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" th:href="@{/sneat/assets/css/insights-light.css}">
+    <script th:src="@{/sneat/assets/js/error-monitor.js}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 </head>
@@ -165,6 +166,16 @@
             </p>
             <p class="text-[#ffd700] text-xs font-black mt-4 uppercase tracking-wide"
                th:text="${totalAuditLogs} + ' eventos registrados'">0 eventos registrados</p>
+        </a>
+
+        <a href="/admin/frontend-errors"
+           class="bg-white/10 hover:bg-white/15 transition border border-white/10 rounded-3xl p-6 block">
+            <h2 class="text-2xl font-black mb-2">Errores del navegador</h2>
+            <p class="text-slate-300 text-sm">
+                Registro tecnico de errores, advertencias, URL, usuario y navegador.
+            </p>
+            <p class="text-[#ff4d6d] text-xs font-black mt-4 uppercase tracking-wide"
+               th:text="${totalFrontendErrors} + ' registros'">0 registros</p>
         </a>
 
     </section>

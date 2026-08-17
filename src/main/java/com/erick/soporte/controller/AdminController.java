@@ -1,6 +1,7 @@
 package com.erick.soporte.controller;
 
 import com.erick.soporte.repository.ConversationRepository;
+import com.erick.soporte.repository.FrontendErrorLogRepository;
 import com.erick.soporte.repository.UserRepository;
 import com.erick.soporte.service.GeminiReportService;
 import org.springframework.beans.factory.ObjectProvider;
@@ -18,17 +19,20 @@ public class AdminController {
     private final UserRepository userRepository;
     private final ConversationRepository conversationRepository;
     private final AuditLogRepository auditLogRepository;
+    private final FrontendErrorLogRepository frontendErrorLogRepository;
     private final ObjectProvider<GeminiReportService> geminiReportServiceProvider;
 
     public AdminController(
             UserRepository userRepository,
             ConversationRepository conversationRepository,
             AuditLogRepository auditLogRepository,
+            FrontendErrorLogRepository frontendErrorLogRepository,
             ObjectProvider<GeminiReportService> geminiReportServiceProvider
     ) {
         this.userRepository = userRepository;
         this.conversationRepository = conversationRepository;
         this.auditLogRepository = auditLogRepository;
+        this.frontendErrorLogRepository = frontendErrorLogRepository;
         this.geminiReportServiceProvider = geminiReportServiceProvider;
     }
 
@@ -37,6 +41,7 @@ public class AdminController {
         model.addAttribute("totalUsers", userRepository.count());
         model.addAttribute("totalConversations", conversationRepository.count());
         model.addAttribute("totalAuditLogs", auditLogRepository.count());
+        model.addAttribute("totalFrontendErrors", frontendErrorLogRepository.count());
         model.addAttribute("geminiStatus", geminiStatus());
 
         return "admin/dashboard";
@@ -53,6 +58,15 @@ public class AdminController {
         model.addAttribute("logs", auditLogRepository.findTop100ByOrderByFechaDesc());
         model.addAttribute("totalAuditLogs", auditLogRepository.count());
         return "admin/logs";
+    }
+
+    @GetMapping("/admin/frontend-errors")
+    public String frontendErrors(Model model) {
+        model.addAttribute("errors", frontendErrorLogRepository.findTop150ByOrderByCreatedAtDesc());
+        model.addAttribute("totalFrontendErrors", frontendErrorLogRepository.count());
+        model.addAttribute("totalFrontendWarnings", frontendErrorLogRepository.countByLevelIgnoreCase("WARN"));
+        model.addAttribute("totalFrontendFailures", frontendErrorLogRepository.countByLevelIgnoreCase("ERROR"));
+        return "admin/frontend-errors";
     }
 
     private Object geminiStatus() {

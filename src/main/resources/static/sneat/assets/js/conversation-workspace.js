@@ -180,6 +180,39 @@ window.ConversationWorkspace = (() => {
         }, 1200);
     }
 
+    function redirectedToLogin(response) {
+        if (!response.redirected) {
+            return false;
+        }
+
+        try {
+            const target = new URL(response.url, window.location.origin);
+            return target.pathname === "/login";
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function redirectedToTwoFactor(response) {
+        if (!response.redirected) {
+            return false;
+        }
+
+        try {
+            const target = new URL(response.url, window.location.origin);
+            return target.pathname.startsWith("/2fa");
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function handleTwoFactorRequired() {
+        showToast("Tu validacion 2FA requiere confirmacion. Abre la pantalla de verificacion para continuar.", true);
+        setTimeout(() => {
+            window.location.href = "/2fa/verify";
+        }, 1200);
+    }
+
     async function keepSessionAlive(showError = false) {
         if (sessionExpired) {
             return false;
@@ -197,14 +230,31 @@ window.ConversationWorkspace = (() => {
         try {
             const response = await fetch("/api/session/keep-alive", {
                 method: "POST",
+                credentials: "same-origin",
                 headers: {
                     "X-CSRF-TOKEN": csrfToken
                 }
             });
 
-            if (response.redirected || response.status === 401 || response.status === 403) {
+            if (redirectedToLogin(response) || response.status === 401) {
                 if (showError) {
                     handleExpiredSession();
+                }
+
+                return false;
+            }
+
+            if (redirectedToTwoFactor(response)) {
+                if (showError) {
+                    handleTwoFactorRequired();
+                }
+
+                return false;
+            }
+
+            if (response.status === 403) {
+                if (showError) {
+                    showToast("No fue posible renovar la sesion por seguridad. Actualiza la pagina e intenta nuevamente.", true);
                 }
 
                 return false;
@@ -1102,18 +1152,37 @@ window.ConversationWorkspace = (() => {
             }
 
             const formData = new FormData(form);
+            const csrfToken = getCsrfToken();
 
             const response = await fetch(
                 "/api/conversations/save",
                 {
                     method: "POST",
-                    body: formData
+                    body: formData,
+                    credentials: "same-origin",
+                    headers: csrfToken
+                        ? { "X-CSRF-TOKEN": csrfToken }
+                        : {}
                 }
             );
 
-            if (response.redirected || response.status === 401 || response.status === 403) {
+            if (redirectedToLogin(response) || response.status === 401) {
                 handleExpiredSession();
                 return;
+            }
+
+            if (redirectedToTwoFactor(response)) {
+                handleTwoFactorRequired();
+                return;
+            }
+
+            if (response.status === 403) {
+                throw new Error("No fue posible guardar por validacion de seguridad. Actualiza la pagina e intenta nuevamente.");
+            }
+
+            const contentType = response.headers.get("content-type") || "";
+            if (!contentType.includes("application/json")) {
+                throw new Error("El servidor devolvio una respuesta inesperada al guardar. Actualiza la pagina e intenta nuevamente.");
             }
 
             const data = await response.json();

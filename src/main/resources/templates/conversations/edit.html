@@ -1,11 +1,14 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>Editar Conversación</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/sneat/assets/js/error-monitor.js"></script>
     <link rel="stylesheet" href="/sneat/assets/css/insights-light.css">
 </head>
 

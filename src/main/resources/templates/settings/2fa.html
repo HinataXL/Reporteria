@@ -2,8 +2,11 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>Autenticación 2FA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script th:src="@{/sneat/assets/js/error-monitor.js}"></script>
     <link rel="stylesheet" th:href="@{/sneat/assets/css/insights-light.css}">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <style>

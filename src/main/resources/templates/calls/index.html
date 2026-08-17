@@ -5,8 +5,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>Llamadas - Insights Desk</title>
     <link rel="stylesheet" th:href="@{/sneat/assets/css/metrics-dashboard.css}">
+    <script th:src="@{/sneat/assets/js/error-monitor.js}"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .calls-kpis {
