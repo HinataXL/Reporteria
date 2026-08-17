@@ -67,6 +67,7 @@ public class SecurityConfig {
                         .requestMatchers("/conversations/edit/**", "/conversations/update/**").hasAnyRole("ADMIN", "SUPERVISOR")
                         .requestMatchers("/conversations/create", "/conversations/save").hasAnyRole("ADMIN", "SUPERVISOR", "AGENTE")
                         .requestMatchers("/conversations/**").hasAnyRole("ADMIN", "SUPERVISOR", "AGENTE")
+                        .requestMatchers("/api/conversations/**").hasAnyRole("ADMIN", "SUPERVISOR", "AGENTE")
                         .requestMatchers("/calls/**").hasAnyRole("ADMIN", "SUPERVISOR", "AGENTE")
                         .requestMatchers("/agent/**").hasAnyRole("ADMIN", "SUPERVISOR", "AGENTE")
                         .requestMatchers("/supervisor/**").hasAnyRole("ADMIN", "SUPERVISOR")

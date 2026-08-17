@@ -72,7 +72,12 @@ window.ConversationWorkspace = (() => {
         return !isPopupMode()
             && !isPipMode()
             && !pipOpenAttempted
+            && hasUserActivation()
             && tabs.some(tab => !tab.saved);
+    }
+
+    function hasUserActivation() {
+        return navigator.userActivation?.isActive === true;
     }
 
     function openPipOnTabLeave() {
@@ -1141,16 +1146,6 @@ window.ConversationWorkspace = (() => {
             });
             setFormBusy(true);
 
-            const sessionReady = await keepSessionAlive(true);
-
-            if (!sessionReady) {
-                if (sessionExpired) {
-                    return;
-                }
-
-                throw new Error("No fue posible validar la sesion");
-            }
-
             const formData = new FormData(form);
             const csrfToken = getCsrfToken();
 
@@ -1167,8 +1162,7 @@ window.ConversationWorkspace = (() => {
             );
 
             if (redirectedToLogin(response) || response.status === 401) {
-                handleExpiredSession();
-                return;
+                throw new Error("No fue posible guardar porque el servidor solicito iniciar sesion nuevamente.");
             }
 
             if (redirectedToTwoFactor(response)) {
@@ -1238,10 +1232,7 @@ window.ConversationWorkspace = (() => {
 
             startTimer();
 
-            showToast(
-                "❌ Error al guardar la conversación",
-                true
-            );
+            showToast(error.message || "Error al guardar la conversacion", true);
 
         } finally {
             setFormBusy(false);

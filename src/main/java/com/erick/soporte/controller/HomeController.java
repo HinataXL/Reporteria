@@ -297,8 +297,6 @@ public class HomeController {
 
         } catch (Exception e) {
 
-            e.printStackTrace();
-
             Map<String, Object> response = new LinkedHashMap<>();
 
             response.put("success", false);

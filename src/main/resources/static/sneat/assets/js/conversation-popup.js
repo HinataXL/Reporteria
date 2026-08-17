@@ -147,6 +147,13 @@
             return;
         }
 
+        if (navigator.userActivation?.isActive !== true) {
+            if (fallbackToPopup) {
+                openRegularPopup(url);
+            }
+            return;
+        }
+
         let pipWindow = null;
         try {
             if (window.documentPictureInPicture.window && !window.documentPictureInPicture.window.closed) {
@@ -167,7 +174,7 @@
             if (fallbackToPopup) {
                 console.warn("Document Picture-in-Picture no disponible, usando popup normal", error);
                 openRegularPopup(url);
-            } else {
+            } else if (error?.name !== "NotAllowedError") {
                 console.warn("No fue posible abrir Picture-in-Picture automaticamente", error);
             }
         }
