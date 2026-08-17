@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Llamadas - Insights Desk</title>
+    <link rel="stylesheet" th:href="@{/sneat/assets/css/metrics-dashboard.css}">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .calls-kpis {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .calls-kpi {
+            min-height: 122px;
+        }
+
+        .filter-card {
+            margin-bottom: 18px;
+        }
+
+        .filter-toolbar {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+        }
+
+        .search-input,
+        .filter-input,
+        .filter-select {
+            width: 100%;
+            min-height: 42px;
+            border: 1px solid var(--rm-line);
+            border-radius: 8px;
+            padding: 0 13px;
+            color: var(--rm-ink);
+            font-weight: 750;
+            background: #fff;
+            outline: none;
+        }
+
+        .filter-input:focus,
+        .filter-select:focus,
+        .search-input:focus {
+            border-color: #bfb2ff;
+            box-shadow: 0 0 0 4px rgba(98, 54, 255, .1);
+        }
+
+        .advanced-filters {
+            display: none;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .advanced-filters.show {
+            display: grid;
+        }
+
+        .filter-field {
+            display: grid;
+            gap: 6px;
+        }
+
+        .filter-label {
+            color: var(--rm-muted);
+            font-size: 11px;
+            font-weight: 950;
+            text-transform: uppercase;
+        }
+
+        .result-counter {
+            color: var(--rm-muted);
+            font-size: 12px;
+            font-weight: 850;
+            text-align: right;
+            margin-top: 12px;
+        }
+
+        .table-card {
+            overflow: hidden;
+        }
+
+        .calls-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .calls-table th,
+        .calls-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--rm-line);
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .calls-table th {
+            color: var(--rm-muted);
+            font-size: 11px;
+            font-weight: 950;
+            text-transform: uppercase;
+            background: #fbfcff;
+        }
+
+        .calls-table tr {
+            cursor: pointer;
+        }
+
+        .calls-table tr:hover {
+            background: #f8faff;
+        }
+
+        .sort-link {
+            color: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+
+        .sort-link svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .code-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 950;
+        }
+
+        .copy-code {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--rm-line);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--rm-muted);
+            display: inline-grid;
+            place-items: center;
+            cursor: pointer;
+        }
+
+        .copy-code svg,
+        .icon-btn svg {
+            width: 15px;
+            height: 15px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            min-height: 28px;
+            padding: 0 10px;
+            font-size: 11px;
+            font-weight: 950;
+        }
+
+        .badge-incoming { background: #eaf8f1; color: #07864a; }
+        .badge-outgoing { background: #f0f5ff; color: #2858d8; }
+        .badge-follow { background: #fff8eb; color: #a16207; }
+        .badge-danger { background: #fff0f3; color: #d92d55; }
+        .badge-neutral { background: #f4f1ff; color: #6236ff; }
+
+        .icon-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid var(--rm-line);
+            background: #fff;
+            color: var(--rm-ink);
+            display: inline-grid;
+            place-items: center;
+            text-decoration: none;
+        }
+
+        .icon-btn.primary {
+            color: #fff;
+            background: #6236ff;
+            border-color: #6236ff;
+        }
+
+        .pagination-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .pagination-btn,
+        .pagination-disabled {
+            min-height: 38px;
+            border-radius: 8px;
+            padding: 0 13px;
+            border: 1px solid var(--rm-line);
+            display: inline-flex;
+            align-items: center;
+            color: var(--rm-ink);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 900;
+            background: #fff;
+        }
+
+        .pagination-disabled {
+            color: #98a2b3;
+        }
+
+        .quick-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            justify-content: flex-end;
+            background: rgba(15, 23, 42, .28);
+            z-index: 1000;
+        }
+
+        .quick-modal.show {
+            display: flex;
+        }
+
+        .quick-panel {
+            width: min(440px, 100%);
+            height: 100%;
+            overflow-y: auto;
+            background: #fff;
+            padding: 22px;
+            box-shadow: -20px 0 55px rgba(15, 23, 42, .16);
+        }
+
+        .quick-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .quick-item {
+            border: 1px solid var(--rm-line);
+            border-radius: 8px;
+            padding: 12px;
+            background: #fbfcff;
+        }
+
+        .quick-item span {
+            display: block;
+            color: var(--rm-muted);
+            font-size: 11px;
+            font-weight: 950;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .quick-item strong,
+        .quick-note {
+            color: var(--rm-ink);
+            font-weight: 850;
+        }
+
+        @media (max-width: 1180px) {
+            .calls-kpis,
+            .advanced-filters {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 860px) {
+            .metrics-shell {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+            }
+
+            .topbar,
+            .filter-toolbar {
+                grid-template-columns: 1fr;
+                flex-direction: column;
+            }
+
+            .calls-kpis,
+            .advanced-filters {
+                grid-template-columns: 1fr;
+            }
+
+            .table-card {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body class="metrics-body">
+<div class="metrics-shell">
+    <aside class="metrics-sidebar">
+        <div class="brand">
+            <img class="brand-logo" th:src="@{/sneat/assets/img/brand/insights-desk-logo.png}" alt="Insights Desk">
+        </div>
+
+        <nav class="side-nav">
+            <a class="side-link" sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')" th:href="@{/supervisor/dashboard}"><i data-lucide="layout-dashboard"></i>Resumen</a>
+            <a class="side-link" sec:authorize="hasRole('AGENTE')" th:href="@{/agent/dashboard}"><i data-lucide="layout-dashboard"></i>Mi resumen</a>
+            <a class="side-link" th:href="@{/conversations}"><i data-lucide="messages-square"></i>Conversaciones</a>
+            <a class="side-link active" th:href="@{/calls}"><i data-lucide="phone-call"></i>Llamadas</a>
+            <a class="side-link" sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')" th:href="@{/admin/zoho-crm/tasks}"><i data-lucide="briefcase"></i>Modulo CRM</a>
+            <a class="side-link" sec:authorize="hasRole('AGENTE')" th:href="@{/agent/zoho-crm/tasks/dashboard}"><i data-lucide="briefcase"></i>Mi CRM</a>
+            <a class="side-link" th:href="@{/conversations/create}" onclick="return openConversationPopup(this.href);"><i data-lucide="plus-circle"></i>Nuevo chat</a>
+            <a class="side-link" th:href="@{/profile}"><i data-lucide="user-round"></i>Mi perfil</a>
+        </nav>
+
+        <div class="side-footer">
+            <div class="user-mini">
+                <div class="avatar" th:text="${#strings.substring(userName,0,1)}">U</div>
+                <div>
+                    <div class="user-name" th:text="${userName}">Usuario</div>
+                    <div class="user-role" th:text="${userRole}">ROL</div>
+                </div>
+            </div>
+            <div class="build-note">V1.7 desarrollado por<br>Erick Pedroza</div>
+        </div>
+    </aside>
+
+    <main class="metrics-main">
+        <header class="topbar">
+            <div>
+                <h1 class="page-title">Llamadas</h1>
+                <p class="page-subtitle">Registro manual de llamadas y seguimientos operativos</p>
+            </div>
+            <div class="topbar-actions">
+                <a class="rm-btn ghost" th:href="@{/calls/export/csv(q=${q},tipo=${tipo},resultado=${resultado},estado=${estado},agent=${agent},cliente=${cliente},comercio=${comercio},from=${from},to=${to})}">
+                    <i data-lucide="download"></i>Exportar
+                </a>
+                <a class="rm-btn primary" th:href="@{/calls/create}">
+                    <i data-lucide="plus"></i>Nueva llamada
+                </a>
+            </div>
+        </header>
+
+        <section class="calls-kpis">
+            <article class="kpi calls-kpi" style="--accent:#6236ff;--soft:#f4f1ff">
+                <div class="icon-bubble"><i data-lucide="phone"></i></div>
+                <div class="kpi-label">Total</div>
+                <div class="kpi-value" th:text="${totalMetric}">0</div>
+                <div class="kpi-note">Llamadas registradas</div>
+            </article>
+            <article class="kpi calls-kpi" style="--accent:#18bd73;--soft:#effaf5">
+                <div class="icon-bubble"><i data-lucide="phone-incoming"></i></div>
+                <div class="kpi-label">Entrantes</div>
+                <div class="kpi-value" th:text="${incomingMetric}">0</div>
+                <div class="kpi-note">Atenciones recibidas</div>
+            </article>
+            <article class="kpi calls-kpi" style="--accent:#4078ff;--soft:#f0f5ff">
+                <div class="icon-bubble"><i data-lucide="phone-outgoing"></i></div>
+                <div class="kpi-label">Salientes</div>
+                <div class="kpi-value" th:text="${outgoingMetric}">0</div>
+                <div class="kpi-note">Gestiones realizadas</div>
+            </article>
+            <article class="kpi calls-kpi" style="--accent:#f6a400;--soft:#fff8eb">
+                <div class="icon-bubble"><i data-lucide="calendar-clock"></i></div>
+                <div class="kpi-label">Seguimiento</div>
+                <div class="kpi-value" th:text="${followUpMetric}">0</div>
+                <div class="kpi-note">Requieren nueva accion</div>
+            </article>
+            <article class="kpi calls-kpi" style="--accent:#07c8f9;--soft:#effaff">
+                <div class="icon-bubble"><i data-lucide="timer"></i></div>
+                <div class="kpi-label">Tiempo promedio</div>
+                <div class="kpi-value" th:text="${#numbers.formatDecimal(avgDurationMetric, 1, 1) + ' min'}">0 min</div>
+                <div class="kpi-note">Duracion registrada</div>
+            </article>
+        </section>
+
+        <form class="card section filter-card" method="get" th:action="@{/calls}">
+            <div class="filter-toolbar">
+                <input class="search-input" name="q" th:value="${q}" placeholder="Buscar por codigo, cliente, comercio, telefono, asunto o agente...">
+                <button type="button" id="advancedFilterToggle" class="rm-btn ghost" aria-expanded="false">
+                    <i data-lucide="sliders-horizontal"></i>Filtros
+                </button>
+            </div>
+
+            <div id="advancedFilters"
+                 class="advanced-filters"
+                 th:classappend="${(tipo != null && !tipo.isBlank()) || (resultado != null && !resultado.isBlank()) || (estado != null && !estado.isBlank()) || (agent != null && !agent.isBlank()) || (cliente != null && !cliente.isBlank()) || (comercio != null && !comercio.isBlank()) || (from != null && !from.isBlank()) || (to != null && !to.isBlank()) || pageSize != 10} ? ' show' : ''">
+                <label class="filter-field">
+                    <span class="filter-label">Tipo</span>
+                    <select class="filter-select" name="tipo">
+                        <option value="">Todos</option>
+                        <option value="Entrante" th:selected="${tipo == 'Entrante'}">Entrante</option>
+                        <option value="Saliente" th:selected="${tipo == 'Saliente'}">Saliente</option>
+                        <option value="Seguimiento" th:selected="${tipo == 'Seguimiento'}">Seguimiento</option>
+                        <option value="Escalada" th:selected="${tipo == 'Escalada'}">Escalada</option>
+                    </select>
+                </label>
+                <label class="filter-field">
+                    <span class="filter-label">Resultado</span>
+                    <select class="filter-select" name="resultado">
+                        <option value="">Todos</option>
+                        <option value="Atendida" th:selected="${resultado == 'Atendida'}">Atendida</option>
+                        <option value="No contesto" th:selected="${resultado == 'No contesto'}">No contesto</option>
+                        <option value="Buzon" th:selected="${resultado == 'Buzon'}">Buzon</option>
+                        <option value="Reprogramada" th:selected="${resultado == 'Reprogramada'}">Reprogramada</option>
+                        <option value="Resuelta" th:selected="${resultado == 'Resuelta'}">Resuelta</option>
+                    </select>
+                </label>
+                <label class="filter-field">
+                    <span class="filter-label">Estado</span>
+                    <select class="filter-select" name="estado">
+                        <option value="">Todos</option>
+                        <option value="Registrada" th:selected="${estado == 'Registrada'}">Registrada</option>
+                        <option value="Seguimiento" th:selected="${estado == 'Seguimiento'}">Seguimiento</option>
+                        <option value="Cerrada" th:selected="${estado == 'Cerrada'}">Cerrada</option>
+                    </select>
+                </label>
+                <label class="filter-field">
+                    <span class="filter-label">Agente</span>
+                    <input class="filter-input" name="agent" th:value="${agent}" placeholder="Nombre agente">
+                </label>
+                <label class="filter-field">
+                    <span class="filter-label">Cliente</span>
+                    <input class="filter-input" name="cliente" th:value="${cliente}" placeholder="Cliente">
+                </label>
+                <label class="filter-field">
+                    <span class="filter-label">Comercio</span>
+                    <input class="filter-input" name="comercio" th:value="${comercio}" placeholder="Nombre comercio">
+                </label>
+                <label class="filter-field">
+                    <span class="filter-label">Desde</span>
+                    <input class="filter-input" type="date" name="from" th:value="${from}">
+                </label>
+                <label class="filter-field">
+                    <span class="filter-label">Hasta</span>
+                    <input class="filter-input" type="date" name="to" th:value="${to}">
+                </label>
+                <label class="filter-field">
+                    <span class="filter-label">Mostrar</span>
+                    <select class="filter-select" name="size" onchange="this.form.submit()">
+                        <option value="10" th:selected="${pageSize == 10}">10</option>
+                        <option value="25" th:selected="${pageSize == 25}">25</option>
+                        <option value="50" th:selected="${pageSize == 50}">50</option>
+                    </select>
+                </label>
+                <input type="hidden" name="sort" th:value="${sort}">
+                <input type="hidden" name="dir" th:value="${dir}">
+                <button type="submit" class="rm-btn primary"><i data-lucide="filter"></i>Filtrar</button>
+                <a th:href="@{/calls}" class="rm-btn ghost"><i data-lucide="x"></i>Limpiar</a>
+            </div>
+            <div class="result-counter" th:text="${'Mostrando ' + calls.numberOfElements + ' de ' + calls.totalElements + ' registro(s)'}">Mostrando registros</div>
+        </form>
+
+        <section class="card table-card">
+            <table class="calls-table">
+                <thead>
+                <tr>
+                    <th>Codigo</th>
+                    <th><a class="sort-link" th:href="@{/calls(page=0,size=${pageSize},sort='cliente',dir=${sort == 'cliente' ? reverseDir : 'asc'},q=${q},tipo=${tipo},resultado=${resultado},estado=${estado},agent=${agent},cliente=${cliente},comercio=${comercio},from=${from},to=${to})}">Cliente <i data-lucide="arrow-up-down"></i></a></th>
+                    <th>Comercio</th>
+                    <th><a class="sort-link" th:href="@{/calls(page=0,size=${pageSize},sort='tipo',dir=${sort == 'tipo' ? reverseDir : 'asc'},q=${q},tipo=${tipo},resultado=${resultado},estado=${estado},agent=${agent},cliente=${cliente},comercio=${comercio},from=${from},to=${to})}">Tipo <i data-lucide="arrow-up-down"></i></a></th>
+                    <th><a class="sort-link" th:href="@{/calls(page=0,size=${pageSize},sort='resultado',dir=${sort == 'resultado' ? reverseDir : 'asc'},q=${q},tipo=${tipo},resultado=${resultado},estado=${estado},agent=${agent},cliente=${cliente},comercio=${comercio},from=${from},to=${to})}">Resultado <i data-lucide="arrow-up-down"></i></a></th>
+                    <th><a class="sort-link" th:href="@{/calls(page=0,size=${pageSize},sort='agente',dir=${sort == 'agente' ? reverseDir : 'asc'},q=${q},tipo=${tipo},resultado=${resultado},estado=${estado},agent=${agent},cliente=${cliente},comercio=${comercio},from=${from},to=${to})}">Agente <i data-lucide="arrow-up-down"></i></a></th>
+                    <th><a class="sort-link" th:href="@{/calls(page=0,size=${pageSize},sort='fecha',dir=${sort == 'fecha' ? reverseDir : 'desc'},q=${q},tipo=${tipo},resultado=${resultado},estado=${estado},agent=${agent},cliente=${cliente},comercio=${comercio},from=${from},to=${to})}">Fecha <i data-lucide="arrow-up-down"></i></a></th>
+                    <th><a class="sort-link" th:href="@{/calls(page=0,size=${pageSize},sort='duracion',dir=${sort == 'duracion' ? reverseDir : 'desc'},q=${q},tipo=${tipo},resultado=${resultado},estado=${estado},agent=${agent},cliente=${cliente},comercio=${comercio},from=${from},to=${to})}">Duracion <i data-lucide="arrow-up-down"></i></a></th>
+                    <th>Accion</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="call : ${calls.content}"
+                    th:attr="data-code=${call.codigo},
+                             data-client=${call.clienteNombre},
+                             data-commerce=${call.nombreComercio},
+                             data-phone=${call.clienteTelefono},
+                             data-email=${call.clienteCorreo},
+                             data-type=${call.tipoLlamada},
+                             data-result=${call.resultado},
+                             data-state=${call.estado},
+                             data-agent=${call.agenteNombre},
+                             data-issue=${call.asunto},
+                             data-description=${call.descripcion},
+                             data-notes=${call.observaciones},
+                             data-start=${call.fechaInicio != null ? #temporals.format(call.fechaInicio, 'dd/MM/yyyy HH:mm') : 'Sin fecha'},
+                             data-end=${call.fechaFin != null ? #temporals.format(call.fechaFin, 'dd/MM/yyyy HH:mm') : 'Sin fecha'},
+                             data-duration=${call.duracionMinutos != null ? call.duracionMinutos : 0},
+                             data-follow=${call.requiereSeguimiento != null and call.requiereSeguimiento ? 'Si' : 'No'},
+                             data-follow-date=${call.fechaSeguimiento != null ? #temporals.format(call.fechaSeguimiento, 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">
+                    <td>
+                        <div class="code-line">
+                            <span th:text="${call.codigo}">CALL-00000</span>
+                            <button type="button" class="copy-code" onclick="copyCode(event, this)" title="Copiar codigo"><i data-lucide="copy"></i></button>
+                        </div>
+                    </td>
+                    <td th:text="${call.clienteNombre}">Cliente</td>
+                    <td th:text="${call.nombreComercio != null and !call.nombreComercio.isBlank() ? call.nombreComercio : 'Sin comercio'}">Comercio</td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${call.tipoLlamada == 'Entrante' ? ' badge-incoming' : (call.tipoLlamada == 'Saliente' ? ' badge-outgoing' : ' badge-follow')}"
+                              th:text="${call.tipoLlamada}">Entrante</span>
+                    </td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${call.resultado == 'No contesto' or call.resultado == 'Buzon' ? ' badge-danger' : ' badge-neutral'}"
+                              th:text="${call.resultado}">Atendida</span>
+                    </td>
+                    <td th:text="${call.agenteNombre}">Agente</td>
+                    <td th:text="${call.fechaInicio != null ? #temporals.format(call.fechaInicio, 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">00/00/0000</td>
+                    <td th:text="${(call.duracionMinutos != null ? call.duracionMinutos : 0) + ' min'}">0 min</td>
+                    <td>
+                        <a class="icon-btn primary" th:href="@{/calls/{id}/edit(id=${call.id})}" onclick="event.stopPropagation()" title="Editar llamada">
+                            <i data-lucide="pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${calls.totalElements == 0}">
+                    <td colspan="9" style="text-align:center;color:var(--rm-muted);font-weight:900;padding:28px;">Sin llamadas registradas para este filtro.</td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <div class="pagination-bar">
+            <a th:if="${calls.hasPrevious()}"
+               th:href="@{/calls(page=${calls.number - 1},size=${pageSize},sort=${sort},dir=${dir},q=${q},tipo=${tipo},resultado=${resultado},estado=${estado},agent=${agent},cliente=${cliente},comercio=${comercio},from=${from},to=${to})}"
+               class="pagination-btn">Anterior</a>
+            <span th:unless="${calls.hasPrevious()}" class="pagination-disabled">Anterior</span>
+            <span class="muted" th:text="${'Pagina ' + (calls.number + 1) + ' de ' + (calls.totalPages == 0 ? 1 : calls.totalPages)}">Pagina 1 de 1</span>
+            <a th:if="${calls.hasNext()}"
+               th:href="@{/calls(page=${calls.number + 1},size=${pageSize},sort=${sort},dir=${dir},q=${q},tipo=${tipo},resultado=${resultado},estado=${estado},agent=${agent},cliente=${cliente},comercio=${comercio},from=${from},to=${to})}"
+               class="pagination-btn">Siguiente</a>
+            <span th:unless="${calls.hasNext()}" class="pagination-disabled">Siguiente</span>
+        </div>
+    </main>
+</div>
+
+<div id="quickViewModal" class="quick-modal" aria-hidden="true">
+    <aside class="quick-panel">
+        <div class="quick-header">
+            <div>
+                <div class="kpi-label">Vista rapida</div>
+                <h2 id="quickCode" class="page-title">CALL-00000</h2>
+                <p id="quickClient" class="page-subtitle">Cliente</p>
+            </div>
+            <button type="button" class="icon-btn" onclick="closeQuickView()" aria-label="Cerrar"><i data-lucide="x"></i></button>
+        </div>
+        <div class="quick-grid">
+            <div class="quick-item"><span>Tipo</span><strong id="quickType">-</strong></div>
+            <div class="quick-item"><span>Resultado</span><strong id="quickResult">-</strong></div>
+            <div class="quick-item"><span>Estado</span><strong id="quickState">-</strong></div>
+            <div class="quick-item"><span>Agente</span><strong id="quickAgent">-</strong></div>
+            <div class="quick-item"><span>Inicio</span><strong id="quickStart">-</strong></div>
+            <div class="quick-item"><span>Fin</span><strong id="quickEnd">-</strong></div>
+            <div class="quick-item"><span>Duracion</span><strong id="quickDuration">0 min</strong></div>
+            <div class="quick-item"><span>Seguimiento</span><strong id="quickFollow">No</strong></div>
+        </div>
+        <div class="quick-item" style="margin-bottom:10px;"><span>Comercio</span><strong id="quickCommerce">-</strong></div>
+        <div class="quick-item" style="margin-bottom:10px;"><span>Telefono / correo</span><strong id="quickContact">-</strong></div>
+        <div class="quick-item" style="margin-bottom:10px;"><span>Asunto</span><strong id="quickIssue">-</strong></div>
+        <div class="quick-item" style="margin-bottom:10px;"><span>Descripcion</span><div id="quickDescription" class="quick-note">Sin descripcion</div></div>
+        <div class="quick-item"><span>Observaciones</span><div id="quickNotes" class="quick-note">Sin observaciones</div></div>
+    </aside>
+</div>
+
+<script th:src="@{/sneat/assets/js/conversation-popup.js}"></script>
+<script>
+    lucide.createIcons();
+
+    const advancedFilterToggle = document.getElementById('advancedFilterToggle');
+    const advancedFilters = document.getElementById('advancedFilters');
+
+    function syncAdvancedFilterToggle() {
+        const expanded = advancedFilters.classList.contains('show');
+        advancedFilterToggle.setAttribute('aria-expanded', String(expanded));
+        advancedFilterToggle.classList.toggle('active', expanded);
+    }
+
+    advancedFilterToggle.addEventListener('click', () => {
+        advancedFilters.classList.toggle('show');
+        syncAdvancedFilterToggle();
+    });
+    syncAdvancedFilterToggle();
+
+    document.querySelectorAll('.calls-table tbody tr[data-code]').forEach(row => {
+        row.addEventListener('click', () => openQuickView(row));
+    });
+
+    function openQuickView(row) {
+        document.getElementById('quickCode').innerText = row.dataset.code || '-';
+        document.getElementById('quickClient').innerText = row.dataset.client || '-';
+        document.getElementById('quickType').innerText = row.dataset.type || '-';
+        document.getElementById('quickResult').innerText = row.dataset.result || '-';
+        document.getElementById('quickState').innerText = row.dataset.state || '-';
+        document.getElementById('quickAgent').innerText = row.dataset.agent || '-';
+        document.getElementById('quickStart').innerText = row.dataset.start || '-';
+        document.getElementById('quickEnd').innerText = row.dataset.end || '-';
+        document.getElementById('quickDuration').innerText = `${row.dataset.duration || 0} min`;
+        document.getElementById('quickFollow').innerText = row.dataset.followDate && row.dataset.followDate !== 'Sin fecha'
+            ? `${row.dataset.follow} - ${row.dataset.followDate}`
+            : (row.dataset.follow || 'No');
+        document.getElementById('quickCommerce').innerText = row.dataset.commerce || 'Sin comercio';
+        document.getElementById('quickContact').innerText = [row.dataset.phone, row.dataset.email].filter(Boolean).join(' / ') || '-';
+        document.getElementById('quickIssue').innerText = row.dataset.issue || '-';
+        document.getElementById('quickDescription').innerText = row.dataset.description || 'Sin descripcion';
+        document.getElementById('quickNotes').innerText = row.dataset.notes || 'Sin observaciones';
+        document.getElementById('quickViewModal').classList.add('show');
+        document.getElementById('quickViewModal').setAttribute('aria-hidden', 'false');
+    }
+
+    function closeQuickView() {
+        document.getElementById('quickViewModal').classList.remove('show');
+        document.getElementById('quickViewModal').setAttribute('aria-hidden', 'true');
+    }
+
+    document.getElementById('quickViewModal').addEventListener('click', event => {
+        if (event.target.id === 'quickViewModal') {
+            closeQuickView();
+        }
+    });
+
+    function copyCode(event, button) {
+        event.stopPropagation();
+        const code = button.previousElementSibling.innerText.trim();
+        navigator.clipboard.writeText(code).then(() => {
+            button.innerHTML = '<i data-lucide="check"></i>';
+            lucide.createIcons();
+            setTimeout(() => {
+                button.innerHTML = '<i data-lucide="copy"></i>';
+                lucide.createIcons();
+            }, 1200);
+        });
+    }
+</script>
+</body>
+</html>

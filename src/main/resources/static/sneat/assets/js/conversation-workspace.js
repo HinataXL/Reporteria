@@ -1,8 +1,11 @@
 console.log("Conversation Workspace v2 cargado");
 
 window.ConversationWorkspace = (() => {
-    let tabs = JSON.parse(sessionStorage.getItem("conversationTabs") || "[]");
-    let activeTabId = sessionStorage.getItem("activeConversationTabId");
+    const tabsStorageKey = "conversationTabs";
+    const activeTabStorageKey = "activeConversationTabId";
+    const workspaceStorage = window.localStorage;
+    let tabs = readStoredTabs();
+    let activeTabId = workspaceStorage.getItem(activeTabStorageKey) || sessionStorage.getItem(activeTabStorageKey);
     let timerInterval = null;
     let sessionPromptTimeout = null;
     let sessionExpired = false;
@@ -12,6 +15,7 @@ window.ConversationWorkspace = (() => {
     let sessionTitleInterval = null;
     let sessionNotificationSent = false;
     let sessionToastShown = false;
+    let pipOpenAttempted = false;
     let zohoClientSuggestions = [];
     let clientSearchTimeout = null;
     const originalDocumentTitle = document.title;
@@ -27,10 +31,26 @@ window.ConversationWorkspace = (() => {
     const sessionAlertTitle = "Sesion por expirar";
     const sessionAlertMessage = "Tu sesion esta por vencer. Vuelve a Reporteria para continuar trabajando.";
 
+    function readStoredTabs() {
+        try {
+            return JSON.parse(
+                workspaceStorage.getItem(tabsStorageKey) ||
+                sessionStorage.getItem(tabsStorageKey) ||
+                "[]"
+            );
+        } catch (error) {
+            console.warn("No fue posible leer conversaciones abiertas", error);
+            return [];
+        }
+    }
+
     function saveState() {
-        sessionStorage.setItem("conversationTabs", JSON.stringify(tabs));
+        const serializedTabs = JSON.stringify(tabs);
+        workspaceStorage.setItem(tabsStorageKey, serializedTabs);
+        sessionStorage.setItem(tabsStorageKey, serializedTabs);
         if (activeTabId) {
-            sessionStorage.setItem("activeConversationTabId", activeTabId);
+            workspaceStorage.setItem(activeTabStorageKey, activeTabId);
+            sessionStorage.setItem(activeTabStorageKey, activeTabId);
         }
 
         updateDraftStatus();
@@ -46,6 +66,63 @@ window.ConversationWorkspace = (() => {
 
     function isPipMode() {
         return document.body?.dataset?.pipMode === "true";
+    }
+
+    function shouldOpenPipOnTabLeave() {
+        return !isPopupMode()
+            && !isPipMode()
+            && !pipOpenAttempted
+            && tabs.some(tab => !tab.saved);
+    }
+
+    function openPipOnTabLeave() {
+        if (!shouldOpenPipOnTabLeave()) {
+            return;
+        }
+        pipOpenAttempted = true;
+        saveActiveTabData();
+        saveState();
+        if (window.ConversationPopup?.openPictureInPicture) {
+            window.ConversationPopup.openPictureInPicture(window.location.href, {
+                fallbackToPopup: false
+            });
+        }
+    }
+
+    function syncWorkspaceFromStorage() {
+        const storedTabs = readStoredTabs().map(normalizeTab);
+        const storedActiveTabId = workspaceStorage.getItem(activeTabStorageKey)
+            || sessionStorage.getItem(activeTabStorageKey);
+
+        if (!storedTabs.length) {
+            return;
+        }
+
+        tabs = storedTabs;
+        activeTabId = storedActiveTabId && tabs.some(tab => tab.id === storedActiveTabId)
+            ? storedActiveTabId
+            : tabs[0].id;
+
+        const tab = getActiveTab();
+        if (tab) {
+            setFormData(tab.data || {});
+        }
+
+        renderTabs();
+        startTimer();
+        updateCounters();
+        validateForm(false);
+        updateDraftStatus();
+    }
+
+    function closePipOnTabReturn() {
+        if (isPopupMode() || isPipMode()) {
+            return;
+        }
+
+        window.ConversationPopup?.closePictureInPicture?.();
+        pipOpenAttempted = false;
+        syncWorkspaceFromStorage();
     }
 
     function closeFloatingWindow() {
@@ -1128,14 +1205,11 @@ window.ConversationWorkspace = (() => {
         if (tabs.length === 0) {
             activeTabId = null;
 
-            sessionStorage.removeItem(
-                "activeConversationTabId"
-            );
+            workspaceStorage.removeItem(activeTabStorageKey);
+            sessionStorage.removeItem(activeTabStorageKey);
 
-            sessionStorage.setItem(
-                "conversationTabs",
-                JSON.stringify([])
-            );
+            workspaceStorage.setItem(tabsStorageKey, JSON.stringify([]));
+            sessionStorage.setItem(tabsStorageKey, JSON.stringify([]));
 
             console.log(
                 "No quedan conversaciones activas. Redirigiendo..."
@@ -1243,16 +1317,26 @@ window.ConversationWorkspace = (() => {
 
         document.addEventListener("visibilitychange", () => {
             if (document.hidden) {
+                openPipOnTabLeave();
                 notifySessionAttention();
                 return;
             }
+
+            closePipOnTabReturn();
 
             if (sessionRenewalPending && !sessionExpired) {
                 showSessionPrompt();
             }
         });
 
+        window.addEventListener("focus", closePipOnTabReturn);
+        window.addEventListener("pageshow", closePipOnTabReturn);
+
         window.addEventListener("beforeunload", event => {
+            if (window.__conversationSilentClose) {
+                return;
+            }
+
             const hasUnsavedDrafts = tabs.some(tab => tab.dirty && !tab.saved);
             if (!hasUnsavedDrafts) return;
 
@@ -1327,7 +1411,8 @@ window.ConversationWorkspace = (() => {
         closeTab,
         toggleTimer,
         continueWorking,
-        closeFloatingWindow
+        closeFloatingWindow,
+        persistActiveTabData: saveActiveTabData
     };
 })();
 

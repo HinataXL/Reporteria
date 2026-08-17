@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Llamada - Insights Desk</title>
+    <link rel="stylesheet" th:href="@{/sneat/assets/css/metrics-dashboard.css}">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .call-shell {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 24px 22px;
+        }
+
+        .call-header {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .call-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .call-form {
+            overflow: hidden;
+        }
+
+        .form-section {
+            padding: 18px;
+            border-bottom: 1px solid var(--rm-line);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .form-grid.three {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .field {
+            display: grid;
+            gap: 7px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        .field label,
+        .section-kicker {
+            color: var(--rm-muted);
+            font-size: 11px;
+            font-weight: 950;
+            text-transform: uppercase;
+        }
+
+        .form-input {
+            width: 100%;
+            min-height: 42px;
+            border: 1px solid #cfd7e4;
+            border-radius: 8px;
+            padding: 0 13px;
+            color: var(--rm-ink);
+            background: #fff;
+            font-weight: 760;
+            outline: none;
+        }
+
+        textarea.form-input {
+            min-height: 96px;
+            padding: 12px 13px;
+            resize: vertical;
+        }
+
+        .form-input:focus {
+            border-color: #bfb2ff;
+            box-shadow: 0 0 0 4px rgba(98, 54, 255, .1);
+        }
+
+        .timer-card {
+            display: grid;
+            gap: 10px;
+            align-content: start;
+            background: linear-gradient(145deg, #fff, #f4f6ff);
+            border: 1px solid #d8defc;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .timer-value {
+            color: #6236ff;
+            font-size: 34px;
+            font-weight: 950;
+            letter-spacing: -0.04em;
+            line-height: 1;
+        }
+
+        .timer-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pill-soft {
+            width: fit-content;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 11px;
+            font-weight: 950;
+            background: #e9f9f0;
+            color: #07864a;
+        }
+
+        .toggle-card {
+            border: 1px solid var(--rm-line);
+            border-radius: 10px;
+            padding: 14px;
+            background: #fbfcff;
+        }
+
+        .toggle-card label {
+            color: var(--rm-ink);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 900;
+            text-transform: none;
+            cursor: pointer;
+        }
+
+        .toggle-card input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #6236ff;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .footer-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 14px 18px;
+            background: #fbfcff;
+        }
+
+        .error-text {
+            color: #d92d55;
+            font-size: 12px;
+            font-weight: 850;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .error-text.show {
+            display: block;
+        }
+
+        @media (max-width: 820px) {
+            .call-header {
+                grid-template-columns: 1fr;
+            }
+
+            .call-actions {
+                justify-content: flex-start;
+            }
+
+            .form-grid,
+            .form-grid.three {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        body.popup-mode .call-shell {
+            max-width: none;
+            padding: 14px;
+        }
+
+        body.popup-mode .call-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            margin: -14px -14px 12px;
+            padding: 14px;
+            background: rgba(247, 251, 255, .94);
+            border-bottom: 1px solid var(--rm-line);
+            backdrop-filter: blur(14px);
+        }
+    </style>
+</head>
+<body class="metrics-body"
+      th:classappend="${popupMode} ? ' popup-mode' : ''"
+      th:attr="data-popup-mode=${popupMode},data-pip-mode=${pipMode}">
+<main class="call-shell">
+    <header class="call-header">
+        <div>
+            <a th:if="${!popupMode}" class="rm-btn ghost" th:href="@{/calls}"><i data-lucide="arrow-left"></i>Volver</a>
+            <button th:if="${popupMode}" type="button" class="rm-btn ghost" onclick="CallWorkspace.closeFloatingWindow()"><i data-lucide="x"></i>Cerrar ventana</button>
+            <h1 class="page-title" style="margin-top:16px;" th:text="${call.id != null ? 'Editar llamada' : 'Nueva llamada'}">Nueva llamada</h1>
+            <p class="page-subtitle">Registro manual de contacto telefonico y seguimiento operativo</p>
+        </div>
+        <div class="call-actions">
+            <span th:if="${popupMode}" class="pill-soft" style="background:#f4f1ff;color:#6236ff;">Ventana flotante</span>
+            <span class="pill-soft">Sistema activo</span>
+            <span id="draftStatus" class="pill-soft" style="background:#f4f1ff;color:#6236ff;">Borrador listo</span>
+            <button class="rm-btn primary" type="submit" form="callForm"><i data-lucide="save"></i>Guardar</button>
+        </div>
+    </header>
+
+    <form id="callForm"
+          class="card call-form"
+          method="post"
+          th:object="${call}"
+          th:action="${call.id != null} ? @{/calls/update/{id}(id=${call.id})} : @{/calls/save}">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <input type="hidden" id="callId" th:value="${call.id}">
+
+        <section class="form-section">
+            <div class="section-kicker">Cliente</div>
+            <div class="form-grid" style="margin-top:12px;">
+                <div class="field">
+                    <label>Nombre del cliente *</label>
+                    <input class="form-input" th:field="*{clienteNombre}" required placeholder="Ej. Juan Perez">
+                </div>
+                <div class="field">
+                    <label>Nombre comercio</label>
+                    <input class="form-input" th:field="*{nombreComercio}" placeholder="Ej. Comercio Central">
+                </div>
+                <div class="field">
+                    <label>Telefono *</label>
+                    <input class="form-input" th:field="*{clienteTelefono}" required placeholder="+502 0000-0000">
+                </div>
+                <div class="field">
+                    <label>Correo</label>
+                    <input class="form-input" type="email" th:field="*{clienteCorreo}" placeholder="cliente@empresa.com">
+                </div>
+            </div>
+        </section>
+
+        <section class="form-section">
+            <div class="section-kicker">Llamada</div>
+            <div class="form-grid three" style="margin-top:12px;">
+                <div class="field">
+                    <label>Tipo de llamada *</label>
+                    <select class="form-input" th:field="*{tipoLlamada}" required>
+                        <option value="Entrante">Entrante</option>
+                        <option value="Saliente">Saliente</option>
+                        <option value="Seguimiento">Seguimiento</option>
+                        <option value="Escalada">Escalada</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Resultado *</label>
+                    <select class="form-input" th:field="*{resultado}" required>
+                        <option value="Atendida">Atendida</option>
+                        <option value="No contesto">No contesto</option>
+                        <option value="Buzon">Buzon</option>
+                        <option value="Reprogramada">Reprogramada</option>
+                        <option value="Resuelta">Resuelta</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Estado</label>
+                    <select class="form-input" th:field="*{estado}">
+                        <option value="Registrada">Registrada</option>
+                        <option value="Seguimiento">Seguimiento</option>
+                        <option value="Cerrada">Cerrada</option>
+                    </select>
+                </div>
+                <div class="field full">
+                    <label>Asunto *</label>
+                    <input class="form-input" th:field="*{asunto}" required placeholder="Motivo principal de la llamada">
+                </div>
+                <div class="field full">
+                    <label>Descripcion</label>
+                    <textarea class="form-input" th:field="*{descripcion}" maxlength="1000" placeholder="Detalle breve de la llamada"></textarea>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-section">
+            <div class="section-kicker">Gestion</div>
+            <div class="form-grid three" style="margin-top:12px;">
+                <div class="field">
+                    <label>Inicio *</label>
+                    <input class="form-input"
+                           id="fechaInicio"
+                           name="fechaInicio"
+                           type="datetime-local"
+                           th:value="${call.fechaInicio != null ? #temporals.format(call.fechaInicio, 'yyyy-MM-dd''T''HH:mm') : ''}"
+                           required>
+                </div>
+                <div class="field">
+                    <label>Fin</label>
+                    <input class="form-input"
+                           id="fechaFin"
+                           name="fechaFin"
+                           type="datetime-local"
+                           th:value="${call.fechaFin != null ? #temporals.format(call.fechaFin, 'yyyy-MM-dd''T''HH:mm') : ''}">
+                </div>
+                <div class="timer-card">
+                    <span class="section-kicker">Duracion</span>
+                    <div id="timerDisplay" class="timer-value">00:00</div>
+                    <span id="timerStatus" class="pill-soft" th:text="${call.id != null ? 'Pausado' : 'En registro'}">En registro</span>
+                    <input type="hidden" id="duracionMinutos" th:field="*{duracionMinutos}">
+                    <div class="timer-row">
+                        <button type="button" id="timerToggle" class="rm-btn primary"><i data-lucide="pause"></i>Pausar</button>
+                        <button type="button" id="timerReset" class="rm-btn ghost"><i data-lucide="rotate-ccw"></i>Reiniciar</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-section">
+            <div class="section-kicker">Seguimiento</div>
+            <div class="form-grid" style="margin-top:12px;">
+                <div class="toggle-card">
+                    <label>
+                        <input type="checkbox" id="requiereSeguimiento" th:field="*{requiereSeguimiento}">
+                        Requiere seguimiento
+                    </label>
+                    <div id="followUpBox" class="field hidden" style="margin-top:12px;">
+                        <label>Fecha de seguimiento</label>
+                        <input class="form-input"
+                               id="fechaSeguimiento"
+                               name="fechaSeguimiento"
+                               type="datetime-local"
+                               th:value="${call.fechaSeguimiento != null ? #temporals.format(call.fechaSeguimiento, 'yyyy-MM-dd''T''HH:mm') : ''}">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Plantilla rapida</label>
+                    <select id="templateSelect" class="form-input">
+                        <option value="">Selecciona una nota frecuente</option>
+                        <option value="Cliente solicita seguimiento. Se deja registro para nueva llamada en la fecha indicada.">Seguimiento pendiente</option>
+                        <option value="Cliente no contesta. Se recomienda nuevo intento en horario laboral.">No contesta</option>
+                        <option value="Consulta resuelta durante la llamada. Cliente queda informado.">Consulta resuelta</option>
+                    </select>
+                </div>
+                <div class="field full">
+                    <label>Observaciones internas</label>
+                    <textarea class="form-input" id="observaciones" th:field="*{observaciones}" maxlength="500" placeholder="Notas operativas para el equipo"></textarea>
+                    <p id="counter" class="page-subtitle">0 / 500</p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer-actions">
+            <a th:if="${!popupMode}" class="rm-btn ghost" th:href="@{/calls}"><i data-lucide="x"></i>Cancelar</a>
+            <button th:if="${popupMode}" type="button" class="rm-btn ghost" onclick="CallWorkspace.closeFloatingWindow()"><i data-lucide="x"></i>Cerrar ventana</button>
+            <button class="rm-btn primary" type="submit"><i data-lucide="save"></i>Guardar llamada</button>
+        </footer>
+    </form>
+</main>
+
+<script th:src="@{/sneat/assets/js/call-popup.js}"></script>
+<script>
+    lucide.createIcons();
+
+    const followCheck = document.getElementById('requiereSeguimiento');
+    const followBox = document.getElementById('followUpBox');
+    const followDate = document.getElementById('fechaSeguimiento');
+    const observations = document.getElementById('observaciones');
+    const counter = document.getElementById('counter');
+    const templateSelect = document.getElementById('templateSelect');
+    const durationInput = document.getElementById('duracionMinutos');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const timerStatus = document.getElementById('timerStatus');
+    const timerToggle = document.getElementById('timerToggle');
+    const timerReset = document.getElementById('timerReset');
+    const fechaFin = document.getElementById('fechaFin');
+    const form = document.getElementById('callForm');
+    const draftStatus = document.getElementById('draftStatus');
+
+    const existingCall = Boolean(document.getElementById('callId')?.value);
+    let elapsedSeconds = Math.max(0, Number(durationInput.value || 0) * 60);
+    let running = !existingCall;
+    let lastTick = Date.now();
+    let pipOpenAttempted = false;
+    const draftStorageKey = `callDraft:${window.location.pathname}`;
+    const timerStorageKey = `${draftStorageKey}:timer`;
+
+    window.CallWorkspace = {
+        persistDraftData,
+        closeFloatingWindow
+    };
+
+    function isPopupMode() {
+        return document.body?.dataset?.popupMode === 'true';
+    }
+
+    function isPipMode() {
+        return document.body?.dataset?.pipMode === 'true';
+    }
+
+    function getFormData() {
+        const data = {};
+        new FormData(form).forEach((value, key) => {
+            if (key !== '_csrf') {
+                data[key] = value;
+            }
+        });
+        data.requiereSeguimiento = followCheck.checked ? 'true' : '';
+        return data;
+    }
+
+    function hasMeaningfulData(data) {
+        return ['clienteNombre', 'nombreComercio', 'clienteTelefono', 'clienteCorreo', 'asunto', 'descripcion', 'observaciones']
+            .some(key => String(data[key] || '').trim().length > 0);
+    }
+
+    function hasActiveCallDraft() {
+        return hasMeaningfulData(getFormData()) || running || elapsedSeconds > 0;
+    }
+
+    function persistDraftData(syncTimer = true) {
+        if (syncTimer) {
+            updateTimer();
+        }
+        const data = getFormData();
+        data.__savedAt = String(Date.now());
+        localStorage.setItem(draftStorageKey, JSON.stringify(data));
+        localStorage.setItem(timerStorageKey, JSON.stringify({
+            elapsedSeconds,
+            running,
+            lastTick: Date.now()
+        }));
+        updateDraftStatus(data);
+    }
+
+    function hydrateDraftData() {
+        try {
+            const raw = localStorage.getItem(draftStorageKey);
+            if (!raw) {
+                return;
+            }
+
+            const data = JSON.parse(raw);
+            if (!hasMeaningfulData(data)) {
+                return;
+            }
+
+            Object.entries(data).forEach(([name, value]) => {
+                if (name.startsWith('__')) {
+                    return;
+                }
+
+                const field = form.elements[name];
+                if (!field) {
+                    return;
+                }
+
+                if (field.type === 'checkbox') {
+                    field.checked = value === 'true';
+                } else {
+                    field.value = value || '';
+                }
+            });
+
+            const timerRaw = localStorage.getItem(timerStorageKey);
+            if (timerRaw) {
+                const timer = JSON.parse(timerRaw);
+                elapsedSeconds = Number(timer.elapsedSeconds || 0);
+                if (timer.running) {
+                    elapsedSeconds += Math.max(0, Math.floor((Date.now() - Number(timer.lastTick || Date.now())) / 1000));
+                }
+                running = Boolean(timer.running);
+                lastTick = Date.now();
+            }
+
+            syncFollowUp();
+            updateCounter();
+            syncTimerControls();
+            updateTimer();
+            updateDraftStatus(data);
+        } catch (error) {
+            console.warn('No fue posible restaurar el borrador de llamada', error);
+        }
+    }
+
+    function updateDraftStatus(data = getFormData()) {
+        if (!draftStatus) {
+            return;
+        }
+
+        if (!hasMeaningfulData(data)) {
+            draftStatus.innerText = 'Borrador listo';
+            return;
+        }
+
+        const savedAt = data.__savedAt
+            ? new Date(Number(data.__savedAt)).toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })
+            : new Date().toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
+        draftStatus.innerText = `Borrador guardado ${savedAt}`;
+    }
+
+    function shouldOpenPipOnTabLeave() {
+        return !isPopupMode()
+            && !isPipMode()
+            && !pipOpenAttempted
+            && hasActiveCallDraft();
+    }
+
+    function openPipOnTabLeave() {
+        if (!shouldOpenPipOnTabLeave()) {
+            return;
+        }
+
+        pipOpenAttempted = true;
+        persistDraftData();
+        window.CallPopup?.openPictureInPicture(window.location.href, {
+            fallbackToPopup: true
+        });
+    }
+
+    function closePipOnTabReturn() {
+        if (isPopupMode() || isPipMode()) {
+            return;
+        }
+
+        window.CallPopup?.closePictureInPicture();
+        pipOpenAttempted = false;
+        hydrateDraftData();
+    }
+
+    function closeFloatingWindow() {
+        window.__callSilentClose = true;
+        window.close();
+        setTimeout(() => {
+            if (!window.closed) {
+                window.location.href = '/calls';
+            }
+        }, 120);
+    }
+
+    function syncFollowUp() {
+        followBox.classList.toggle('hidden', !followCheck.checked);
+        followDate.required = followCheck.checked;
+        if (!followCheck.checked) {
+            followDate.value = '';
+        }
+    }
+
+    function updateCounter() {
+        counter.innerText = `${observations.value.length} / 500`;
+    }
+
+    function updateTimer() {
+        if (running) {
+            const now = Date.now();
+            elapsedSeconds += Math.floor((now - lastTick) / 1000);
+            lastTick = now;
+        }
+
+        const minutes = Math.floor(elapsedSeconds / 60);
+        const seconds = elapsedSeconds % 60;
+        timerDisplay.innerText = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        durationInput.value = elapsedSeconds > 0 ? Math.max(1, Math.ceil(elapsedSeconds / 60)) : 0;
+    }
+
+    function syncTimerControls() {
+        timerStatus.innerText = running ? 'En registro' : 'Pausado';
+        timerStatus.style.background = running ? '#e9f9f0' : '#fff8eb';
+        timerStatus.style.color = running ? '#07864a' : '#a16207';
+        timerToggle.innerHTML = running ? '<i data-lucide="pause"></i>Pausar' : '<i data-lucide="play"></i>Reanudar';
+        lucide.createIcons();
+    }
+
+    function localDateTimeValue(date = new Date()) {
+        const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+        return offsetDate.toISOString().slice(0, 16);
+    }
+
+    function toggleTimer() {
+        running = !running;
+        lastTick = Date.now();
+        syncTimerControls();
+        if (!running && !fechaFin.value) {
+            fechaFin.value = localDateTimeValue();
+        }
+    }
+
+    followCheck.addEventListener('change', syncFollowUp);
+    observations.addEventListener('input', updateCounter);
+    form.addEventListener('input', persistDraftData);
+    form.addEventListener('change', persistDraftData);
+    templateSelect.addEventListener('change', () => {
+        if (!templateSelect.value) return;
+        observations.value = observations.value
+            ? `${observations.value}\n${templateSelect.value}`
+            : templateSelect.value;
+        updateCounter();
+        templateSelect.value = '';
+    });
+    timerToggle.addEventListener('click', toggleTimer);
+    timerReset.addEventListener('click', () => {
+        elapsedSeconds = 0;
+        durationInput.value = 0;
+        lastTick = Date.now();
+        updateTimer();
+    });
+    form.addEventListener('submit', async event => {
+        updateTimer();
+        if (!fechaFin.value) {
+            fechaFin.value = localDateTimeValue();
+        }
+
+        if (isPopupMode()) {
+            event.preventDefault();
+            const submitButtons = form.querySelectorAll('button[type="submit"], .rm-btn.primary');
+            submitButtons.forEach(button => {
+                button.disabled = true;
+                button.dataset.originalText = button.innerHTML;
+                button.innerHTML = '<i data-lucide="loader-circle"></i>Guardando';
+            });
+            lucide.createIcons();
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    throw new Error('No fue posible guardar la llamada.');
+                }
+
+                localStorage.removeItem(draftStorageKey);
+                localStorage.removeItem(timerStorageKey);
+                closeFloatingWindow();
+            } catch (error) {
+                alert(error.message || 'No fue posible guardar la llamada.');
+                submitButtons.forEach(button => {
+                    button.disabled = false;
+                    button.innerHTML = button.dataset.originalText || 'Guardar llamada';
+                });
+                lucide.createIcons();
+            }
+
+            return;
+        }
+
+        localStorage.removeItem(draftStorageKey);
+        localStorage.removeItem(timerStorageKey);
+    });
+
+    window.addEventListener('beforeunload', event => {
+        if (window.__callSilentClose) {
+            return;
+        }
+
+        if (!hasActiveCallDraft()) {
+            return;
+        }
+
+        persistDraftData();
+        event.preventDefault();
+        event.returnValue = '';
+    });
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            openPipOnTabLeave();
+            return;
+        }
+
+        closePipOnTabReturn();
+    });
+
+    window.addEventListener('focus', closePipOnTabReturn);
+    window.addEventListener('pageshow', closePipOnTabReturn);
+
+    hydrateDraftData();
+    syncFollowUp();
+    updateCounter();
+    syncTimerControls();
+    updateTimer();
+    setInterval(() => {
+        updateTimer();
+        if (!document.hidden && hasActiveCallDraft()) {
+            persistDraftData(false);
+        }
+    }, 1000);
+</script>
+</body>
+</html>

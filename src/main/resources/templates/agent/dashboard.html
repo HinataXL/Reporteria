@@ -23,9 +23,10 @@
             <a class="side-link active" th:href="@{/agent/dashboard}"><i data-lucide="layout-dashboard"></i>Resumen</a>
             <a class="side-link" th:href="@{/agent/zoho-crm/tasks/dashboard}"><i data-lucide="briefcase"></i>Mi CRM</a>
             <a class="side-link" th:href="@{/conversations}"><i data-lucide="messages-square"></i>Conversaciones</a>
+            <a class="side-link" th:href="@{/calls}"><i data-lucide="phone-call"></i>Llamadas</a>
             <a class="side-link" href="#topIssuesList"><i data-lucide="clipboard-list"></i>Top Asuntos</a>
             <a class="side-link" href="#topClientsList"><i data-lucide="briefcase-business"></i>Clientes</a>
-            <a class="side-link" th:href="@{/conversations/create(popup=true)}" onclick="return openConversationPopup(this.href);"><i data-lucide="plus-circle"></i>Nuevo chat</a>
+            <a class="side-link" th:href="@{/conversations/create}" onclick="return openConversationPopup(this.href);"><i data-lucide="plus-circle"></i>Nuevo chat</a>
             <a class="side-link" th:href="@{/profile}"><i data-lucide="user-round"></i>Mi perfil</a>
         </nav>
 
@@ -54,7 +55,7 @@
                     <i data-lucide="chevron-down"></i>
                 </div>
                 <a class="rm-btn ghost" th:href="@{/conversations}"><i data-lucide="list-checks"></i>Mis conversaciones</a>
-                <a class="rm-btn primary" th:href="@{/conversations/create(popup=true)}" onclick="return openConversationPopup(this.href);"><i data-lucide="plus"></i>Nueva conversacion</a>
+                <a class="rm-btn primary" th:href="@{/conversations/create}" onclick="return openConversationPopup(this.href);"><i data-lucide="plus"></i>Nueva conversacion</a>
             </div>
         </header>
 

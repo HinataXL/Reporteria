@@ -1451,8 +1451,16 @@
                     Conversaciones
                 </a>
             </li>
+            <li sec:authorize="hasAnyRole('ADMIN','SUPERVISOR','AGENTE')">
+                <a th:href="@{/calls}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.08 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.13.96.35 1.89.66 2.78a2 2 0 0 1-.45 2.11L8 9.88a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.89.31 1.82.53 2.78.66A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                    Llamadas
+                </a>
+            </li>
             <li>
-                <a th:href="@{/conversations/create(popup=true)}"
+                <a th:href="@{/conversations/create}"
                    onclick="return openConversationPopup(this.href);">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 5v14M5 12h14"></path>
@@ -1513,7 +1521,7 @@
             <div class="header-actions">
                 <button type="button" class="rm-btn refresh-btn" onclick="window.location.reload()"><i data-lucide="refresh-cw"></i>Actualizar</button>
                 <a class="rm-btn" sec:authorize="hasAnyRole('ADMIN','SUPERVISOR')" th:href="@{/conversations/export/csv}"><i data-lucide="download"></i>Exportar</a>
-                <a class="rm-btn primary" th:href="@{/conversations/create(popup=true)}" onclick="return openConversationPopup(this.href);"><i data-lucide="plus"></i>Nueva conversacion</a>
+                <a class="rm-btn primary" th:href="@{/conversations/create}" onclick="return openConversationPopup(this.href);"><i data-lucide="plus"></i>Nueva conversacion</a>
             </div>
         </header>
 

@@ -1,5 +1,5 @@
 (function () {
-    const popupName = "insightsDeskConversationPopup";
+    const popupName = "insightsDeskCallPopup";
     const popupFeatures = [
         "width=1040",
         "height=820",
@@ -8,34 +8,9 @@
         "resizable=yes",
         "scrollbars=yes"
     ].join(",");
-    const workspaceChannelName = "conversation-workspace";
-    let refreshScheduled = false;
 
-    function scheduleRefresh() {
-        if (refreshScheduled) {
-            return;
-        }
-
-        refreshScheduled = true;
-        setTimeout(() => {
-            window.location.reload();
-        }, 700);
-    }
-
-    function handleWorkspaceEvent(message) {
-        if (!message || message.type !== "conversation-saved") {
-            return;
-        }
-
-        if (window.location.pathname === "/conversations/create") {
-            return;
-        }
-
-        scheduleRefresh();
-    }
-
-    function buildFloatingCreateUrl(url, pipMode) {
-        const target = new URL(url || "/conversations/create", window.location.origin);
+    function buildFloatingCallUrl(url, pipMode) {
+        const target = new URL(url || "/calls/create", window.location.origin);
         target.searchParams.set("popup", "true");
         if (pipMode) {
             target.searchParams.set("pip", "true");
@@ -46,17 +21,16 @@
         return target.href;
     }
 
-    function buildStandardCreateUrl(url) {
-        const target = new URL(url || "/conversations/create", window.location.origin);
+    function buildStandardCallUrl(url) {
+        const target = new URL(url || "/calls/create", window.location.origin);
         target.searchParams.delete("popup");
         target.searchParams.delete("pip");
         return target.href;
     }
 
     function openRegularPopup(url) {
-        const popupUrl = buildFloatingCreateUrl(url, false);
+        const popupUrl = buildFloatingCallUrl(url, false);
         const popup = window.open(popupUrl, popupName, popupFeatures);
-
         if (!popup) {
             window.location.href = popupUrl;
             return;
@@ -71,7 +45,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Nueva conversacion</title>
+    <title>Nueva llamada</title>
     <style>
         html,
         body {
@@ -105,7 +79,7 @@
     </style>
 </head>
 <body>
-    <div class="pip-loading">Abriendo nueva conversacion...</div>
+    <div class="pip-loading">Abriendo llamada...</div>
 </body>
 </html>`);
         pipWindow.document.close();
@@ -119,7 +93,7 @@
         return html.replace(/<html([^>]*)>/i, `<html$1><head>${base}</head>`);
     }
 
-    async function writeCreatePageIntoPip(pipWindow, url) {
+    async function writeCallPageIntoPip(pipWindow, url) {
         const response = await fetch(url, {
             credentials: "same-origin",
             headers: {
@@ -128,7 +102,7 @@
         });
 
         if (!response.ok) {
-            throw new Error("No fue posible cargar la ventana de nueva conversacion.");
+            throw new Error("No fue posible cargar la ventana de llamada.");
         }
 
         const html = injectBaseHref(await response.text());
@@ -157,9 +131,8 @@
                 width: 1040,
                 height: 820
             });
-            const pipUrl = buildFloatingCreateUrl(url, true);
             writeLoadingDocument(pipWindow);
-            await writeCreatePageIntoPip(pipWindow, pipUrl);
+            await writeCallPageIntoPip(pipWindow, buildFloatingCallUrl(url, true));
         } catch (error) {
             if (pipWindow && !pipWindow.closed) {
                 pipWindow.close();
@@ -184,50 +157,25 @@
         }
 
         try {
-            pipWindow.ConversationWorkspace?.persistActiveTabData?.();
-            pipWindow.__conversationSilentClose = true;
+            pipWindow.CallWorkspace?.persistDraftData?.();
+            pipWindow.__callSilentClose = true;
         } catch (error) {
-            console.warn("No fue posible sincronizar la ventana flotante antes de cerrarla", error);
+            console.warn("No fue posible sincronizar la llamada antes de cerrar PiP", error);
         }
 
         pipWindow.close();
         return true;
     }
 
-    window.ConversationPopup = {
+    window.CallPopup = {
         openPictureInPicture,
         openRegularPopup,
-        buildStandardCreateUrl,
+        buildStandardCallUrl,
         closePictureInPicture
     };
 
-    window.openConversationPopup = function (url) {
-        window.location.href = buildStandardCreateUrl(url);
+    window.openCallPopup = function (url) {
+        window.location.href = buildStandardCallUrl(url);
         return false;
     };
-
-    if ("BroadcastChannel" in window) {
-        const channel = new BroadcastChannel(workspaceChannelName);
-        channel.addEventListener("message", event => handleWorkspaceEvent(event.data));
-    }
-
-    window.addEventListener("message", event => {
-        if (event.origin !== window.location.origin) {
-            return;
-        }
-
-        handleWorkspaceEvent(event.data);
-    });
-
-    window.addEventListener("storage", event => {
-        if (event.key !== "conversationWorkspaceEvent" || !event.newValue) {
-            return;
-        }
-
-        try {
-            handleWorkspaceEvent(JSON.parse(event.newValue));
-        } catch (error) {
-            console.warn("No fue posible leer evento de conversacion", error);
-        }
-    });
 })();
