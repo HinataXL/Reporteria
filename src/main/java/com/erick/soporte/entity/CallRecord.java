@@ -41,6 +41,12 @@ public class CallRecord {
     @Column(nullable = false)
     private String resultado;
 
+    @Column(name = "department_id")
+    private Integer departmentId;
+
+    @Column(name = "department_name")
+    private String departmentName;
+
     @Column(nullable = false)
     private String asunto;
 
@@ -67,6 +73,17 @@ public class CallRecord {
     @Column(name = "fecha_seguimiento")
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime fechaSeguimiento;
+
+    private String numeroTicket;
+
+    private String zohoTicketId;
+
+    @Column(columnDefinition = "TEXT")
+    private String zohoTicketUrl;
+
+    private String zohoContactId;
+
+    private LocalDateTime zohoTicketCreatedAt;
 
     private String estado;
 
@@ -160,6 +177,22 @@ public class CallRecord {
         this.resultado = resultado;
     }
 
+    public Integer getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(Integer departmentId) {
+        this.departmentId = departmentId;
+    }
+
+    public String getDepartmentName() {
+        return departmentName;
+    }
+
+    public void setDepartmentName(String departmentName) {
+        this.departmentName = departmentName;
+    }
+
     public String getAsunto() {
         return asunto;
     }
@@ -222,6 +255,46 @@ public class CallRecord {
 
     public void setFechaSeguimiento(LocalDateTime fechaSeguimiento) {
         this.fechaSeguimiento = fechaSeguimiento;
+    }
+
+    public String getNumeroTicket() {
+        return numeroTicket;
+    }
+
+    public void setNumeroTicket(String numeroTicket) {
+        this.numeroTicket = numeroTicket;
+    }
+
+    public String getZohoTicketId() {
+        return zohoTicketId;
+    }
+
+    public void setZohoTicketId(String zohoTicketId) {
+        this.zohoTicketId = zohoTicketId;
+    }
+
+    public String getZohoTicketUrl() {
+        return zohoTicketUrl;
+    }
+
+    public void setZohoTicketUrl(String zohoTicketUrl) {
+        this.zohoTicketUrl = zohoTicketUrl;
+    }
+
+    public String getZohoContactId() {
+        return zohoContactId;
+    }
+
+    public void setZohoContactId(String zohoContactId) {
+        this.zohoContactId = zohoContactId;
+    }
+
+    public LocalDateTime getZohoTicketCreatedAt() {
+        return zohoTicketCreatedAt;
+    }
+
+    public void setZohoTicketCreatedAt(LocalDateTime zohoTicketCreatedAt) {
+        this.zohoTicketCreatedAt = zohoTicketCreatedAt;
     }
 
     public String getEstado() {

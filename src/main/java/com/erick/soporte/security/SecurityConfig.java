@@ -53,7 +53,7 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/css/**", "/js/**", "/img/**", "/sneat/**").permitAll()
+                        .requestMatchers("/login", "/error", "/css/**", "/js/**", "/img/**", "/sneat/**").permitAll()
                         .requestMatchers("/api/webhooks/qpaypro", "/api/webhooks/qpaypro/**").permitAll()
 
                         .requestMatchers("/2fa/**").authenticated()
@@ -68,6 +68,7 @@ public class SecurityConfig {
                         .requestMatchers("/conversations/create", "/conversations/save").hasAnyRole("ADMIN", "SUPERVISOR", "AGENTE")
                         .requestMatchers("/conversations/**").hasAnyRole("ADMIN", "SUPERVISOR", "AGENTE")
                         .requestMatchers("/api/conversations/**").hasAnyRole("ADMIN", "SUPERVISOR", "AGENTE")
+                        .requestMatchers("/api/calls/**").hasAnyRole("ADMIN", "SUPERVISOR", "AGENTE")
                         .requestMatchers("/calls/**").hasAnyRole("ADMIN", "SUPERVISOR", "AGENTE")
                         .requestMatchers("/agent/**").hasAnyRole("ADMIN", "SUPERVISOR", "AGENTE")
                         .requestMatchers("/supervisor/**").hasAnyRole("ADMIN", "SUPERVISOR")

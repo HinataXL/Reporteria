@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Insights Desk</title>
+    <link rel="stylesheet" th:href="@{/sneat/assets/css/metrics-dashboard.css}">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            background:
+                radial-gradient(circle at 18% 18%, rgba(7, 200, 249, .14), transparent 28%),
+                radial-gradient(circle at 82% 22%, rgba(98, 54, 255, .12), transparent 26%),
+                #f5f7fb;
+        }
+
+        .error-card {
+            width: min(760px, 100%);
+            background: rgba(255, 255, 255, .94);
+            border: 1px solid #dbe3f1;
+            border-radius: 20px;
+            box-shadow: 0 24px 70px rgba(8, 22, 63, .12);
+            padding: 32px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 26px;
+            color: #07132f;
+            font-weight: 950;
+            font-size: 18px;
+        }
+
+        .brand-mark,
+        .status-mark {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, #6236ff, #07c8f9);
+            color: #fff;
+            box-shadow: 0 16px 34px rgba(98, 54, 255, .28);
+        }
+
+        .status-mark {
+            width: 58px;
+            height: 58px;
+            margin-bottom: 18px;
+            background: #f4f1ff;
+            color: #6236ff;
+            box-shadow: none;
+        }
+
+        .status-code {
+            color: #63708a;
+            font-size: 12px;
+            font-weight: 950;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            margin: 0;
+            color: #07132f;
+            font-size: clamp(32px, 6vw, 52px);
+            line-height: 1;
+            letter-spacing: 0;
+        }
+
+        .message {
+            margin: 16px 0 0;
+            color: #52607a;
+            font-size: 16px;
+            line-height: 1.65;
+            max-width: 620px;
+        }
+
+        .meta {
+            display: grid;
+            gap: 8px;
+            margin: 24px 0;
+            padding: 16px;
+            background: #f8faff;
+            border: 1px solid #e0e7f2;
+            border-radius: 14px;
+            color: #52607a;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .meta strong {
+            color: #07132f;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        .error-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            border-radius: 12px;
+            padding: 0 16px;
+            border: 1px solid #dbe3f1;
+            background: #fff;
+            color: #07132f;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 950;
+        }
+
+        .error-btn.primary {
+            border-color: transparent;
+            background: linear-gradient(135deg, #6236ff, #754bff);
+            color: #fff;
+            box-shadow: 0 14px 30px rgba(98, 54, 255, .25);
+        }
+    </style>
+</head>
+<body>
+<main class="error-card">
+    <div class="brand">
+        <span class="brand-mark"><i data-lucide="bar-chart-3"></i></span>
+        <span>Insights Desk</span>
+    </div>
+
+    <div class="status-mark">
+        <i th:if="${isNotFound}" data-lucide="map-off"></i>
+        <i th:unless="${isNotFound}" data-lucide="triangle-alert"></i>
+    </div>
+
+    <p class="status-code" th:text="${'Error ' + status}">Error 500</p>
+    <h1 th:text="${title}">No fue posible completar la solicitud</h1>
+    <p class="message" th:text="${message}">
+        Registramos el error para revision del equipo administrador. Puedes volver e intentar de nuevo.
+    </p>
+
+    <section class="meta">
+        <div>Referencia: <strong th:text="${reference}">ERR-000</strong></div>
+        <div>Ruta: <strong th:text="${path}">/ruta</strong></div>
+    </section>
+
+    <div class="actions">
+        <a class="error-btn primary" href="javascript:history.back()">
+            <i data-lucide="arrow-left"></i>Volver
+        </a>
+        <a class="error-btn" th:href="@{/}">
+            <i data-lucide="home"></i>Inicio
+        </a>
+        <a class="error-btn" th:href="@{/login}">
+            <i data-lucide="log-in"></i>Login
+        </a>
+    </div>
+</main>
+
+<script>
+    lucide.createIcons();
+</script>
+</body>
+</html>

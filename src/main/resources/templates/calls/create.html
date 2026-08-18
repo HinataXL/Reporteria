@@ -91,30 +91,6 @@
             box-shadow: 0 0 0 4px rgba(98, 54, 255, .1);
         }
 
-        .timer-card {
-            display: grid;
-            gap: 10px;
-            align-content: start;
-            background: linear-gradient(145deg, #fff, #f4f6ff);
-            border: 1px solid #d8defc;
-            border-radius: 12px;
-            padding: 16px;
-        }
-
-        .timer-value {
-            color: #6236ff;
-            font-size: 34px;
-            font-weight: 950;
-            letter-spacing: -0.04em;
-            line-height: 1;
-        }
-
-        .timer-row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
         .pill-soft {
             width: fit-content;
             border-radius: 999px;
@@ -167,6 +143,36 @@
             font-weight: 850;
             margin-top: 8px;
             display: none;
+        }
+
+        .save-banner {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 14px;
+            border: 1px solid #b7f0cb;
+            border-radius: 12px;
+            background: #effcf4;
+            color: #075f36;
+            padding: 14px 16px;
+            font-size: 13px;
+            font-weight: 900;
+            box-shadow: 0 16px 36px rgba(8, 22, 63, .08);
+        }
+
+        .save-banner.show {
+            display: flex;
+        }
+
+        .save-banner button {
+            border: 0;
+            background: #d8f8e4;
+            color: #075f36;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-weight: 950;
+            cursor: pointer;
         }
 
         .error-text.show {
@@ -231,6 +237,20 @@
           th:action="${call.id != null} ? @{/calls/update/{id}(id=${call.id})} : @{/calls/save}">
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
         <input type="hidden" id="callId" th:value="${call.id}">
+        <input type="hidden"
+               id="fechaInicio"
+               name="fechaInicio"
+               th:value="${call.fechaInicio != null ? #temporals.format(call.fechaInicio, 'yyyy-MM-dd''T''HH:mm') : ''}">
+        <input type="hidden"
+               id="fechaFin"
+               name="fechaFin"
+               th:value="${call.fechaFin != null ? #temporals.format(call.fechaFin, 'yyyy-MM-dd''T''HH:mm') : ''}">
+        <input type="hidden" id="duracionMinutos" th:field="*{duracionMinutos}">
+
+        <div id="saveBanner" class="save-banner" role="status">
+            <span id="saveBannerText">Llamada guardada correctamente. Puedes iniciar otro registro.</span>
+            <button type="button" id="saveBannerClose">Aceptar</button>
+        </div>
 
         <section class="form-section">
             <div class="section-kicker">Cliente</div>
@@ -240,12 +260,21 @@
                     <input class="form-input" th:field="*{clienteNombre}" required placeholder="Ej. Juan Perez">
                 </div>
                 <div class="field">
-                    <label>Nombre comercio</label>
-                    <input class="form-input" th:field="*{nombreComercio}" placeholder="Ej. Comercio Central">
+                    <label>Nombre comercio *</label>
+                    <input class="form-input" th:field="*{nombreComercio}" required placeholder="Ej. Comercio Central">
                 </div>
                 <div class="field">
                     <label>Telefono *</label>
-                    <input class="form-input" th:field="*{clienteTelefono}" required placeholder="+502 0000-0000">
+                    <input class="form-input"
+                           th:field="*{clienteTelefono}"
+                           required
+                           type="text"
+                           inputmode="numeric"
+                           autocomplete="tel"
+                           pattern="[0-9]{1,8}"
+                           maxlength="8"
+                           oninput="this.value = this.value.replace(/\D/g, '').slice(0, 8)"
+                           placeholder="00000000">
                 </div>
                 <div class="field">
                     <label>Correo</label>
@@ -259,71 +288,48 @@
             <div class="form-grid three" style="margin-top:12px;">
                 <div class="field">
                     <label>Tipo de llamada *</label>
-                    <select class="form-input" th:field="*{tipoLlamada}" required>
-                        <option value="Entrante">Entrante</option>
-                        <option value="Saliente">Saliente</option>
+                    <select class="form-input" id="tipoLlamada" th:field="*{tipoLlamada}" required>
+                        <option value="Entrante">Llamada Entrante</option>
+                        <option value="Saliente">Llamada Saliente</option>
                         <option value="Seguimiento">Seguimiento</option>
                         <option value="Escalada">Escalada</option>
                     </select>
                 </div>
                 <div class="field">
                     <label>Resultado *</label>
-                    <select class="form-input" th:field="*{resultado}" required>
+                    <select class="form-input" id="resultado" th:field="*{resultado}" required
+                            th:attr="data-current=${call.resultado}">
                         <option value="Atendida">Atendida</option>
-                        <option value="No contesto">No contesto</option>
-                        <option value="Buzon">Buzon</option>
-                        <option value="Reprogramada">Reprogramada</option>
-                        <option value="Resuelta">Resuelta</option>
+                        <option value="Transferida">Transferida</option>
+                        <option value="Solicita 2da llamada">Solicita 2da llamada</option>
                     </select>
                 </div>
-                <div class="field">
-                    <label>Estado</label>
-                    <select class="form-input" th:field="*{estado}">
-                        <option value="Registrada">Registrada</option>
-                        <option value="Seguimiento">Seguimiento</option>
-                        <option value="Cerrada">Cerrada</option>
+                <div class="field hidden" id="departmentBox">
+                    <label>Departamento *</label>
+                    <select class="form-input" id="departmentId" th:field="*{departmentId}">
+                        <option value="">Selecciona un departamento</option>
+                        <option th:each="department : ${departments}"
+                                th:value="${department.id}"
+                                th:text="${department.nombre}">
+                            Departamento
+                        </option>
                     </select>
                 </div>
+                <input type="hidden" th:field="*{estado}" value="Registrada">
                 <div class="field full">
                     <label>Asunto *</label>
-                    <input class="form-input" th:field="*{asunto}" required placeholder="Motivo principal de la llamada">
+                    <select class="form-input" th:field="*{asunto}" required>
+                        <option value="">Selecciona un asunto</option>
+                        <option th:each="issue : ${issueTypes}"
+                                th:value="${issue.nombre}"
+                                th:text="${issue.nombre}">
+                            Asunto
+                        </option>
+                    </select>
                 </div>
                 <div class="field full">
                     <label>Descripcion</label>
                     <textarea class="form-input" th:field="*{descripcion}" maxlength="1000" placeholder="Detalle breve de la llamada"></textarea>
-                </div>
-            </div>
-        </section>
-
-        <section class="form-section">
-            <div class="section-kicker">Gestion</div>
-            <div class="form-grid three" style="margin-top:12px;">
-                <div class="field">
-                    <label>Inicio *</label>
-                    <input class="form-input"
-                           id="fechaInicio"
-                           name="fechaInicio"
-                           type="datetime-local"
-                           th:value="${call.fechaInicio != null ? #temporals.format(call.fechaInicio, 'yyyy-MM-dd''T''HH:mm') : ''}"
-                           required>
-                </div>
-                <div class="field">
-                    <label>Fin</label>
-                    <input class="form-input"
-                           id="fechaFin"
-                           name="fechaFin"
-                           type="datetime-local"
-                           th:value="${call.fechaFin != null ? #temporals.format(call.fechaFin, 'yyyy-MM-dd''T''HH:mm') : ''}">
-                </div>
-                <div class="timer-card">
-                    <span class="section-kicker">Duracion</span>
-                    <div id="timerDisplay" class="timer-value">00:00</div>
-                    <span id="timerStatus" class="pill-soft" th:text="${call.id != null ? 'Pausado' : 'En registro'}">En registro</span>
-                    <input type="hidden" id="duracionMinutos" th:field="*{duracionMinutos}">
-                    <div class="timer-row">
-                        <button type="button" id="timerToggle" class="rm-btn primary"><i data-lucide="pause"></i>Pausar</button>
-                        <button type="button" id="timerReset" class="rm-btn ghost"><i data-lucide="rotate-ccw"></i>Reiniciar</button>
-                    </div>
                 </div>
             </div>
         </section>
@@ -380,22 +386,31 @@
     const observations = document.getElementById('observaciones');
     const counter = document.getElementById('counter');
     const templateSelect = document.getElementById('templateSelect');
+    const tipoLlamada = document.getElementById('tipoLlamada');
+    const resultado = document.getElementById('resultado');
+    const departmentBox = document.getElementById('departmentBox');
+    const departmentId = document.getElementById('departmentId');
     const durationInput = document.getElementById('duracionMinutos');
-    const timerDisplay = document.getElementById('timerDisplay');
-    const timerStatus = document.getElementById('timerStatus');
-    const timerToggle = document.getElementById('timerToggle');
-    const timerReset = document.getElementById('timerReset');
+    const fechaInicio = document.getElementById('fechaInicio');
     const fechaFin = document.getElementById('fechaFin');
     const form = document.getElementById('callForm');
+    const phoneInput = form.elements.clienteTelefono;
     const draftStatus = document.getElementById('draftStatus');
+    const saveBanner = document.getElementById('saveBanner');
+    const saveBannerText = document.getElementById('saveBannerText');
+    const saveBannerClose = document.getElementById('saveBannerClose');
 
     const existingCall = Boolean(document.getElementById('callId')?.value);
-    let elapsedSeconds = Math.max(0, Number(durationInput.value || 0) * 60);
-    let running = !existingCall;
-    let lastTick = Date.now();
     let pipOpenAttempted = false;
+    let dirty = false;
+    let saving = false;
     const draftStorageKey = `callDraft:${window.location.pathname}`;
-    const timerStorageKey = `${draftStorageKey}:timer`;
+    const resultOptionsByType = {
+        Entrante: ['Atendida', 'Transferida', 'Solicita 2da llamada'],
+        Saliente: ['Solicitud Grupo Soporte Cliq', 'Llamada Seguimiento'],
+        Seguimiento: ['Atendida', 'No contesto', 'Reprogramada', 'Resuelta'],
+        Escalada: ['Atendida', 'Transferida', 'Resuelta']
+    };
 
     window.CallWorkspace = {
         persistDraftData,
@@ -413,7 +428,7 @@
     function getFormData() {
         const data = {};
         new FormData(form).forEach((value, key) => {
-            if (key !== '_csrf') {
+            if (!['_csrf', 'fechaInicio', 'fechaFin', 'duracionMinutos'].includes(key)) {
                 data[key] = value;
             }
         });
@@ -427,21 +442,25 @@
     }
 
     function hasActiveCallDraft() {
-        return hasMeaningfulData(getFormData()) || running || elapsedSeconds > 0;
+        return dirty && hasMeaningfulData(getFormData());
     }
 
-    function persistDraftData(syncTimer = true) {
-        if (syncTimer) {
-            updateTimer();
+    function persistDraftData() {
+        if (saving) {
+            return;
         }
+
         const data = getFormData();
+        dirty = hasMeaningfulData(data);
+
+        if (!dirty) {
+            localStorage.removeItem(draftStorageKey);
+            updateDraftStatus(data);
+            return;
+        }
+
         data.__savedAt = String(Date.now());
         localStorage.setItem(draftStorageKey, JSON.stringify(data));
-        localStorage.setItem(timerStorageKey, JSON.stringify({
-            elapsedSeconds,
-            running,
-            lastTick: Date.now()
-        }));
         updateDraftStatus(data);
     }
 
@@ -474,21 +493,11 @@
                 }
             });
 
-            const timerRaw = localStorage.getItem(timerStorageKey);
-            if (timerRaw) {
-                const timer = JSON.parse(timerRaw);
-                elapsedSeconds = Number(timer.elapsedSeconds || 0);
-                if (timer.running) {
-                    elapsedSeconds += Math.max(0, Math.floor((Date.now() - Number(timer.lastTick || Date.now())) / 1000));
-                }
-                running = Boolean(timer.running);
-                lastTick = Date.now();
-            }
-
+            resultado.dataset.current = data.resultado || resultado.value;
+            syncResultOptions(data.resultado || resultado.value);
+            dirty = true;
             syncFollowUp();
             updateCounter();
-            syncTimerControls();
-            updateTimer();
             updateDraftStatus(data);
         } catch (error) {
             console.warn('No fue posible restaurar el borrador de llamada', error);
@@ -526,7 +535,7 @@
         pipOpenAttempted = true;
         persistDraftData();
         window.CallPopup?.openPictureInPicture(window.location.href, {
-            fallbackToPopup: true
+            fallbackToPopup: false
         });
     }
 
@@ -558,29 +567,36 @@
         }
     }
 
+    function syncResultOptions(preferredValue = resultado.value) {
+        const options = resultOptionsByType[tipoLlamada.value] || resultOptionsByType.Entrante;
+        const current = options.includes(preferredValue)
+            ? preferredValue
+            : (options.includes(resultado.dataset.current) ? resultado.dataset.current : options[0]);
+
+        resultado.innerHTML = '';
+        options.forEach(value => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = value;
+            option.selected = value === current;
+            resultado.appendChild(option);
+        });
+
+        syncDepartmentField();
+    }
+
+    function syncDepartmentField() {
+        const isTransfer = resultado.value === 'Transferida';
+        departmentBox.classList.toggle('hidden', !isTransfer);
+        departmentId.required = isTransfer;
+
+        if (!isTransfer) {
+            departmentId.value = '';
+        }
+    }
+
     function updateCounter() {
         counter.innerText = `${observations.value.length} / 500`;
-    }
-
-    function updateTimer() {
-        if (running) {
-            const now = Date.now();
-            elapsedSeconds += Math.floor((now - lastTick) / 1000);
-            lastTick = now;
-        }
-
-        const minutes = Math.floor(elapsedSeconds / 60);
-        const seconds = elapsedSeconds % 60;
-        timerDisplay.innerText = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-        durationInput.value = elapsedSeconds > 0 ? Math.max(1, Math.ceil(elapsedSeconds / 60)) : 0;
-    }
-
-    function syncTimerControls() {
-        timerStatus.innerText = running ? 'En registro' : 'Pausado';
-        timerStatus.style.background = running ? '#e9f9f0' : '#fff8eb';
-        timerStatus.style.color = running ? '#07864a' : '#a16207';
-        timerToggle.innerHTML = running ? '<i data-lucide="pause"></i>Pausar' : '<i data-lucide="play"></i>Reanudar';
-        lucide.createIcons();
     }
 
     function localDateTimeValue(date = new Date()) {
@@ -588,16 +604,133 @@
         return offsetDate.toISOString().slice(0, 16);
     }
 
-    function toggleTimer() {
-        running = !running;
-        lastTick = Date.now();
-        syncTimerControls();
-        if (!running && !fechaFin.value) {
-            fechaFin.value = localDateTimeValue();
+    function prepareSystemDates() {
+        const now = localDateTimeValue();
+        if (!existingCall) {
+            fechaInicio.value = now;
+            fechaFin.value = now;
+            durationInput.value = 0;
+            return;
+        }
+
+        if (!fechaInicio.value) {
+            fechaInicio.value = now;
+        }
+        if (!fechaFin.value) {
+            fechaFin.value = now;
+        }
+        durationInput.value = 0;
+    }
+
+    function clearDraft() {
+        localStorage.removeItem(draftStorageKey);
+        dirty = false;
+        updateDraftStatus({});
+    }
+
+    function resetNewCallForm() {
+        const csrfField = form.querySelector('input[name="_csrf"]');
+        const csrfValue = csrfField?.value;
+
+        form.reset();
+        if (csrfField) {
+            csrfField.value = csrfValue || '';
+        }
+
+        fechaInicio.value = '';
+        fechaFin.value = '';
+        durationInput.value = 0;
+        templateSelect.value = '';
+        syncFollowUp();
+        updateCounter();
+        clearDraft();
+        form.querySelector('[name="clienteNombre"]')?.focus();
+    }
+
+    function showSaveBanner(codigo) {
+        if (!saveBanner) {
+            return;
+        }
+
+        saveBannerText.innerText = codigo
+            ? `Llamada ${codigo} guardada correctamente. Puedes iniciar otro registro.`
+            : 'Llamada guardada correctamente. Puedes iniciar otro registro.';
+        saveBanner.classList.add('show');
+        window.setTimeout(() => saveBanner.classList.remove('show'), 5200);
+    }
+
+    function csrfHeaders() {
+        const token = document.querySelector('meta[name="_csrf"]')?.content;
+        const header = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+        return token ? { [header]: token } : {};
+    }
+
+    function setSavingState(isSaving) {
+        saving = isSaving;
+        form.classList.toggle('is-saving', isSaving);
+        form.querySelectorAll('button[type="submit"]').forEach(button => {
+            button.disabled = isSaving;
+            if (isSaving) {
+                button.dataset.originalText = button.innerHTML;
+                button.innerHTML = '<i data-lucide="loader-circle"></i>Guardando';
+            } else {
+                button.innerHTML = button.dataset.originalText || 'Guardar llamada';
+            }
+        });
+        lucide.createIcons();
+    }
+
+    async function saveNewCall() {
+        prepareSystemDates();
+        setSavingState(true);
+
+        try {
+            const response = await fetch('/api/calls/save', {
+                method: 'POST',
+                body: new FormData(form),
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...csrfHeaders()
+                }
+            });
+
+            const contentType = response.headers.get('content-type') || '';
+            const data = contentType.includes('application/json')
+                ? await response.json()
+                : {};
+
+            if (!response.ok || data.success === false) {
+                throw new Error(data.message || 'No fue posible guardar la llamada.');
+            }
+
+            clearDraft();
+            resetNewCallForm();
+            showSaveBanner(data.codigo);
+        } catch (error) {
+            dirty = true;
+            alert(error.message || 'No fue posible guardar la llamada.');
+        } finally {
+            setSavingState(false);
         }
     }
 
     followCheck.addEventListener('change', syncFollowUp);
+    phoneInput.addEventListener('input', () => {
+        phoneInput.value = phoneInput.value.replace(/\D/g, '').slice(0, 8);
+        persistDraftData();
+    });
+    tipoLlamada.addEventListener('change', () => {
+        resultado.dataset.current = '';
+        syncResultOptions();
+        persistDraftData();
+    });
+    resultado.addEventListener('change', () => {
+        resultado.dataset.current = resultado.value;
+        syncDepartmentField();
+        persistDraftData();
+    });
+    departmentId.addEventListener('change', persistDraftData);
     observations.addEventListener('input', updateCounter);
     form.addEventListener('input', persistDraftData);
     form.addEventListener('change', persistDraftData);
@@ -608,58 +741,17 @@
             : templateSelect.value;
         updateCounter();
         templateSelect.value = '';
-    });
-    timerToggle.addEventListener('click', toggleTimer);
-    timerReset.addEventListener('click', () => {
-        elapsedSeconds = 0;
-        durationInput.value = 0;
-        lastTick = Date.now();
-        updateTimer();
+        persistDraftData();
     });
     form.addEventListener('submit', async event => {
-        updateTimer();
-        if (!fechaFin.value) {
-            fechaFin.value = localDateTimeValue();
-        }
-
-        if (isPopupMode()) {
+        if (!existingCall) {
             event.preventDefault();
-            const submitButtons = form.querySelectorAll('button[type="submit"], .rm-btn.primary');
-            submitButtons.forEach(button => {
-                button.disabled = true;
-                button.dataset.originalText = button.innerHTML;
-                button.innerHTML = '<i data-lucide="loader-circle"></i>Guardando';
-            });
-            lucide.createIcons();
-
-            try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    body: new FormData(form),
-                    credentials: 'same-origin'
-                });
-
-                if (!response.ok) {
-                    throw new Error('No fue posible guardar la llamada.');
-                }
-
-                localStorage.removeItem(draftStorageKey);
-                localStorage.removeItem(timerStorageKey);
-                closeFloatingWindow();
-            } catch (error) {
-                alert(error.message || 'No fue posible guardar la llamada.');
-                submitButtons.forEach(button => {
-                    button.disabled = false;
-                    button.innerHTML = button.dataset.originalText || 'Guardar llamada';
-                });
-                lucide.createIcons();
-            }
-
+            await saveNewCall();
             return;
         }
 
-        localStorage.removeItem(draftStorageKey);
-        localStorage.removeItem(timerStorageKey);
+        prepareSystemDates();
+        clearDraft();
     });
 
     window.addEventListener('beforeunload', event => {
@@ -689,16 +781,10 @@
     window.addEventListener('pageshow', closePipOnTabReturn);
 
     hydrateDraftData();
+    syncResultOptions(resultado.dataset.current || resultado.value);
     syncFollowUp();
     updateCounter();
-    syncTimerControls();
-    updateTimer();
-    setInterval(() => {
-        updateTimer();
-        if (!document.hidden && hasActiveCallDraft()) {
-            persistDraftData(false);
-        }
-    }, 1000);
+    saveBannerClose?.addEventListener('click', () => saveBanner.classList.remove('show'));
 </script>
 </body>
 </html>

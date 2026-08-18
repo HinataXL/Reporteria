@@ -225,6 +225,22 @@
             box-shadow: 0 6px 20px rgba(27, 160, 200, 0.2);
         }
 
+        .ticket-template-select {
+            min-height: 44px;
+            border-radius: 12px;
+            border: 1px solid rgba(27, 160, 200, 0.35);
+            background: rgba(255, 255, 255, 0.08);
+            color: #f4f0e6;
+            padding: 0 14px;
+            font-weight: 800;
+            outline: none;
+        }
+
+        .ticket-template-select option {
+            color: #07132f;
+            background: #ffffff;
+        }
+
         .info-value {
             padding: 8px 12px;
             background: rgba(27, 160, 200, 0.05);
@@ -286,8 +302,16 @@
             <form th:if="${conversation.zohoTicketId == null or conversation.zohoTicketId == ''}"
                   th:action="@{/conversations/{id}/zoho-ticket(id=${conversation.id})}"
                   method="post"
-                  style="display:inline-flex;">
+                  style="display:inline-flex; gap: 10px; align-items: center;">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <select name="ticketTemplate" class="ticket-template-select" title="Plantilla del ticket">
+                    <option value="auto">Plantilla automatica</option>
+                    <option value="error_1005_1004_limite_permanente">Error 1005/1004 - Aumento de limite</option>
+                    <option value="anulaciones">Anulaciones</option>
+                    <option value="seguimiento">Seguimiento</option>
+                    <option value="incidencia">Incidencia</option>
+                    <option value="aumento_limites">Aumento de limites</option>
+                </select>
                 <button type="submit" class="action-icon" title="Crear ticket Zoho" aria-label="Crear ticket Zoho">
                     <i class="fas fa-ticket-alt"></i>
                 </button>
@@ -509,6 +533,17 @@
                     <p class="text-sm opacity-75 leading-relaxed">
                         Crea un ticket en Zoho Desk usando los datos de esta conversacion.
                     </p>
+                    <label class="block">
+                        <span class="block text-sm uppercase font-black opacity-60 mb-2">Plantilla</span>
+                        <select name="ticketTemplate" class="ticket-template-select w-full">
+                            <option value="auto">Plantilla automatica</option>
+                            <option value="error_1005_1004_limite_permanente">Error 1005/1004 - Aumento de limite</option>
+                            <option value="anulaciones">Anulaciones</option>
+                            <option value="seguimiento">Seguimiento</option>
+                            <option value="incidencia">Incidencia</option>
+                            <option value="aumento_limites">Aumento de limites</option>
+                        </select>
+                    </label>
                     <button type="submit"
                             class="btn-edit block w-full px-5 py-3 rounded-2xl font-bold text-center flex items-center justify-center gap-2">
                         <i class="fas fa-plus-circle"></i> Crear ticket Zoho

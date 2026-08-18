@@ -1,11 +1,15 @@
 package com.erick.soporte.controller;
 
 import com.erick.soporte.entity.CallRecord;
+import com.erick.soporte.entity.Department;
 import com.erick.soporte.entity.User;
 import com.erick.soporte.repository.CallRecordRepository;
+import com.erick.soporte.repository.DepartmentRepository;
+import com.erick.soporte.repository.IssueTypeRepository;
 import com.erick.soporte.repository.UserRepository;
 import com.erick.soporte.security.CustomUserPrincipal;
 import com.erick.soporte.service.AuditLogService;
+import com.erick.soporte.service.ZohoDeskClientService;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -32,7 +37,9 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class CallRecordController {
@@ -40,16 +47,25 @@ public class CallRecordController {
     private static final ZoneId APP_ZONE = ZoneId.of("America/Guatemala");
     private final CallRecordRepository callRecordRepository;
     private final UserRepository userRepository;
+    private final IssueTypeRepository issueTypeRepository;
+    private final DepartmentRepository departmentRepository;
     private final AuditLogService auditLogService;
+    private final ZohoDeskClientService zohoDeskClientService;
 
     public CallRecordController(
             CallRecordRepository callRecordRepository,
             UserRepository userRepository,
-            AuditLogService auditLogService
+            IssueTypeRepository issueTypeRepository,
+            DepartmentRepository departmentRepository,
+            AuditLogService auditLogService,
+            ZohoDeskClientService zohoDeskClientService
     ) {
         this.callRecordRepository = callRecordRepository;
         this.userRepository = userRepository;
+        this.issueTypeRepository = issueTypeRepository;
+        this.departmentRepository = departmentRepository;
         this.auditLogService = auditLogService;
+        this.zohoDeskClientService = zohoDeskClientService;
     }
 
     @GetMapping("/calls")
@@ -87,11 +103,6 @@ public class CallRecordController {
         model.addAttribute("incomingMetric", countByType(filteredCalls, "Entrante"));
         model.addAttribute("outgoingMetric", countByType(filteredCalls, "Saliente"));
         model.addAttribute("followUpMetric", filteredCalls.stream().filter(c -> Boolean.TRUE.equals(c.getRequiereSeguimiento())).count());
-        model.addAttribute("avgDurationMetric", filteredCalls.stream()
-                .filter(c -> c.getDuracionMinutos() != null)
-                .mapToInt(CallRecord::getDuracionMinutos)
-                .average()
-                .orElse(0));
         model.addAttribute("agents", userRepository.findAll().stream()
                 .map(this::fullName)
                 .filter(name -> !name.isBlank())
@@ -126,14 +137,47 @@ public class CallRecordController {
         call.setResultado("Atendida");
         call.setEstado("Registrada");
         model.addAttribute("call", call);
+        model.addAttribute("issueTypes", issueTypeRepository.findByActivoTrueOrderByNombreAsc());
+        model.addAttribute("departments", departmentRepository.findByActivoTrueOrderByNombreAsc());
         model.addAttribute("popupMode", popup || pip);
         model.addAttribute("pipMode", pip);
         return "calls/create";
     }
 
+    @PostMapping("/api/calls/save")
+    public ResponseEntity<Map<String, Object>> saveAjax(
+            @ModelAttribute CallRecord call,
+            Authentication authentication,
+            HttpServletRequest request
+    ) {
+        try {
+            CallRecord saved = persistNewCall(call, authentication, request);
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("success", true);
+            response.put("id", saved.getId());
+            response.put("codigo", saved.getCodigo());
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
     @PostMapping("/calls/save")
     public String save(
             @ModelAttribute CallRecord call,
+            Authentication authentication,
+            HttpServletRequest request
+    ) {
+        persistNewCall(call, authentication, request);
+        return "redirect:/calls";
+    }
+
+    private CallRecord persistNewCall(
+            CallRecord call,
             Authentication authentication,
             HttpServletRequest request
     ) {
@@ -154,7 +198,57 @@ public class CallRecordController {
                 request
         );
 
+        return saved;
+    }
+
+    @PostMapping("/calls/{id}/zoho-ticket")
+    public String createZohoTicket(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "auto") String ticketTemplate,
+            Authentication authentication,
+            HttpServletRequest request,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes
+    ) {
+        CustomUserPrincipal user = (CustomUserPrincipal) authentication.getPrincipal();
+        CallRecord call = callRecordRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Llamada no encontrada"));
+
+        if (!canManageCalls(user) && !belongsToAgent(call, user)) {
+            throw new RuntimeException("No tienes permisos para crear ticket de esta llamada");
+        }
+
+        try {
+            Map<String, Object> ticket = zohoDeskClientService.createTicket(call, ticketTemplate);
+            String ticketNumber = ticketValue(ticket.get("ticketNumber"));
+            String ticketId = ticketValue(ticket.get("id"));
+            String ticketUrl = ticketValue(ticket.get("webUrl"));
+            String zohoContactId = ticketValue(ticket.get("zohoContactId"));
+
+            call.setNumeroTicket(!ticketNumber.isBlank() ? ticketNumber : ticketId);
+            call.setZohoTicketId(ticketId);
+            call.setZohoTicketUrl(ticketUrl.isBlank() ? null : ticketUrl);
+            call.setZohoContactId(zohoContactId.isBlank() ? null : zohoContactId);
+            call.setZohoTicketCreatedAt(LocalDateTime.now(APP_ZONE));
+            callRecordRepository.save(call);
+
+            auditLogService.registrar(
+                    "CREAR_TICKET_ZOHO_LLAMADA",
+                    "ZOHO",
+                    "Se creo ticket Zoho " + call.getNumeroTicket() + " para " + call.getCodigo(),
+                    authentication,
+                    request
+            );
+
+            redirectAttributes.addFlashAttribute("success", "Ticket Zoho creado: " + call.getNumeroTicket());
+        } catch (Exception error) {
+            redirectAttributes.addFlashAttribute("error", error.getMessage());
+        }
+
         return "redirect:/calls";
+    }
+
+    private String ticketValue(Object value) {
+        return value == null ? "" : String.valueOf(value).trim();
     }
 
     @GetMapping("/calls/{id}/edit")
@@ -173,6 +267,8 @@ public class CallRecordController {
         }
 
         model.addAttribute("call", call);
+        model.addAttribute("issueTypes", issueTypeRepository.findByActivoTrueOrderByNombreAsc());
+        model.addAttribute("departments", departmentRepository.findByActivoTrueOrderByNombreAsc());
         model.addAttribute("popupMode", popup || pip);
         model.addAttribute("pipMode", pip);
         return "calls/create";
@@ -198,15 +294,21 @@ public class CallRecordController {
         call.setClienteCorreo(form.getClienteCorreo());
         call.setTipoLlamada(form.getTipoLlamada());
         call.setResultado(form.getResultado());
+        call.setDepartmentId(form.getDepartmentId());
         call.setAsunto(form.getAsunto());
         call.setDescripcion(form.getDescripcion());
         call.setObservaciones(form.getObservaciones());
-        call.setFechaInicio(form.getFechaInicio());
-        call.setFechaFin(form.getFechaFin());
+        if (form.getFechaInicio() != null) {
+            call.setFechaInicio(form.getFechaInicio());
+        }
+        if (form.getFechaFin() != null) {
+            call.setFechaFin(form.getFechaFin());
+        }
         call.setDuracionMinutos(resolveDuration(form));
         call.setRequiereSeguimiento(Boolean.TRUE.equals(form.getRequiereSeguimiento()));
         call.setFechaSeguimiento(Boolean.TRUE.equals(form.getRequiereSeguimiento()) ? form.getFechaSeguimiento() : null);
-        call.setEstado(resolveState(form));
+        resolveTransferDepartment(call);
+        call.setEstado(resolveState());
         call.setUpdatedBy(user.getNombreCompleto());
         requireCallData(call);
 
@@ -244,25 +346,50 @@ public class CallRecordController {
         if (!Boolean.TRUE.equals(call.getRequiereSeguimiento())) {
             call.setFechaSeguimiento(null);
         }
+        if (call.getFechaInicio() == null) {
+            call.setFechaInicio(LocalDateTime.now(APP_ZONE));
+        }
+        if (call.getFechaFin() == null) {
+            call.setFechaFin(call.getFechaInicio());
+        }
+        resolveTransferDepartment(call);
         call.setDuracionMinutos(resolveDuration(call));
-        call.setEstado(resolveState(call));
+        call.setEstado(resolveState());
         requireCallData(call);
+    }
+
+    private void resolveTransferDepartment(CallRecord call) {
+        if (!"Transferida".equalsIgnoreCase(call.getResultado())) {
+            call.setDepartmentId(null);
+            call.setDepartmentName(null);
+            return;
+        }
+
+        if (call.getDepartmentId() == null) {
+            throw new IllegalArgumentException("El departamento es obligatorio cuando la llamada fue transferida.");
+        }
+
+        Department department = departmentRepository.findById(call.getDepartmentId())
+                .orElseThrow(() -> new IllegalArgumentException("Departamento no encontrado."));
+
+        if (!Boolean.TRUE.equals(department.getActivo())) {
+            throw new IllegalArgumentException("El departamento seleccionado no esta activo.");
+        }
+
+        call.setDepartmentName(department.getNombre());
     }
 
     private Integer resolveDuration(CallRecord call) {
         if (call.getFechaInicio() != null && call.getFechaFin() != null && !call.getFechaFin().isBefore(call.getFechaInicio())) {
             long minutes = Duration.between(call.getFechaInicio(), call.getFechaFin()).toMinutes();
-            return Math.max(1, (int) minutes);
+            return Math.max(0, (int) minutes);
         }
 
         return call.getDuracionMinutos() != null ? Math.max(0, call.getDuracionMinutos()) : 0;
     }
 
-    private String resolveState(CallRecord call) {
-        if (Boolean.TRUE.equals(call.getRequiereSeguimiento())) {
-            return "Seguimiento";
-        }
-        return call.getEstado() == null || call.getEstado().isBlank() ? "Registrada" : call.getEstado();
+    private String resolveState() {
+        return "Registrada";
     }
 
     private void requireCallData(CallRecord call) {
@@ -271,6 +398,12 @@ public class CallRecordController {
         }
         if (call.getClienteTelefono() == null || call.getClienteTelefono().trim().isEmpty()) {
             throw new IllegalArgumentException("El telefono es obligatorio.");
+        }
+        if (!call.getClienteTelefono().trim().matches("\\d{1,8}")) {
+            throw new IllegalArgumentException("El telefono debe contener solo numeros y maximo 8 digitos.");
+        }
+        if (call.getNombreComercio() == null || call.getNombreComercio().trim().isEmpty()) {
+            throw new IllegalArgumentException("El nombre comercio es obligatorio.");
         }
         if (call.getTipoLlamada() == null || call.getTipoLlamada().trim().isEmpty()) {
             throw new IllegalArgumentException("El tipo de llamada es obligatorio.");
@@ -340,7 +473,6 @@ public class CallRecordController {
             case "resultado" -> "resultado";
             case "estado" -> "estado";
             case "agente" -> "agenteNombre";
-            case "duracion" -> "duracionMinutos";
             case "fecha" -> "fechaInicio";
             default -> "id";
         };

@@ -324,6 +324,7 @@ public class HomeController {
     @PostMapping("/conversations/{id}/zoho-ticket")
     public String createZohoTicket(
             @PathVariable Long id,
+            @RequestParam(defaultValue = "auto") String ticketTemplate,
             Authentication authentication,
             HttpServletRequest request,
             org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes
@@ -337,11 +338,11 @@ public class HomeController {
         }
 
         try {
-            Map<String, Object> ticket = zohoDeskClientService.createTicket(conversation);
-            String ticketNumber = String.valueOf(ticket.getOrDefault("ticketNumber", ""));
-            String ticketId = String.valueOf(ticket.getOrDefault("id", ""));
-            String ticketUrl = String.valueOf(ticket.getOrDefault("webUrl", ""));
-            String zohoContactId = String.valueOf(ticket.getOrDefault("zohoContactId", ""));
+            Map<String, Object> ticket = zohoDeskClientService.createTicket(conversation, ticketTemplate);
+            String ticketNumber = ticketValue(ticket.get("ticketNumber"));
+            String ticketId = ticketValue(ticket.get("id"));
+            String ticketUrl = ticketValue(ticket.get("webUrl"));
+            String zohoContactId = ticketValue(ticket.get("zohoContactId"));
 
             conversation.setTicketAperturado(true);
             conversation.setNumeroTicket(!ticketNumber.isBlank() ? ticketNumber : ticketId);
@@ -365,6 +366,10 @@ public class HomeController {
         }
 
         return "redirect:/conversations/" + id;
+    }
+
+    private String ticketValue(Object value) {
+        return value == null ? "" : String.valueOf(value).trim();
     }
 
     @GetMapping("/conversations/edit/{id}")

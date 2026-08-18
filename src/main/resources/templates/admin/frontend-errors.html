@@ -2,7 +2,7 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Errores del navegador</title>
+    <title>Errores del sistema</title>
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <meta name="app-role" content="ADMIN">
@@ -16,9 +16,9 @@
     <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
         <div>
             <p class="text-[#00d9ff] text-sm font-black uppercase tracking-[0.22em] mb-2">Administracion</p>
-            <h1 class="text-4xl font-black">Errores del navegador</h1>
+            <h1 class="text-4xl font-black">Errores del sistema</h1>
             <p class="text-slate-300 text-sm mt-2">
-                Registro tecnico de fallos, advertencias, URL, usuario y navegador.
+                Registro tecnico de fallos del navegador y del servidor, URL, usuario y contexto.
             </p>
         </div>
 
@@ -54,8 +54,8 @@
     <section class="bg-white/10 border border-white/10 rounded-3xl p-5 mb-6">
         <h2 class="text-xl font-black mb-2">Como usar este modulo</h2>
         <p class="text-slate-300 text-sm leading-relaxed">
-            La consola del navegador queda silenciosa para usuarios normales. Los errores se guardan aqui con contexto
-            para revisar pantalla afectada, usuario, navegador y detalle tecnico sin depender de capturas de consola.
+            Los errores del navegador y las pantallas de error del servidor se guardan aqui con contexto
+            para revisar pantalla afectada, usuario, navegador, ruta y detalle tecnico sin depender de capturas.
             Para depuracion local se puede activar <span class="font-black text-[#00d9ff]">insightsDebug=true</span> en localStorage.
         </p>
     </section>
@@ -109,7 +109,7 @@
             </tr>
             <tr th:if="${errors == null or errors.empty}">
                 <td colspan="6" class="p-8 text-center text-slate-300">
-                    Aun no hay errores del navegador registrados.
+                    Aun no hay errores del sistema registrados.
                 </td>
             </tr>
             </tbody>

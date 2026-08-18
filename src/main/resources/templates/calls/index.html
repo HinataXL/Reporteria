@@ -190,6 +190,52 @@
             border-color: #6236ff;
         }
 
+        .actions-cell {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .actions-cell form {
+            margin: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ticket-template-mini {
+            width: 132px;
+            height: 36px;
+            border: 1px solid var(--rm-border);
+            border-radius: 10px;
+            background: #fff;
+            color: var(--rm-ink);
+            font-size: 11px;
+            font-weight: 900;
+            padding: 0 8px;
+            outline: none;
+        }
+
+        .flash-message {
+            margin-bottom: 14px;
+            border-radius: 12px;
+            padding: 13px 15px;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .flash-success {
+            border: 1px solid #b7f0cb;
+            background: #effcf4;
+            color: #075f36;
+        }
+
+        .flash-error {
+            border: 1px solid #ffd0da;
+            background: #fff0f3;
+            color: #b42342;
+        }
+
         .pagination-bar {
             display: flex;
             justify-content: center;
@@ -356,7 +402,7 @@
             </div>
         </header>
 
-        <section class="calls-kpis">
+        <section class="calls-kpis" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
             <article class="kpi calls-kpi" style="--accent:#6236ff;--soft:#f4f1ff">
                 <div class="icon-bubble"><i data-lucide="phone"></i></div>
                 <div class="kpi-label">Total</div>
@@ -381,13 +427,10 @@
                 <div class="kpi-value" th:text="${followUpMetric}">0</div>
                 <div class="kpi-note">Requieren nueva accion</div>
             </article>
-            <article class="kpi calls-kpi" style="--accent:#07c8f9;--soft:#effaff">
-                <div class="icon-bubble"><i data-lucide="timer"></i></div>
-                <div class="kpi-label">Tiempo promedio</div>
-                <div class="kpi-value" th:text="${#numbers.formatDecimal(avgDurationMetric, 1, 1) + ' min'}">0 min</div>
-                <div class="kpi-note">Duracion registrada</div>
-            </article>
         </section>
+
+        <div th:if="${success}" class="flash-message flash-success" th:text="${success}">Operacion exitosa</div>
+        <div th:if="${error}" class="flash-message flash-error" th:text="${error}">No fue posible completar la operacion</div>
 
         <form class="card section filter-card" method="get" th:action="@{/calls}">
             <div class="filter-toolbar">
@@ -477,7 +520,6 @@
                     <th><a class="sort-link" th:href="@{/calls(page=0,size=${pageSize},sort='resultado',dir=${sort == 'resultado' ? reverseDir : 'asc'},q=${q},tipo=${tipo},resultado=${resultado},estado=${estado},agent=${agent},cliente=${cliente},comercio=${comercio},from=${from},to=${to})}">Resultado <i data-lucide="arrow-up-down"></i></a></th>
                     <th><a class="sort-link" th:href="@{/calls(page=0,size=${pageSize},sort='agente',dir=${sort == 'agente' ? reverseDir : 'asc'},q=${q},tipo=${tipo},resultado=${resultado},estado=${estado},agent=${agent},cliente=${cliente},comercio=${comercio},from=${from},to=${to})}">Agente <i data-lucide="arrow-up-down"></i></a></th>
                     <th><a class="sort-link" th:href="@{/calls(page=0,size=${pageSize},sort='fecha',dir=${sort == 'fecha' ? reverseDir : 'desc'},q=${q},tipo=${tipo},resultado=${resultado},estado=${estado},agent=${agent},cliente=${cliente},comercio=${comercio},from=${from},to=${to})}">Fecha <i data-lucide="arrow-up-down"></i></a></th>
-                    <th><a class="sort-link" th:href="@{/calls(page=0,size=${pageSize},sort='duracion',dir=${sort == 'duracion' ? reverseDir : 'desc'},q=${q},tipo=${tipo},resultado=${resultado},estado=${estado},agent=${agent},cliente=${cliente},comercio=${comercio},from=${from},to=${to})}">Duracion <i data-lucide="arrow-up-down"></i></a></th>
                     <th>Accion</th>
                 </tr>
                 </thead>
@@ -497,9 +539,9 @@
                              data-notes=${call.observaciones},
                              data-start=${call.fechaInicio != null ? #temporals.format(call.fechaInicio, 'dd/MM/yyyy HH:mm') : 'Sin fecha'},
                              data-end=${call.fechaFin != null ? #temporals.format(call.fechaFin, 'dd/MM/yyyy HH:mm') : 'Sin fecha'},
-                             data-duration=${call.duracionMinutos != null ? call.duracionMinutos : 0},
                              data-follow=${call.requiereSeguimiento != null and call.requiereSeguimiento ? 'Si' : 'No'},
-                             data-follow-date=${call.fechaSeguimiento != null ? #temporals.format(call.fechaSeguimiento, 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">
+                             data-follow-date=${call.fechaSeguimiento != null ? #temporals.format(call.fechaSeguimiento, 'dd/MM/yyyy HH:mm') : 'Sin fecha'},
+                             data-ticket=${call.numeroTicket != null and !call.numeroTicket.isBlank() ? call.numeroTicket : 'Sin ticket'}">
                     <td>
                         <div class="code-line">
                             <span th:text="${call.codigo}">CALL-00000</span>
@@ -520,15 +562,40 @@
                     </td>
                     <td th:text="${call.agenteNombre}">Agente</td>
                     <td th:text="${call.fechaInicio != null ? #temporals.format(call.fechaInicio, 'dd/MM/yyyy HH:mm') : 'Sin fecha'}">00/00/0000</td>
-                    <td th:text="${(call.duracionMinutos != null ? call.duracionMinutos : 0) + ' min'}">0 min</td>
                     <td>
-                        <a class="icon-btn primary" th:href="@{/calls/{id}/edit(id=${call.id})}" onclick="event.stopPropagation()" title="Editar llamada">
-                            <i data-lucide="pencil"></i>
-                        </a>
+                        <div class="actions-cell" onclick="event.stopPropagation()">
+                            <a class="icon-btn primary" th:href="@{/calls/{id}/edit(id=${call.id})}" title="Editar llamada">
+                                <i data-lucide="pencil"></i>
+                            </a>
+                            <form th:if="${call.zohoTicketId == null or call.zohoTicketId == ''}"
+                                  th:action="@{/calls/{id}/zoho-ticket(id=${call.id})}"
+                                  method="post">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <select name="ticketTemplate" class="ticket-template-mini" title="Plantilla del ticket">
+                                    <option value="auto">Automatica</option>
+                                    <option value="error_1005_1004_limite_permanente">Error 1005/1004</option>
+                                    <option value="anulaciones">Anulaciones</option>
+                                    <option value="seguimiento">Seguimiento</option>
+                                    <option value="incidencia">Incidencia</option>
+                                </select>
+                                <button type="submit" class="icon-btn" title="Crear ticket Zoho" aria-label="Crear ticket Zoho">
+                                    <i data-lucide="ticket-plus"></i>
+                                </button>
+                            </form>
+                            <a th:if="${call.zohoTicketUrl != null and call.zohoTicketUrl != ''}"
+                               class="icon-btn"
+                               th:href="${call.zohoTicketUrl}"
+                               target="_blank"
+                               rel="noopener"
+                               title="Abrir ticket Zoho"
+                               aria-label="Abrir ticket Zoho">
+                                <i data-lucide="external-link"></i>
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 <tr th:if="${calls.totalElements == 0}">
-                    <td colspan="9" style="text-align:center;color:var(--rm-muted);font-weight:900;padding:28px;">Sin llamadas registradas para este filtro.</td>
+                    <td colspan="8" style="text-align:center;color:var(--rm-muted);font-weight:900;padding:28px;">Sin llamadas registradas para este filtro.</td>
                 </tr>
                 </tbody>
             </table>
@@ -565,8 +632,8 @@
             <div class="quick-item"><span>Agente</span><strong id="quickAgent">-</strong></div>
             <div class="quick-item"><span>Inicio</span><strong id="quickStart">-</strong></div>
             <div class="quick-item"><span>Fin</span><strong id="quickEnd">-</strong></div>
-            <div class="quick-item"><span>Duracion</span><strong id="quickDuration">0 min</strong></div>
             <div class="quick-item"><span>Seguimiento</span><strong id="quickFollow">No</strong></div>
+            <div class="quick-item"><span>Ticket Zoho</span><strong id="quickTicket">Sin ticket</strong></div>
         </div>
         <div class="quick-item" style="margin-bottom:10px;"><span>Comercio</span><strong id="quickCommerce">-</strong></div>
         <div class="quick-item" style="margin-bottom:10px;"><span>Telefono / correo</span><strong id="quickContact">-</strong></div>
@@ -608,10 +675,10 @@
         document.getElementById('quickAgent').innerText = row.dataset.agent || '-';
         document.getElementById('quickStart').innerText = row.dataset.start || '-';
         document.getElementById('quickEnd').innerText = row.dataset.end || '-';
-        document.getElementById('quickDuration').innerText = `${row.dataset.duration || 0} min`;
         document.getElementById('quickFollow').innerText = row.dataset.followDate && row.dataset.followDate !== 'Sin fecha'
             ? `${row.dataset.follow} - ${row.dataset.followDate}`
             : (row.dataset.follow || 'No');
+        document.getElementById('quickTicket').innerText = row.dataset.ticket || 'Sin ticket';
         document.getElementById('quickCommerce').innerText = row.dataset.commerce || 'Sin comercio';
         document.getElementById('quickContact').innerText = [row.dataset.phone, row.dataset.email].filter(Boolean).join(' / ') || '-';
         document.getElementById('quickIssue').innerText = row.dataset.issue || '-';
