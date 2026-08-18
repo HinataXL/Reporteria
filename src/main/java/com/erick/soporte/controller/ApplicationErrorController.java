@@ -5,6 +5,7 @@ import com.erick.soporte.repository.FrontendErrorLogRepository;
 import com.erick.soporte.security.CustomUserPrincipal;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.boot.webmvc.error.ErrorController;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -15,7 +16,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 @Controller
-public class ApplicationErrorController {
+public class ApplicationErrorController implements ErrorController {
 
     private static final int TEXT_LIMIT = 4000;
 
