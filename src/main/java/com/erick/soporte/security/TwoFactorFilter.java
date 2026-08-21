@@ -1,6 +1,7 @@
 package com.erick.soporte.security;
 
 import com.erick.soporte.service.ActiveSessionService;
+import com.erick.soporte.service.AuditLogService;
 import com.erick.soporte.service.LoginAlertMailService;
 import com.erick.soporte.service.PasskeyEnrollmentService;
 import jakarta.servlet.FilterChain;
@@ -26,17 +27,20 @@ public class TwoFactorFilter extends OncePerRequestFilter {
     private final ActiveSessionService activeSessionService;
     private final LoginAlertMailService loginAlertMailService;
     private final PasskeyEnrollmentService passkeyEnrollmentService;
+    private final AuditLogService auditLogService;
 
     public TwoFactorFilter(
             CustomUserDetailsService customUserDetailsService,
             ActiveSessionService activeSessionService,
             LoginAlertMailService loginAlertMailService,
-            PasskeyEnrollmentService passkeyEnrollmentService
+            PasskeyEnrollmentService passkeyEnrollmentService,
+            AuditLogService auditLogService
     ) {
         this.customUserDetailsService = customUserDetailsService;
         this.activeSessionService = activeSessionService;
         this.loginAlertMailService = loginAlertMailService;
         this.passkeyEnrollmentService = passkeyEnrollmentService;
+        this.auditLogService = auditLogService;
     }
 
     @Override
@@ -116,6 +120,13 @@ public class TwoFactorFilter extends OncePerRequestFilter {
 
             activeSessionService.register(session.getId(), principal);
             loginAlertMailService.notifyIfWatchedUserLoggedIn(principal, request);
+            auditLogService.registrar(
+                    "LOGIN_PASSKEY",
+                    "SEGURIDAD",
+                    "Inicio de sesion con passkey para " + principal.getUsername(),
+                    SecurityContextHolder.getContext().getAuthentication(),
+                    request
+            );
             session.setAttribute("PASSKEY_SESSION_REGISTERED", true);
         }
     }

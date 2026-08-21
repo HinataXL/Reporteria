@@ -5,6 +5,7 @@ import com.erick.soporte.entity.User;
 import com.erick.soporte.repository.RoleRepository;
 import com.erick.soporte.repository.UserRepository;
 import com.erick.soporte.service.AuditLogService;
+import com.erick.soporte.service.PasskeyEnrollmentService;
 import com.erick.soporte.service.UserPasswordMailService;
 import com.erick.soporte.security.CustomUserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,19 +25,22 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
     private final AuditLogService auditLogService;
     private final UserPasswordMailService userPasswordMailService;
+    private final PasskeyEnrollmentService passkeyEnrollmentService;
 
     public UserController(
             UserRepository userRepository,
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
             AuditLogService auditLogService,
-            UserPasswordMailService userPasswordMailService
+            UserPasswordMailService userPasswordMailService,
+            PasskeyEnrollmentService passkeyEnrollmentService
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditLogService = auditLogService;
         this.userPasswordMailService = userPasswordMailService;
+        this.passkeyEnrollmentService = passkeyEnrollmentService;
     }
 
     @GetMapping
@@ -44,6 +48,7 @@ public class UserController {
         model.addAttribute("users", userRepository.findAll());
         model.addAttribute("roles", roleRepository.findAll());
         model.addAttribute("currentUserId", currentUserId(authentication));
+        model.addAttribute("passkeySummaries", passkeyEnrollmentService.summariesByUsername());
         return "users/index";
     }
 
@@ -175,11 +180,37 @@ public class UserController {
                     request
             );
 
-            redirectAttributes.addFlashAttribute("success", "Nueva contrasena enviada a " + user.getCorreo() + ".");
+        redirectAttributes.addFlashAttribute("success", "Nueva contrasena enviada a " + user.getCorreo() + ".");
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("error", "No se pudo enviar la nueva contrasena. Revisa la configuracion SMTP.");
         }
 
+        return "redirect:/users";
+    }
+
+    @PostMapping("/{id}/passkeys/reset")
+    public String resetPasskeys(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes,
+            Authentication authentication,
+            HttpServletRequest request
+    ) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
+            redirectAttributes.addFlashAttribute("error", "Usuario no encontrado.");
+            return "redirect:/users";
+        }
+
+        int deleted = passkeyEnrollmentService.deleteAllForUser(user.getCorreo());
+        auditLogService.registrar(
+                "RESET_PASSKEY_USUARIO",
+                "SEGURIDAD",
+                "Se eliminaron " + deleted + " passkeys de " + user.getCorreo() + " para forzar nuevo registro",
+                authentication,
+                request
+        );
+
+        redirectAttributes.addFlashAttribute("success", "Passkeys eliminadas. El usuario debera registrar una nueva al ingresar.");
         return "redirect:/users";
     }
 

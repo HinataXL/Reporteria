@@ -67,7 +67,7 @@ public class TwoFactorVerificationController {
         activeSessionService.register(session.getId(), principal);
         loginAlertMailService.notifyIfWatchedUserLoggedIn(principal, request);
 
-        if (!passkeyEnrollmentService.hasPasskey(principal.getUsername())) {
+        if (passkeyEnrollmentService.requiresPasskey(principal.getUsername(), principal.getRol())) {
             session.setAttribute("PASSKEY_SETUP_REQUIRED", true);
             return "redirect:/settings/2fa?passkeyRequired";
         }

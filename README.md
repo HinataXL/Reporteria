@@ -11,10 +11,16 @@ Funcionalidades principales disponibles:
 - Autenticacion con Spring Security.
 - Roles ADMIN, SUPERVISOR y AGENTE.
 - Seguridad 2FA con aplicacion autenticadora.
+- Inicio de sesion con Passkey/WebAuthn.
+- Politica de passkey obligatoria por rol.
+- Administracion de passkeys por usuario: listar, renombrar y eliminar.
+- Reset administrativo de passkeys para recuperacion controlada.
 - Gestion de usuarios administrativos.
 - Gestion de conversaciones de soporte.
+- Gestion manual de llamadas operativas.
 - Dashboard de supervisor con metricas operativas.
 - Dashboard de agente con metricas asignadas.
+- Dashboard y modulo de tareas Zoho CRM.
 - Indicadores por estado: pendientes, resueltas, escaladas y cerradas.
 - Top 10 asuntos y top 10 clientes.
 - Vista 360 de clientes.
@@ -27,6 +33,8 @@ Funcionalidades principales disponibles:
 - Auditoria de acciones del sistema.
 - Monitoreo de uso de Gemini desde panel admin.
 - Sincronizacion de clientes desde Zoho Desk.
+- Creacion de tickets en Zoho Desk desde conversaciones y llamadas.
+- Registro de errores frontend/backend desde panel admin.
 
 ## Tecnologias
 
@@ -34,6 +42,7 @@ Funcionalidades principales disponibles:
 - Spring Boot 4.0.6
 - Spring MVC
 - Spring Security
+- Spring Security WebAuthn
 - Spring Data JPA
 - Thymeleaf
 - PostgreSQL
@@ -54,7 +63,7 @@ src/main/java/com/erick/soporte
   entity/        Entidades JPA
   repository/    Repositorios Spring Data
   security/      Login, roles, 2FA y filtros de seguridad
-  service/       Servicios de auditoria, reportes, IA y tiempo real
+  service/       Servicios de auditoria, reportes, IA, Zoho, passkeys y tiempo real
 
 src/main/resources
   templates/     Vistas Thymeleaf
@@ -68,8 +77,11 @@ src/main/resources
 
 - Acceso a panel administrador.
 - Gestion de usuarios.
+- Gestion de roles, contrasenas temporales y reset de passkeys.
 - Auditoria del sistema.
+- Modulo de errores del sistema.
 - Estado y uso de Gemini.
+- Modulo CRM de tareas.
 - Exportacion CSV.
 - Acceso a dashboards operativos.
 
@@ -79,11 +91,13 @@ src/main/resources
 - Reportes y exportaciones.
 - Acciones masivas sobre conversaciones.
 - Vista global de metricas del equipo.
+- Acceso al modulo CRM segun permisos configurados.
 
 ### AGENTE
 
 - Dashboard agente.
 - Creacion y seguimiento de conversaciones.
+- Registro de llamadas.
 - Vista limitada a conversaciones asignadas.
 
 ## Rutas Relevantes
@@ -98,9 +112,15 @@ src/main/resources
 /admin/dashboard
 /admin/gemini
 /admin/logs
+/admin/frontend-errors
 /admin/zoho
+/admin/zoho-crm/tasks
+/admin/zoho-crm/tasks/dashboard
+/agent/zoho-crm/tasks/dashboard
 /users
 /settings/2fa
+/calls
+/calls/create
 /profile
 ```
 
@@ -118,6 +138,7 @@ APIs principales:
 /api/session/keep-alive
 /api/webhooks/qpaypro
 /api/clients/search
+/api/calls/save
 ```
 
 ## Variables de Entorno
@@ -160,6 +181,11 @@ REPORT_MAIL_CC=copia@outlook.com
 LOGIN_ALERT_ENABLED=true
 LOGIN_ALERT_USER=pablo.flores@fixss.com
 LOGIN_ALERT_EMAIL_TO=correo_que_recibe_la_alerta@dominio.com
+
+PASSKEY_RP_NAME=Insights Desk
+PASSKEY_RP_ID=insightsdesk.tech
+PASSKEY_ALLOWED_ORIGINS=https://insightsdesk.tech
+PASSKEY_REQUIRED_ROLES=ADMIN,SUPERVISOR,AGENTE
 ```
 
 Configuracion actual en `application.properties`:
@@ -195,6 +221,10 @@ login.alert.enabled=${LOGIN_ALERT_ENABLED:true}
 login.alert.user=${LOGIN_ALERT_USER:pablo.flores@fixss.com}
 login.alert.to=${LOGIN_ALERT_EMAIL_TO:}
 app.allowed-email-domain=@fixss.com
+app.passkeys.rp-name=${PASSKEY_RP_NAME:Insights Desk}
+app.passkeys.rp-id=${PASSKEY_RP_ID:localhost}
+app.passkeys.allowed-origins=${PASSKEY_ALLOWED_ORIGINS:http://localhost:8080,https://insightsdesk.tech}
+app.passkeys.required-roles=${PASSKEY_REQUIRED_ROLES:ADMIN,SUPERVISOR,AGENTE}
 server.servlet.session.timeout=10m
 ```
 
@@ -276,6 +306,10 @@ Tablas principales:
 - `departments`
 - `rejection_codes`
 - `webhook_events`
+- `call_records`
+- `frontend_error_logs`
+- `user_entities`
+- `user_credentials`
 
 Importante: en PostgreSQL, si se cargan usuarios manualmente, validar que la secuencia de `users.id` este sincronizada con el valor maximo existente.
 
@@ -284,8 +318,27 @@ Importante: en PostgreSQL, si se cargan usuarios manualmente, validar que la sec
 - Las contrasenas se almacenan con BCrypt.
 - El acceso se controla por roles.
 - 2FA utiliza TOTP.
+- Passkey/WebAuthn permite inicio de sesion con huella, rostro, PIN o llave de seguridad.
+- Los usuarios sin passkey pueden ser obligados a configurarla al iniciar sesion segun `PASSKEY_REQUIRED_ROLES`.
+- El usuario puede listar, renombrar y eliminar sus passkeys desde `/settings/2fa`.
+- El administrador puede ver el estado de passkey por usuario y resetear passkeys desde `/users`.
+- Los eventos de passkey se auditan: creacion, login, renombrado, eliminacion y reset administrativo.
 - Las rutas `/api/webhooks/qpaypro` y `/ws/**` se excluyen de CSRF por requerimientos de integracion.
 - El dominio permitido para login se controla con `app.allowed-email-domain`.
+
+Para produccion, `PASSKEY_RP_ID` debe coincidir con el dominio real, por ejemplo:
+
+```env
+PASSKEY_RP_ID=insightsdesk.tech
+PASSKEY_ALLOWED_ORIGINS=https://insightsdesk.tech
+```
+
+Para desarrollo local:
+
+```env
+PASSKEY_RP_ID=localhost
+PASSKEY_ALLOWED_ORIGINS=http://localhost:8080
+```
 
 ## IA con Gemini
 
@@ -300,7 +353,7 @@ El servicio esta preparado para no bloquear el arranque si Gemini no esta dispon
 
 ## Integracion Zoho Desk
 
-Zoho Desk se usa como fuente externa de contactos/clientes. La sincronizacion se ejecuta desde:
+Zoho Desk se usa como fuente externa de contactos/clientes y para apertura de tickets. La sincronizacion se ejecuta desde:
 
 ```text
 /admin/zoho
@@ -313,6 +366,8 @@ La integracion:
 - Guarda clientes en la tabla local `support_clients`.
 - Permite busqueda rapida desde el formulario de nueva conversacion mediante `/api/clients/search`.
 - Permite crear tickets en Zoho Desk desde el detalle de una conversacion guardada.
+- Permite crear tickets desde una llamada registrada.
+- Usa plantillas predefinidas por asunto para enviar texto ordenado al ticket.
 
 Scopes recomendados en Zoho API Console:
 
@@ -345,6 +400,12 @@ La vista administrativa esta disponible en:
 /admin/logs
 ```
 
+Adicionalmente, los errores capturados desde navegador y servidor se consultan en:
+
+```text
+/admin/frontend-errors
+```
+
 ## Tiempo Real
 
 El sistema usa WebSocket/STOMP para publicar eventos hacia dashboards y actividad en tiempo real.
@@ -367,13 +428,35 @@ Topics usados:
 - CSV de conversaciones: `/conversations/export/csv`
 - Envio manual de CSV por correo: `/admin/reports/email-csv`
 - Tareas Zoho CRM: `/admin/zoho-crm/tasks`
+- Dashboard beta de tareas CRM: `/admin/zoho-crm/tasks/dashboard`
+- Dashboard agente de tareas CRM: `/agent/zoho-crm/tasks/dashboard`
 - PDF supervisor: `/supervisor/report/pdf`
 
-El CSV incluye solo la informacion solicitada para reporte operativo: cliente, telefono, asunto, fecha de inicio, fecha guardado y observaciones.
+El CSV incluye solo la informacion solicitada para reporte operativo: cliente, telefono, nombre comercio, asunto, fecha de inicio, fecha guardado y observaciones.
 
 El envio manual por correo permite seleccionar un rango de fechas, adjuntar el CSV y enviarlo desde una cuenta Zoho Mail con copia opcional a otra direccion. Para probarlo se deben configurar `MAIL_USERNAME`, `MAIL_PASSWORD`, `REPORT_MAIL_TO` y `REPORT_MAIL_CC`.
 
 La vista de Zoho CRM consulta el modulo `Tasks` por `Created_Time` y calcula tareas asignadas, realizadas, pendientes y cumplimiento por propietario. Para tareas realizadas se usan los estados definidos en `ZOHO_CRM_COMPLETED_STATUSES`.
+
+Para reducir consumo de API, las consultas CRM no usan auto-refresh. El refresco se realiza con boton manual y, en vistas de agente, puede requerir autorizacion de un usuario ADMIN mediante WebSocket.
+
+## Llamadas
+
+El modulo de llamadas permite registrar atenciones telefonicas desde:
+
+```text
+/calls
+/calls/create
+```
+
+Caracteristicas:
+
+- Registro manual con cliente, comercio, telefono, asunto, tipo y resultado.
+- Asuntos cargados desde base de datos.
+- Flujo de resultados por tipo de llamada.
+- Apertura de tickets Zoho Desk desde llamadas.
+- Plantillas predefinidas para tickets.
+- Exportacion CSV y vista historica.
 
 ## Despliegue
 
@@ -394,6 +477,12 @@ Antes de subir cambios:
 
 ```bash
 ./mvnw -DskipTests compile
+```
+
+Pruebas:
+
+```bash
+./mvnw test
 ```
 
 Recomendaciones:

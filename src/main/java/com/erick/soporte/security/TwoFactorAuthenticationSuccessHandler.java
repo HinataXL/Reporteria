@@ -72,8 +72,8 @@ public class TwoFactorAuthenticationSuccessHandler implements AuthenticationSucc
     }
 
     private boolean setPasskeySetupState(HttpServletRequest request, CustomUserPrincipal principal) {
-        boolean missingPasskey = !passkeyEnrollmentService.hasPasskey(principal.getUsername());
-        if (missingPasskey) {
+        boolean requiresPasskey = passkeyEnrollmentService.requiresPasskey(principal.getUsername(), principal.getRol());
+        if (requiresPasskey) {
             request.getSession().setAttribute("PASSKEY_SETUP_REQUIRED", true);
             return true;
         }

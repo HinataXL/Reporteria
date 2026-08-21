@@ -201,6 +201,11 @@
         <span class="font-semibold text-sm">2FA activado correctamente.</span>
     </div>
 
+    <div th:if="${success}" class="fade-up mb-6 flex items-center gap-3 bg-green-500/10 text-green-300 border border-green-500/20 rounded-2xl px-4 py-3">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 9l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="font-semibold text-sm" th:text="${success}">Accion completada.</span>
+    </div>
+
     <div th:if="${param.disabled}" class="fade-up mb-6 flex items-center gap-3 bg-yellow-500/10 text-yellow-300 border border-yellow-500/20 rounded-2xl px-4 py-3">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M9 5v4M9 12v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         <span class="font-semibold text-sm">2FA desactivado correctamente.</span>
@@ -240,6 +245,62 @@
                 </svg>
                 Registrar passkey
             </button>
+        </div>
+
+        <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                <p class="text-[10px] uppercase tracking-widest text-[#F4F0E6]/35 font-bold">Estado</p>
+                <p class="mt-2 text-sm font-bold" th:classappend="${hasPasskey} ? ' text-green-300' : ' text-yellow-300'" th:text="${hasPasskey} ? 'Activa' : 'Pendiente'">Pendiente</p>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                <p class="text-[10px] uppercase tracking-widest text-[#F4F0E6]/35 font-bold">Dispositivos</p>
+                <p class="mt-2 text-sm font-bold text-[#F4F0E6]" th:text="${passkeys != null ? passkeys.size() : 0}">0</p>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-black/10 p-4">
+                <p class="text-[10px] uppercase tracking-widest text-[#F4F0E6]/35 font-bold">Politica</p>
+                <p class="mt-2 text-sm font-bold text-violet-200" th:text="${passkeyRequired} ? 'Obligatoria ahora' : 'Lista para passkey'">Lista para passkey</p>
+            </div>
+        </div>
+
+        <div class="mt-6 border-t border-white/10 pt-5">
+            <div class="flex items-center justify-between gap-3 mb-4">
+                <h3 class="font-display text-base font-bold">Passkeys registradas</h3>
+                <span class="text-xs text-[#F4F0E6]/40">Puedes renombrar o eliminar dispositivos.</span>
+            </div>
+
+            <div th:if="${passkeys == null or passkeys.empty}" class="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4 text-yellow-200 text-sm font-semibold">
+                Aun no tienes passkeys registradas.
+            </div>
+
+            <div th:each="passkey : ${passkeys}" class="rounded-2xl border border-white/10 bg-black/10 p-4 mb-3">
+                <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 lg:items-center">
+                    <div>
+                        <p class="font-bold text-[#F4F0E6]" th:text="${passkey.label()}">Laptop principal</p>
+                        <div class="mt-2 flex flex-wrap gap-3 text-xs text-[#F4F0E6]/45">
+                            <span th:text="|Creada: ${passkey.created() != null ? #temporals.format(passkey.created(), 'dd/MM/yyyy HH:mm') : '-'}|">Creada</span>
+                            <span th:text="|Ultimo uso: ${passkey.lastUsed() != null ? #temporals.format(passkey.lastUsed(), 'dd/MM/yyyy HH:mm') : 'Sin uso'}|">Ultimo uso</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <form th:action="@{/settings/2fa/passkeys/{credentialId}/label(credentialId=${passkey.credentialId()})}" method="post" class="flex gap-2">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <input name="label"
+                                   th:value="${passkey.label()}"
+                                   maxlength="80"
+                                   class="min-w-0 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-[#F4F0E6] outline-none focus:border-violet-300">
+                            <button type="submit" class="rounded-xl bg-violet-500 px-3 py-2 text-xs font-bold text-white hover:bg-violet-400">Guardar</button>
+                        </form>
+                        <form th:action="@{/settings/2fa/passkeys/{credentialId}/delete(credentialId=${passkey.credentialId()})}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button type="submit"
+                                    onclick="return confirm('Se eliminara esta passkey. Si no tienes otra, deberas registrar una nueva para continuar. Continuar?')"
+                                    class="w-full rounded-xl border border-red-400/25 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300 hover:bg-red-500 hover:text-white">
+                                Eliminar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -514,6 +575,13 @@
             if (!registerResponse.ok) {
                 throw new Error('No fue posible guardar la passkey.');
             }
+
+            await fetch('/settings/2fa/passkeys/created', {
+                method: 'POST',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            });
 
             passkeyRegisterStatus.textContent = 'Passkey registrada correctamente. Ya puedes usarla en el login.';
             window.location.assign('/settings/2fa?passkeyCreated');

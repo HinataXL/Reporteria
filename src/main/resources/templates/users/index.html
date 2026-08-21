@@ -120,6 +120,9 @@
           <th class="py-4 px-6 text-center">
             <i class="fas fa-signal mr-1 text-gray-500"></i> Estado
           </th>
+          <th class="py-4 px-6 text-center">
+            <i class="fas fa-fingerprint mr-1 text-gray-500"></i> Passkey
+          </th>
           <th class="py-4 px-6 text-right rounded-tr-2xl">
             <i class="fas fa-sliders mr-1 text-gray-500"></i> Acciones
           </th>
@@ -127,7 +130,9 @@
         </thead>
 
         <tbody class="text-sm font-medium">
-        <tr th:each="user : ${users}" class="border-b border-darkBorder/50 hover:bg-white/[0.02] transition-colors duration-200 group">
+        <tr th:each="user : ${users}"
+            th:with="passkey=${passkeySummaries[#strings.toLowerCase(user.correo)]}"
+            class="border-b border-darkBorder/50 hover:bg-white/[0.02] transition-colors duration-200 group">
 
           <td class="py-4 px-6">
             <div class="flex items-center gap-3">
@@ -166,6 +171,23 @@
                             </span>
           </td>
 
+          <td class="py-4 px-6 text-center">
+            <div th:if="${passkey != null and passkey.hasPasskey()}" class="inline-flex flex-col items-center gap-1">
+              <span class="inline-flex items-center gap-1.5 bg-violet-500/10 border border-violet-400/20 text-violet-200 px-3 py-1 rounded-lg text-xs font-bold">
+                <i class="fas fa-fingerprint text-[10px]"></i>
+                <span th:text="${passkey.total()} + ' activa(s)'">1 activa</span>
+              </span>
+              <span class="text-[10px] text-gray-500" th:text="${passkey.lastUsed() != null ? 'Uso: ' + #temporals.format(passkey.lastUsed(), 'dd/MM HH:mm') : 'Sin uso'}">Sin uso</span>
+            </div>
+            <div th:unless="${passkey != null and passkey.hasPasskey()}" class="inline-flex flex-col items-center gap-1">
+              <span class="inline-flex items-center gap-1.5 bg-yellow-400/10 border border-yellow-400/20 text-yellow-300 px-3 py-1 rounded-lg text-xs font-bold">
+                <i class="fas fa-triangle-exclamation text-[10px]"></i>
+                Pendiente
+              </span>
+              <span class="text-[10px] text-gray-500">Se forzara al ingresar</span>
+            </div>
+          </td>
+
           <td class="py-4 px-6">
             <div class="flex flex-wrap justify-end items-center gap-2">
               <form th:action="@{/users/{id}/role(id=${user.id})}" method="post" class="flex items-center gap-2">
@@ -196,6 +218,16 @@
                 </button>
               </form>
 
+              <form th:action="@{/users/{id}/passkeys/reset(id=${user.id})}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit"
+                        onclick="return confirm('Se eliminaran las passkeys registradas y se forzara un nuevo registro en el proximo ingreso. Continuar?')"
+                        class="w-9 h-9 rounded-xl border border-violet-400/30 bg-violet-500/10 text-violet-200 hover:bg-violet-500 hover:text-white transition"
+                        title="Resetear passkeys">
+                  <i class="fas fa-fingerprint"></i>
+                </button>
+              </form>
+
               <form th:action="@{/users/{id}/delete(id=${user.id})}" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <button type="submit"
@@ -212,7 +244,7 @@
         </tr>
 
         <tr th:if="${users == null or users.empty}">
-          <td colspan="5" class="py-12 text-center text-gray-500">
+          <td colspan="6" class="py-12 text-center text-gray-500">
             <div class="flex flex-col items-center justify-center">
               <i class="fas fa-users-slash text-4xl mb-3 opacity-50"></i>
               <p>No hay usuarios registrados en el sistema.</p>
