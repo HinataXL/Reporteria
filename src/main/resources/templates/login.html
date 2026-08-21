@@ -2,6 +2,8 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ingresar - Insights Desk</title>
 
@@ -397,6 +399,71 @@
             display: block;
         }
 
+        .login-divider {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 12px;
+            margin: 22px 0;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 850;
+        }
+
+        .login-divider::before,
+        .login-divider::after {
+            content: "";
+            height: 1px;
+            background: var(--line);
+        }
+
+        .passkey-button {
+            width: 100%;
+            min-height: 54px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            color: var(--ink);
+            background: #fff;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font: inherit;
+            font-weight: 950;
+            box-shadow: 0 12px 32px rgba(31, 41, 85, .08);
+            transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+        }
+
+        .passkey-button.available {
+            display: inline-flex;
+        }
+
+        .passkey-button:hover {
+            transform: translateY(-1px);
+            border-color: rgba(98, 54, 255, .42);
+            box-shadow: 0 16px 38px rgba(98, 54, 255, .14);
+        }
+
+        .passkey-button:disabled {
+            cursor: wait;
+            opacity: .7;
+            transform: none;
+        }
+
+        .passkey-status {
+            min-height: 18px;
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .passkey-status.error {
+            color: var(--rose);
+        }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -542,6 +609,16 @@
                     <span class="spinner" aria-hidden="true"></span>
                 </button>
             </form>
+
+            <div class="login-divider">o</div>
+
+            <button type="button" id="passkeyLoginButton" class="passkey-button">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M15 7a4 4 0 1 1-7.5 2M14.5 10.5 21 17v3h-3l-2-2-2 2-2-2 2-2-2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Ingresar con passkey
+            </button>
+            <div id="passkeyStatus" class="passkey-status" role="status"></div>
         </div>
     </section>
 </main>
@@ -556,7 +633,100 @@
         const eyeIcon = document.getElementById('eyeIcon');
         const emailError = document.querySelector('[data-error-for="email"]');
         const passwordError = document.querySelector('[data-error-for="password"]');
+        const passkeyButton = document.getElementById('passkeyLoginButton');
+        const passkeyStatus = document.getElementById('passkeyStatus');
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        const base64UrlToBuffer = (value) => {
+            const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+            const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+            const binary = atob(padded);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i += 1) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes.buffer;
+        };
+
+        const bufferToBase64Url = (buffer) => {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            bytes.forEach((byte) => binary += String.fromCharCode(byte));
+            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+        };
+
+        const prepareRequestOptions = (options) => {
+            options.challenge = base64UrlToBuffer(options.challenge);
+            if (Array.isArray(options.allowCredentials)) {
+                options.allowCredentials = options.allowCredentials.map((credential) => ({
+                    ...credential,
+                    id: base64UrlToBuffer(credential.id)
+                }));
+            }
+            return options;
+        };
+
+        const serializeAssertion = (credential) => ({
+            id: credential.id,
+            rawId: bufferToBase64Url(credential.rawId),
+            type: credential.type,
+            response: {
+                authenticatorData: bufferToBase64Url(credential.response.authenticatorData),
+                clientDataJSON: bufferToBase64Url(credential.response.clientDataJSON),
+                signature: bufferToBase64Url(credential.response.signature),
+                userHandle: credential.response.userHandle ? bufferToBase64Url(credential.response.userHandle) : null
+            },
+            clientExtensionResults: credential.getClientExtensionResults(),
+            authenticatorAttachment: credential.authenticatorAttachment
+        });
+
+        if (window.PublicKeyCredential) {
+            passkeyButton.classList.add('available');
+        }
+
+        passkeyButton.addEventListener('click', async () => {
+            passkeyStatus.textContent = 'Abriendo selector de passkey...';
+            passkeyStatus.classList.remove('error');
+            passkeyButton.disabled = true;
+
+            try {
+                const optionsResponse = await fetch('/webauthn/authenticate/options', {
+                    method: 'POST',
+                    headers: {
+                        [csrfHeader]: csrfToken
+                    }
+                });
+
+                if (!optionsResponse.ok) {
+                    throw new Error('No fue posible preparar el inicio con passkey.');
+                }
+
+                const publicKey = prepareRequestOptions(await optionsResponse.json());
+                const credential = await navigator.credentials.get({ publicKey });
+
+                const loginResponse = await fetch('/login/webauthn', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [csrfHeader]: csrfToken
+                    },
+                    body: JSON.stringify(serializeAssertion(credential))
+                });
+
+                if (!loginResponse.ok) {
+                    throw new Error('No se pudo validar la passkey.');
+                }
+
+                const result = await loginResponse.json();
+                window.location.assign(result.redirectUrl || '/conversations');
+            } catch (error) {
+                passkeyStatus.textContent = 'No fue posible ingresar con passkey. Puedes usar tu contraseña.';
+                passkeyStatus.classList.add('error');
+                passkeyButton.disabled = false;
+            }
+        });
 
         togglePassword.addEventListener('click', () => {
             const isPassword = passwordInput.type === 'password';

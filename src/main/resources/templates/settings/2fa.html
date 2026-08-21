@@ -170,6 +170,32 @@
         <span class="font-semibold text-sm" th:text="${error}">Error</span>
     </div>
 
+    <!-- ======================== PASSKEY ======================== -->
+    <div class="fade-up mb-8 bg-white/5 border border-white/10 rounded-3xl p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-5 justify-between">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-violet-500/15 border border-violet-400/25 flex items-center justify-center flex-shrink-0 text-violet-200">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                        <path d="M15 7a4 4 0 1 1-7.5 2M14.5 10.5 21 17v3h-3l-2-2-2 2-2-2 2-2-2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="font-display text-xl font-bold">Passkey</h2>
+                    <p class="text-[#F4F0E6]/50 text-sm max-w-md">Registra este dispositivo para iniciar sesión con huella, rostro, PIN o llave de seguridad.</p>
+                    <p id="passkeyRegisterStatus" class="text-xs text-[#F4F0E6]/45 font-semibold mt-3 min-h-[18px]" role="status"></p>
+                </div>
+            </div>
+            <button id="registerPasskeyButton"
+                    type="button"
+                    class="hidden items-center justify-center gap-2 rounded-2xl bg-violet-500 hover:bg-violet-400 text-white px-5 py-3 text-sm font-bold transition-all shadow-lg shadow-violet-500/20">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Registrar passkey
+            </button>
+        </div>
+    </div>
+
     <!-- ======================== 2FA ACTIVO ======================== -->
     <div th:if="${enabled}" class="fade-up-2">
         <div class="bg-white/5 border border-white/10 rounded-3xl p-8">
@@ -347,6 +373,109 @@
 </div>
 
 <script>
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+
+    const base64UrlToBuffer = (value) => {
+        const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+        const binary = atob(padded);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes.buffer;
+    };
+
+    const bufferToBase64Url = (buffer) => {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        bytes.forEach((byte) => binary += String.fromCharCode(byte));
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+    };
+
+    const prepareCreationOptions = (options) => {
+        options.challenge = base64UrlToBuffer(options.challenge);
+        options.user.id = base64UrlToBuffer(options.user.id);
+        if (Array.isArray(options.excludeCredentials)) {
+            options.excludeCredentials = options.excludeCredentials.map((credential) => ({
+                ...credential,
+                id: base64UrlToBuffer(credential.id)
+            }));
+        }
+        return options;
+    };
+
+    const serializeAttestation = (credential) => ({
+        publicKey: {
+            credential: {
+                id: credential.id,
+                rawId: bufferToBase64Url(credential.rawId),
+                type: credential.type,
+                response: {
+                    attestationObject: bufferToBase64Url(credential.response.attestationObject),
+                    clientDataJSON: bufferToBase64Url(credential.response.clientDataJSON),
+                    transports: typeof credential.response.getTransports === 'function'
+                            ? credential.response.getTransports()
+                            : []
+                },
+                clientExtensionResults: credential.getClientExtensionResults(),
+                authenticatorAttachment: credential.authenticatorAttachment
+            },
+            label: 'Passkey principal'
+        }
+    });
+
+    const registerPasskeyButton = document.getElementById('registerPasskeyButton');
+    const passkeyRegisterStatus = document.getElementById('passkeyRegisterStatus');
+
+    if (window.PublicKeyCredential && registerPasskeyButton) {
+        registerPasskeyButton.classList.remove('hidden');
+        registerPasskeyButton.classList.add('inline-flex');
+    } else if (passkeyRegisterStatus) {
+        passkeyRegisterStatus.textContent = 'Este navegador no soporta passkeys.';
+    }
+
+    registerPasskeyButton?.addEventListener('click', async () => {
+        passkeyRegisterStatus.textContent = 'Abriendo registro de passkey...';
+        registerPasskeyButton.disabled = true;
+
+        try {
+            const optionsResponse = await fetch('/webauthn/register/options', {
+                method: 'POST',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            });
+
+            if (!optionsResponse.ok) {
+                throw new Error('No fue posible preparar el registro.');
+            }
+
+            const publicKey = prepareCreationOptions(await optionsResponse.json());
+            const credential = await navigator.credentials.create({ publicKey });
+
+            const registerResponse = await fetch('/webauthn/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                },
+                body: JSON.stringify(serializeAttestation(credential))
+            });
+
+            if (!registerResponse.ok) {
+                throw new Error('No fue posible guardar la passkey.');
+            }
+
+            passkeyRegisterStatus.textContent = 'Passkey registrada correctamente. Ya puedes usarla en el login.';
+        } catch (error) {
+            passkeyRegisterStatus.textContent = 'No fue posible registrar la passkey. Intenta nuevamente.';
+        } finally {
+            registerPasskeyButton.disabled = false;
+        }
+    });
+
     // ── OTP boxes ──
     const boxes = Array.from(document.querySelectorAll('.otp-box'));
     const activateBtn = document.getElementById('activateBtn');
@@ -396,7 +525,7 @@
     });
 
     // Auto-submit al completar
-    document.getElementById('twoFaForm').addEventListener('input', () => {
+    document.getElementById('twoFaForm')?.addEventListener('input', () => {
         if (getFullCode().length === 6) {
             setTimeout(() => {
                 if (!activateBtn.disabled) activateBtn.focus();

@@ -1,5 +1,6 @@
 package com.erick.soporte.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -14,12 +15,25 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Configuration
 public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
     private final TwoFactorAuthenticationSuccessHandler successHandler;
     private final TwoFactorFilter twoFactorFilter;
+
+    @Value("${app.passkeys.rp-name}")
+    private String passkeyRpName;
+
+    @Value("${app.passkeys.rp-id}")
+    private String passkeyRpId;
+
+    @Value("${app.passkeys.allowed-origins}")
+    private String passkeyAllowedOrigins;
 
     public SecurityConfig(
             CustomUserDetailsService customUserDetailsService,
@@ -54,8 +68,10 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/error", "/css/**", "/js/**", "/img/**", "/sneat/**").permitAll()
+                        .requestMatchers("/webauthn/authenticate/options", "/login/webauthn").permitAll()
                         .requestMatchers("/api/webhooks/qpaypro", "/api/webhooks/qpaypro/**").permitAll()
 
+                        .requestMatchers("/webauthn/register", "/webauthn/register/options").authenticated()
                         .requestMatchers("/2fa/**").authenticated()
                         .requestMatchers("/settings/2fa/**").authenticated()
 
@@ -89,6 +105,11 @@ public class SecurityConfig {
                         .successHandler(successHandler)
                         .failureUrl("/login?error=true")
                         .permitAll()
+                )
+                .webAuthn(webAuthn -> webAuthn
+                        .rpName(passkeyRpName)
+                        .rpId(passkeyRpId)
+                        .allowedOrigins(parsePasskeyAllowedOrigins())
                 )
 
                 .logout(logout -> logout
@@ -126,5 +147,12 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    private Set<String> parsePasskeyAllowedOrigins() {
+        return Arrays.stream(passkeyAllowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .collect(Collectors.toSet());
     }
 }
