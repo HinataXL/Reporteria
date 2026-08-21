@@ -5,6 +5,8 @@ import com.erick.soporte.repository.UserRepository;
 import com.erick.soporte.security.CustomUserPrincipal;
 import com.erick.soporte.security.QrCodeService;
 import com.erick.soporte.security.TotpService;
+import com.erick.soporte.service.PasskeyEnrollmentService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,19 +19,22 @@ public class TwoFactorController {
     private final UserRepository userRepository;
     private final TotpService totpService;
     private final QrCodeService qrCodeService;
+    private final PasskeyEnrollmentService passkeyEnrollmentService;
 
     public TwoFactorController(
             UserRepository userRepository,
             TotpService totpService,
-            QrCodeService qrCodeService
+            QrCodeService qrCodeService,
+            PasskeyEnrollmentService passkeyEnrollmentService
     ) {
         this.userRepository = userRepository;
         this.totpService = totpService;
         this.qrCodeService = qrCodeService;
+        this.passkeyEnrollmentService = passkeyEnrollmentService;
     }
 
     @GetMapping
-    public String setup(Authentication authentication, Model model) {
+    public String setup(Authentication authentication, HttpSession session, Model model) {
         CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
 
         User user = userRepository.findByCorreo(principal.getCorreo())
@@ -51,6 +56,9 @@ public class TwoFactorController {
         model.addAttribute("qrBase64", qrBase64);
         model.addAttribute("secret", user.getTotpSecret());
         model.addAttribute("enabled", Boolean.TRUE.equals(user.getTotpEnabled()));
+        boolean hasPasskey = passkeyEnrollmentService.hasPasskey(principal.getUsername());
+        model.addAttribute("hasPasskey", hasPasskey);
+        model.addAttribute("passkeyRequired", Boolean.TRUE.equals(session.getAttribute("PASSKEY_SETUP_REQUIRED")) && !hasPasskey);
 
         return "settings/2fa";
     }

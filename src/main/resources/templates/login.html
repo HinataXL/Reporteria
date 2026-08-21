@@ -719,8 +719,19 @@
                     throw new Error('No se pudo validar la passkey.');
                 }
 
-                const result = await loginResponse.json();
-                window.location.assign(result.redirectUrl || '/conversations');
+                if (loginResponse.redirected) {
+                    window.location.assign(loginResponse.url || '/');
+                    return;
+                }
+
+                const contentType = loginResponse.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    const result = await loginResponse.json();
+                    window.location.assign(result.redirectUrl || result.location || '/');
+                    return;
+                }
+
+                window.location.assign('/');
             } catch (error) {
                 passkeyStatus.textContent = 'No fue posible ingresar con passkey. Puedes usar tu contraseña.';
                 passkeyStatus.classList.add('error');

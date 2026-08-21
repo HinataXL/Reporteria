@@ -6,6 +6,7 @@ import com.erick.soporte.security.CustomUserPrincipal;
 import com.erick.soporte.security.TotpService;
 import com.erick.soporte.service.ActiveSessionService;
 import com.erick.soporte.service.LoginAlertMailService;
+import com.erick.soporte.service.PasskeyEnrollmentService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.security.core.Authentication;
@@ -21,17 +22,20 @@ public class TwoFactorVerificationController {
     private final TotpService totpService;
     private final ActiveSessionService activeSessionService;
     private final LoginAlertMailService loginAlertMailService;
+    private final PasskeyEnrollmentService passkeyEnrollmentService;
 
     public TwoFactorVerificationController(
             UserRepository userRepository,
             TotpService totpService,
             ActiveSessionService activeSessionService,
-            LoginAlertMailService loginAlertMailService
+            LoginAlertMailService loginAlertMailService,
+            PasskeyEnrollmentService passkeyEnrollmentService
     ) {
         this.userRepository = userRepository;
         this.totpService = totpService;
         this.activeSessionService = activeSessionService;
         this.loginAlertMailService = loginAlertMailService;
+        this.passkeyEnrollmentService = passkeyEnrollmentService;
     }
 
     @GetMapping("/verify")
@@ -62,6 +66,13 @@ public class TwoFactorVerificationController {
         session.setAttribute("2FA_VERIFIED", true);
         activeSessionService.register(session.getId(), principal);
         loginAlertMailService.notifyIfWatchedUserLoggedIn(principal, request);
+
+        if (!passkeyEnrollmentService.hasPasskey(principal.getUsername())) {
+            session.setAttribute("PASSKEY_SETUP_REQUIRED", true);
+            return "redirect:/settings/2fa?passkeyRequired";
+        }
+
+        session.removeAttribute("PASSKEY_SETUP_REQUIRED");
 
         return "redirect:/conversations";
     }

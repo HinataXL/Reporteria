@@ -21,7 +21,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -72,8 +74,28 @@ public class HomeController {
     }
 
     @GetMapping("/")
-    public String home() {
-        return "index";
+    public String home(Authentication authentication) {
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            return "redirect:/login";
+        }
+
+        boolean isAdmin = hasAuthority(authentication, "ROLE_ADMIN");
+        boolean isSupervisor = hasAuthority(authentication, "ROLE_SUPERVISOR");
+        boolean isAgent = hasAuthority(authentication, "ROLE_AGENTE");
+
+        if (isAdmin) {
+            return "redirect:/admin/dashboard";
+        }
+        if (isSupervisor) {
+            return "redirect:/supervisor/dashboard";
+        }
+        if (isAgent) {
+            return "redirect:/agent/dashboard";
+        }
+
+        return "redirect:/conversations";
     }
 
     @GetMapping("/conversations")
@@ -527,6 +549,12 @@ public class HomeController {
     private boolean belongsToAgent(Conversation conversation, CustomUserPrincipal user) {
         return (conversation.getUserId() != null && conversation.getUserId().equals(user.getId()))
                 || (conversation.getAgenteNombre() != null && conversation.getAgenteNombre().equalsIgnoreCase(user.getNombreCompleto()));
+    }
+
+    private boolean hasAuthority(Authentication authentication, String authority) {
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority::equals);
     }
 
     private String fullName(User user) {
